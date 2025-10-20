@@ -71,15 +71,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-<<<<<<< HEAD
-          name: Nightly
-=======
-<<<<<<< HEAD
-          name: Nightly
-=======
           name: ${{ env.RELEASE }}
->>>>>>> 72f6bd6 (Add tag for nightly release)
->>>>>>> f599d36 (Add tag for nightly release)
           files: release/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
