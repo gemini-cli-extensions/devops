@@ -36,6 +36,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git tag -fa -m "Nightly Release" ${{ env.RELEASE }}
+          git push --delete origin ${{ env.RELEASE }}
           git push origin ${{ env.RELEASE }}
 
       - name: Set up Go
