@@ -5,6 +5,9 @@ on:
     - cron: '0 0 * * *' # Runs daily at midnight UTC
   workflow_dispatch: # Allows manual triggering of the workflow
 
+env:
+  RELEASE: nightly
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -30,8 +33,10 @@ jobs:
           cp ../gemini-extension.json release/
           cp ../README.md release/
           cp ../local-rag/devops-rag.db release/
-          git tag -fa nightly
-          git push origin --tags
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -fa ${{ env.RELEASE }}
+          git push origin ${{ env.RELEASE }}
 
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -66,7 +71,15 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+<<<<<<< HEAD
           name: Nightly
+=======
+<<<<<<< HEAD
+          name: Nightly
+=======
+          name: ${{ env.RELEASE }}
+>>>>>>> 72f6bd6 (Add tag for nightly release)
+>>>>>>> f599d36 (Add tag for nightly release)
           files: release/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
