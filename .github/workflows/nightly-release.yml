@@ -30,6 +30,8 @@ jobs:
           cp ../gemini-extension.json release/
           cp ../README.md release/
           cp ../local-rag/devops-rag.db release/
+          git tag -fa nightly
+          git push origin --tags
 
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -64,4 +66,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          name: Nightly
           files: release/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
