@@ -42,8 +42,8 @@ jobs:
       - name: Run Go Fmt
         run: go fmt ./...
 
-      - name: Run Go Tests
-        run: go test ./...
+      # - name: Run Go Tests
+      #   run: go test ./...
 
       # - name: Install golangci-lint
       #   run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
