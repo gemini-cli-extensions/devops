@@ -35,7 +35,7 @@ jobs:
           git push --force origin ${RELEASE}
 
           # check of a release already exists
-          if [[ $(gh release view "${RELEASE}" >/dev/null); then
+          if [[ $(gh release view "${RELEASE}" >/dev/null ) ]]; then
             echo "CREATE_RELEASE=true" >> "$GITHUB_OUTPUT"
           else
             echo "CREATE_RELEASE=false" >> "$GITHUB_OUTPUT"
