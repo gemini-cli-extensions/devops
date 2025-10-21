@@ -10,7 +10,7 @@ env:
 
 jobs:
   prep:
-    uses: {owner}/{repo}/.github/workflows/prep-release.yaml@{ref}
+    uses: ./.github/workflows/prep-release.yaml
     with:
       release: nightly
 
