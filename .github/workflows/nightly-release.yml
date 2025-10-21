@@ -69,19 +69,21 @@ jobs:
             - name: Create release assets
               id: archive
               run: |
-                  archive="devops-mcp-server-${{ matrix.goos }}-${{ matrix.goarch }}"
+                  mkdir dist
+                  archive="dist/devops-mcp-server-${{ matrix.goos }}-${{ matrix.goarch }}"
                   if [[ "matrix.goos" == "windows" ]];then
                     archive="${archive}.zip"
-                    zip -J "release/${archive}" -C release .
+                    zip -J "${archive}" -C release .
                   else
                     archive="${archive}.tar.gz"
-                    tar -czvf "release/${archive}" -C release .
+                    tar -czvf "${archive}" -C release .
                   fi
+                  echo "Created ${archive}"
                   echo "ARCHIVE_NAME=${archive}" >> "$GITHUB_OUTPUT"
 
             - name: UpUpload archive to GitHub Release
               uses: softprops/action-gh-release@v1
               with:
-                  files: ${{ steps.archive.ARCHIVE_NAME }}
+                  files: dist/*
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
