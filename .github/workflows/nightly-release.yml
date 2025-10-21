@@ -35,7 +35,7 @@ jobs:
 
             - name: prep-release
               run: |
-                  mkdir -p release
+                  mkdir -p release dist
                   cp ../gemini-extension.json release/
                   cp ../README.md release/
                   cp ../local-rag/devops-rag.db release/
@@ -69,7 +69,6 @@ jobs:
             - name: Create release assets
               id: archive
               run: |
-                  mkdir dist
                   archive="dist/devops-mcp-server-${{ matrix.goos }}-${{ matrix.goarch }}"
                   if [[ "matrix.goos" == "windows" ]];then
                     archive="${archive}.zip"
