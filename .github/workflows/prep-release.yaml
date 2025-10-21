@@ -1,0 +1,19 @@
+name: Prepare Release
+
+on:
+  workflow_call:
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  prep-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: prep-release
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -fa -m "${{ env.RELEASE }} release" ${{ env.RELEASE }}
+          git push --force origin ${{ env.RELEASE }}
