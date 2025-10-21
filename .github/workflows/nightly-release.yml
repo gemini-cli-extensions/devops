@@ -9,6 +9,12 @@ env:
   RELEASE: nightly
 
 jobs:
+  # Prepare release first
+  call-prep:
+    uses: haroonc/devops/.github/workflows/prep-release.yaml@main
+    with:
+      release: ${{ env.RELEASE }}
+
   release:
     runs-on: ubuntu-latest
     defaults:
@@ -69,10 +75,9 @@ jobs:
         run: |
           tar -czvf "release/devops-mcp-server-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz" -C release "devops-mcp-server-${{ matrix.goos }}-${{ matrix.goarch }}"
 
-      - name: Create GitHub Release
+      - name: UpUpload archive to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: ${{ env.RELEASE }}
           files: release/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
