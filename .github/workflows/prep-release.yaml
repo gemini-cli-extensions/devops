@@ -23,7 +23,7 @@ jobs:
         id: prep
         run: |
           export RELEASE="${{ env.RELEASE }}"
-          if [[ "${{ inputs.release }}"" != "" ]]; then
+          if [[ "${{ inputs.release }}" != "" ]]; then
             RELEASE="${{ inputs.release }}"
           fi
           echo "RELEASE=${RELEASE}" >> "$GITHUB_OUTPUT"
