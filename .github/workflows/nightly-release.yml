@@ -11,9 +11,9 @@ env:
 jobs:
   # Prepare release first
   call-prep:
-    uses: haroonc/devops/.github/workflows/prep-release.yaml@main
+    uses: {owner}/{repo}/.github/workflows/prep-release.yaml@{ref}
     with:
-      release: ${{ env.RELEASE }}
+      release: nightly
 
   release:
     runs-on: ubuntu-latest
