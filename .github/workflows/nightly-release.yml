@@ -9,8 +9,7 @@ env:
   RELEASE: nightly
 
 jobs:
-  # Prepare release first
-  call-prep:
+  prep:
     uses: {owner}/{repo}/.github/workflows/prep-release.yaml@{ref}
     with:
       release: nightly
