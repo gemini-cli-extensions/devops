@@ -22,7 +22,7 @@ jobs:
       - name: Prepare for a new release
         id: prep
         run: |
-          export RELEASE="${{ env.RELEASE }}""
+          export RELEASE="${{ env.RELEASE }}"
           if [[ ${{ inputs.release }} != "" ]]; then
             RELEASE="${{ inputs.release }}"
           fi
