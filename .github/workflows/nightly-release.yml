@@ -91,6 +91,7 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   files: dist/*
+                  overwrite_files: true
                   tag_name: ${{ env.RELEASE }}
                   fail_on_unmatched_files: true
               env:
