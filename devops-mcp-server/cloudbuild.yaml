@@ -5,11 +5,21 @@ steps:
   - '-c'
   - |
     set -e
+    echo "Installing golangci-lint..."
     go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+    echo "Cleaning module cache..."
+    go clean -modcache
+    echo "Running go mod tidy..."
+    date
     go mod tidy
-    golangci-lint run ./...
+    date
+    echo "Running golangci-lint..."
+    golangci-lint run --timeout=5m ./...
+    echo "Running go build..."
     go build ./...
+    echo "Running go test..."
     go test ./...
+    echo "Done."
   dir: 'devops-mcp-server'
 options:
   logging: CLOUD_LOGGING_ONLY
