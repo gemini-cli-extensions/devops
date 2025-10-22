@@ -1,0 +1,12 @@
+steps:
+- name: 'golangci/golangci-lint:v1.55.2'
+  entrypoint: 'sh'
+  args: ['-c', 'go mod tidy && golangci-lint run ./...']
+  dir: 'devops-mcp-server'
+- name: 'golang:1.22'
+  entrypoint: 'sh'
+  args: ['-c', 'go mod tidy && go build ./... && go test ./...']
+  dir: 'devops-mcp-server'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
