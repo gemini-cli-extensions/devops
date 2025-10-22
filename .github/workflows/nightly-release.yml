@@ -80,6 +80,13 @@ jobs:
                   echo "Created ${archive}"
                   echo "ARCHIVE_NAME=${archive}" >> "$GITHUB_OUTPUT"
 
+            - name: Create release assets
+              id: test
+              run: |
+                  pwd
+                  ls dist/*
+                  ls ${{ steps.archive.ARCHIVE_NAME }}
+
             - name: UpUpload archive to GitHub Release
               uses: softprops/action-gh-release@v1
               with:
