@@ -84,5 +84,7 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   files: dist/*
+                  tag_name: ${{ env.RELEASE }}
+                  fail_on_unmatched_files: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
