@@ -25,7 +25,7 @@ import (
 	chromem "github.com/philippgille/chromem-go"
 )
 
-func gcpAuthHelper(ctx context.Context,t *testing.T) (tokenValue, projectID string){
+func gcpAuthHelper(ctx context.Context, t *testing.T) (tokenValue, projectID string) {
 	// Use Application Default Credentials to get a TokenSource
 	scopes := []string{"https://www.googleapis.com/auth/cloud-platform"}
 	creds, err := credentials.DetectDefault(&credentials.DetectOptions{
@@ -40,7 +40,7 @@ func gcpAuthHelper(ctx context.Context,t *testing.T) (tokenValue, projectID stri
 		log.Fatalf("Failed to get project ID: %v", err)
 	}
 	if projectID == "" {
-		//Try quota project 
+		//Try quota project
 		projectID, err = creds.QuotaProjectID(ctx)
 		if err != nil {
 			log.Fatalf("Failed to get project ID: %v", err)
@@ -60,17 +60,17 @@ func gcpAuthHelper(ctx context.Context,t *testing.T) (tokenValue, projectID stri
 		log.Fatalf("Failed to retrieve access token: %v", err)
 	}
 
-	return token.Value,projectID
+	return token.Value, projectID
 }
 
 func TestRAGQuery(t *testing.T) {
 	ctx := context.Background()
-	token, projectID := gcpAuthHelper(ctx,t)
+	token, projectID := gcpAuthHelper(ctx, t)
 
 	vertexEmbeddingFunc := chromem.NewEmbeddingFuncVertex(
-									token,
-									projectID,
-									chromem.EmbeddingModelVertexEnglishV4)
+		token,
+		projectID,
+		chromem.EmbeddingModelVertexEnglishV4)
 
 	db := chromem.NewDB()
 	dbFile := os.Getenv("RAG_DB_PATH")
@@ -80,9 +80,9 @@ func TestRAGQuery(t *testing.T) {
 	//check if file exists, we expect an existing DB
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 		log.Fatalf("RAG_DB_PATH file does not exist, skipping import: %v", dbFile)
-	}else{
+	} else {
 		err := db.ImportFromFile(dbFile, "")
-		log.Printf("Imported RAG with collections:%d",len(db.ListCollections()))
+		log.Printf("Imported RAG with collections:%d", len(db.ListCollections()))
 		if err != nil {
 			log.Fatalf("Unable to import from the RAG DB file:%s - %v", dbFile, err)
 		}
@@ -90,27 +90,27 @@ func TestRAGQuery(t *testing.T) {
 
 	collectionPattern, err := db.GetOrCreateCollection("pattern", nil, vertexEmbeddingFunc)
 	if err != nil {
-		log.Fatalf("Unable to get collection pattern: %v",err)
+		log.Fatalf("Unable to get collection pattern: %v", err)
 	}
 
-	patternResult,err := collectionPattern.Query(ctx, "Simple pipeline that deploys to Cloud Run",1,nil,nil)
+	patternResult, err := collectionPattern.Query(ctx, "Simple pipeline that deploys to Cloud Run", 1, nil, nil)
 	if err != nil {
-		log.Fatalf("Unable to Query collection pattern: %v",err)
+		log.Fatalf("Unable to Query collection pattern: %v", err)
 	}
-	if len(patternResult)<1 || patternResult[0].Content == ""{
-		log.Fatalf("Failed to find pattern: %v",len(patternResult))
+	if len(patternResult) < 1 || patternResult[0].Content == "" {
+		log.Fatalf("Failed to find pattern: %v", len(patternResult))
 	}
 
 	collectionKnowledge, err := db.GetOrCreateCollection("knowledge", nil, vertexEmbeddingFunc)
 	if err != nil {
-		log.Fatalf("Unable to get collection knowledge: %v",err)
+		log.Fatalf("Unable to get collection knowledge: %v", err)
 	}
 
-	knowledgeResult,err := collectionKnowledge.Query(ctx, "Package a Python application",3,nil,nil)
+	knowledgeResult, err := collectionKnowledge.Query(ctx, "Package a Python application", 3, nil, nil)
 	if err != nil {
-		log.Fatalf("Unable to Query collection knowledge: %v",err)
+		log.Fatalf("Unable to Query collection knowledge: %v", err)
 	}
-	if len(knowledgeResult)<3 || knowledgeResult[0].Content == ""{
-		log.Fatalf("Failed to find pattern: %v",len(knowledgeResult))
+	if len(knowledgeResult) < 3 || knowledgeResult[0].Content == "" {
+		log.Fatalf("Failed to find pattern: %v", len(knowledgeResult))
 	}
 }

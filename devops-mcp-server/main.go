@@ -32,7 +32,6 @@ var (
 	pprofAddr = flag.String("pprof", "", "if set, host the pprof debugging server at this address")
 )
 
-
 func main() {
 	flag.Parse()
 

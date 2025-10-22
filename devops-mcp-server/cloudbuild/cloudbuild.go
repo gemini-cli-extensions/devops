@@ -21,6 +21,11 @@ import (
 	"google.golang.org/api/cloudbuild/v1"
 )
 
+// ListResult defines a generic struct to wrap a list of items.
+type ListResult[T any] struct {
+	Items []T `json:"items"`
+}
+
 // Client is a client for interacting with the Cloud Build API.
 type Client struct {
 	service *cloudbuild.Service
@@ -80,11 +85,11 @@ func (c *Client) RunTrigger(ctx context.Context, projectID, location, triggerID 
 }
 
 // ListTriggers lists all Cloud Build triggers in a given location.
-func (c *Client) ListTriggers(ctx context.Context, projectID, location string) ([]*cloudbuild.BuildTrigger, error) {
+func (c *Client) ListTriggers(ctx context.Context, projectID, location string) (*ListResult[*cloudbuildv1.BuildTrigger], error) {
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
 	resp, err := c.service.Projects.Locations.Triggers.List(parent).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list triggers: %v", err)
 	}
-	return resp.Triggers, nil
+	return &ListResult[*cloudbuildv1.BuildTrigger]{Items: resp.Triggers}, nil
 }

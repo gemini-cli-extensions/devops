@@ -36,23 +36,23 @@ import (
 //go:embed version.txt
 var version string
 
-func createServer() *mcp.Server{
+func createServer() *mcp.Server {
 	opts := &mcp.ServerOptions{
-		Instructions:      "Google Cloud DevOps MCP Server",
+		Instructions: "Google Cloud DevOps MCP Server",
 		HasResources: false,
 	}
 	server := mcp.NewServer(&mcp.Implementation{
-								Name: "devops",
-								Title: "Google Cloud DevOps MCP Server",
-								Version: version,
-							}, opts)
+		Name:    "devops",
+		Title:   "Google Cloud DevOps MCP Server",
+		Version: version,
+	}, opts)
 
 	ctx := context.Background()
-	
+
 	if err := addAllTools(ctx, server); err != nil {
 		log.Fatalf("failed to add tools: %v", err)
 	}
-	
+
 	addAllPrompts(ctx, server)
 
 	return server
@@ -60,7 +60,7 @@ func createServer() *mcp.Server{
 
 func addAllPrompts(ctx context.Context, server *mcp.Server) {
 	// Add design prompt.
-	prompts.DesignPrompt(ctx, server)	
+	prompts.DesignPrompt(ctx, server)
 }
 
 func addAllTools(ctx context.Context, server *mcp.Server) error {

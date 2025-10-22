@@ -12,20 +12,20 @@ import (
 	"github.com/tmc/langchaingo/textsplitter"
 )
 
-func addDirectoryToRag(ctx context.Context,collection *chromem.Collection, dir string) {
+func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir string) {
 	var docs []chromem.Document
 	log.Printf("Uploading directory %s to collection: %v", dir, collection.Name)
 	splitter := textsplitter.NewMarkdownTextSplitter(
 		textsplitter.WithChunkSize(1000),
 		textsplitter.WithChunkOverlap(150),
 	)
-	
+
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if !info.IsDir() {
-			_,err := collection.GetByID(ctx,path)
+			_, err := collection.GetByID(ctx, path)
 			if err == nil {
 				// log.Printf("Doc found %s: %v", path, err)
 				// Skip if doc is already loaded
@@ -43,8 +43,8 @@ func addDirectoryToRag(ctx context.Context,collection *chromem.Collection, dir s
 				return nil
 			}
 			for index, chunk := range chunks {
-				chunkId := path+"_"+strconv.Itoa(index)
-				_,err := collection.GetByID(ctx,chunkId)
+				chunkId := path + "_" + strconv.Itoa(index)
+				_, err := collection.GetByID(ctx, chunkId)
 				if err == nil {
 					// log.Printf("Doc found %s: %v", path, err)
 					// Skip if doc is already loaded

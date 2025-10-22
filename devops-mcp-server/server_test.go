@@ -49,7 +49,7 @@ func TestMCPServer(t *testing.T) {
 		log.Fatalf("failed to list tools: %v", err)
 	}
 	log.Printf("Prompts: %v", len(tools.Tools))
-	for _,tool := range tools.Tools {
+	for _, tool := range tools.Tools {
 		log.Printf("Tool %s: %s", tool.Name, tool.Title)
 	}
 
@@ -58,10 +58,9 @@ func TestMCPServer(t *testing.T) {
 		log.Fatalf("failed to list prompts: %v", err)
 	}
 	log.Printf("Prompts: %v", len(prompts.Prompts))
-	for _,prompt := range prompts.Prompts {
+	for _, prompt := range prompts.Prompts {
 		log.Printf("Prompt %s: %s", prompt.Name, prompt.Title)
 	}
-	
 
 	// Now shut down the session by closing the client, and waiting for the
 	// server session to end.
