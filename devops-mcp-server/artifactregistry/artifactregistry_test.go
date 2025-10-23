@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1"
+	artifactregistrypb "cloud.google.com/go/artifactregistry/apiv1/artifactregistrypb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

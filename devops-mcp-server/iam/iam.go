@@ -18,23 +18,23 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/api/cloudresourcemanager/v1"
-	"google.golang.org/api/iam/v1"
+	cloudresourcemanagerv1 "google.golang.org/api/cloudresourcemanager/v1"
+	iamv1 "google.golang.org/api/iam/v1"
 )
 
 // Client is a client for interacting with the IAM API.
 type Client struct {
-	iamService *iam.Service
-	crmService *cloudresourcemanager.Service
+	iamService *iamv1.Service
+	crmService *cloudresourcemanagerv1.Service
 }
 
 // NewClient creates a new Client.
 func NewClient(ctx context.Context) (*Client, error) {
-	iamService, err := iam.NewService(ctx)
+	iamService, err := iamv1.NewService(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create iam service: %v", err)
 	}
-	crmService, err := cloudresourcemanager.NewService(ctx)
+	crmService, err := cloudresourcemanagerv1.NewService(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cloud resource manager service: %v", err)
 	}
@@ -42,11 +42,11 @@ func NewClient(ctx context.Context) (*Client, error) {
 }
 
 // CreateServiceAccount creates a new Google Cloud Platform service account.
-func (c *Client) CreateServiceAccount(ctx context.Context, projectID, displayName, accountID string) (*iam.ServiceAccount, error) {
+func (c *Client) CreateServiceAccount(ctx context.Context, projectID, displayName, accountID string) (*iamv1.ServiceAccount, error) {
 	projectPath := fmt.Sprintf("projects/%s", projectID)
-	req := &iam.CreateServiceAccountRequest{
+	req := &iamv1.CreateServiceAccountRequest{
 		AccountId: accountID,
-		ServiceAccount: &iam.ServiceAccount{
+		ServiceAccount: &iamv1.ServiceAccount{
 			DisplayName: displayName,
 		},
 	}
@@ -54,25 +54,25 @@ func (c *Client) CreateServiceAccount(ctx context.Context, projectID, displayNam
 }
 
 // AddIAMRoleBinding adds an IAM role binding to a Google Cloud Platform resource.
-func (c *Client) AddIAMRoleBinding(ctx context.Context, resourceID, role, member string) (*cloudresourcemanager.Policy, error) {
-	policy, err := c.crmService.Projects.GetIamPolicy(resourceID, &cloudresourcemanager.GetIamPolicyRequest{}).Context(ctx).Do()
+func (c *Client) AddIAMRoleBinding(ctx context.Context, resourceID, role, member string) (*cloudresourcemanagerv1.Policy, error) {
+	policy, err := c.crmService.Projects.GetIamPolicy(resourceID, &cloudresourcemanagerv1.GetIamPolicyRequest{}).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get iam policy: %v", err)
 	}
 
-	policy.Bindings = append(policy.Bindings, &cloudresourcemanager.Binding{
+	policy.Bindings = append(policy.Bindings, &cloudresourcemanagerv1.Binding{
 		Role:    role,
 		Members: []string{member},
 	})
 
-	setPolicyRequest := &cloudresourcemanager.SetIamPolicyRequest{
+	setPolicyRequest := &cloudresourcemanagerv1.SetIamPolicyRequest{
 		Policy: policy,
 	}
 	return c.crmService.Projects.SetIamPolicy(resourceID, setPolicyRequest).Context(ctx).Do()
 }
 
 // ListServiceAccounts lists all service accounts in a project.
-func (c *Client) ListServiceAccounts(ctx context.Context, projectID string) ([]*iam.ServiceAccount, error) {
+func (c *Client) ListServiceAccounts(ctx context.Context, projectID string) ([]*iamv1.ServiceAccount, error) {
 	parent := fmt.Sprintf("projects/%s", projectID)
 	resp, err := c.iamService.Projects.ServiceAccounts.List(parent).Context(ctx).Do()
 	if err != nil {
@@ -83,7 +83,7 @@ func (c *Client) ListServiceAccounts(ctx context.Context, projectID string) ([]*
 
 // GetIAMRoleBinding gets the IAM role bindings for a service account.
 func (c *Client) GetIAMRoleBinding(ctx context.Context, projectID, serviceAccountEmail string) ([]string, error) {
-	policy, err := c.crmService.Projects.GetIamPolicy(projectID, &cloudresourcemanager.GetIamPolicyRequest{}).Context(ctx).Do()
+	policy, err := c.crmService.Projects.GetIamPolicy(projectID, &cloudresourcemanagerv1.GetIamPolicyRequest{}).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get iam policy: %v", err)
 	}

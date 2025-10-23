@@ -48,7 +48,9 @@ func main() {
 		}))
 		go func() {
 			// DefaultServeMux was mutated by the /debug/pprof import.
-			http.ListenAndServe(*pprofAddr, http.DefaultServeMux)
+			if err := http.ListenAndServe(*pprofAddr, http.DefaultServeMux); err != nil {
+				log.Printf("pprof server failed: %v", err)
+			}
 		}()
 	}
 

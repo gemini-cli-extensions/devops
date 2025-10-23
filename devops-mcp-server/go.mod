@@ -1,6 +1,6 @@
 module devops-mcp-server
 
-go 1.24.4
+go 1.24.8
 
 require (
 	cloud.google.com/go/artifactregistry v1.17.2

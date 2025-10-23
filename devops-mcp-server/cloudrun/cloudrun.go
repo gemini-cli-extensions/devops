@@ -20,7 +20,7 @@ import (
 	"os/exec"
 
 	run "cloud.google.com/go/run/apiv2"
-	runpb "google.golang.org/genproto/googleapis/cloud/run/v2"
+	runpb "cloud.google.com/go/run/apiv2/runpb"
 )
 
 // Exec interface for running commands.
