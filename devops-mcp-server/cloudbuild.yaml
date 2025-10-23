@@ -1,6 +1,6 @@
 steps:
   # Step 1: Install tools (like the linter) and clean the cache.
-  # This populates /go/bin/golangci-lint within the volume.
+  # This populates /workspace/bin/golangci-lint within the volume.
   - name: 'golang:1.24'
     id: 'Install Tools'
     entrypoint: 'sh'
@@ -14,7 +14,7 @@ steps:
         go clean -modcache
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/go/bin:$$$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/workspace/bin:$$PATH' # Add /workspace/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
 
   # Step 2: Download dependencies.
@@ -26,12 +26,12 @@ steps:
     args: ['mod', 'tidy']
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/workspace/bin:$$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/workspace/bin:$$PATH' # Add /workspace/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
     waitFor: ['Install Tools'] # Run after tools are installed
 
   # Step 3: Run the linter.
-  # This uses the cached golangci-lint from /go/bin and the cached
+  # This uses the cached golangci-lint from /workspace/bin and the cached
   # dependencies from /go/pkg/mod.
   - name: 'golang:1.24'
     id: 'Run Linter'
@@ -39,7 +39,7 @@ steps:
     args: ['run', '--timeout=5m', './...']
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/workspace/bin:$$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/workspace/bin:$$PATH' # Add /workspace/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
     waitFor: ['Download Dependencies']
 
@@ -50,7 +50,7 @@ steps:
     args: ['build', './...']
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/workspace/bin:$$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/workspace/bin:$$PATH' # Add /workspace/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
     waitFor: ['Run Linter'] # Wait for lint to pass
 
@@ -61,7 +61,7 @@ steps:
     args: ['test', './...']
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/workspace/bin:$$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/workspace/bin:$$PATH' # Add /workspace/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
     waitFor: ['Run Build'] # Wait for build to pass
 
