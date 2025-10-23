@@ -1,25 +1,69 @@
 steps:
-- name: 'golang:1.24'
-  entrypoint: 'sh'
-  args:
-  - '-c'
-  - |
-    set -e
-    echo "Installing golangci-lint..."
-    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
-    echo "Cleaning module cache..."
-    go clean -modcache
-    echo "Running go mod tidy..."
-    date
-    go mod tidy
-    date
-    echo "Running golangci-lint..."
-    golangci-lint run --timeout=5m ./...
-    echo "Running go build..."
-    go build ./...
-    echo "Running go test..."
-    go test ./...
-    echo "Done."
-  dir: 'devops-mcp-server'
+  # Step 1: Install tools (like the linter) and clean the cache.
+  # This populates /go/bin/golangci-lint within the volume.
+  - name: 'golang:1.24'
+    id: 'Install Tools'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        set -e
+        echo "Installing golangci-lint..."
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+        echo "Cleaning module cache..."
+        go clean -modcache
+    env:
+      - 'GOPATH=/workspace'
+      - 'PATH=/go/bin:$PATH' # Add /go/bin to PATH to find installed tools
+    dir: 'devops-mcp-server'
+
+  # Step 2: Download dependencies.
+  # This uses the volume, so /go/pkg/mod is cached.
+  # It will only download new/changed dependencies.
+  - name: 'golang:1.24'
+    id: 'Download Dependencies'
+    entrypoint: 'go'
+    args: ['mod', 'tidy']
+    env:
+      - 'GOPATH=/workspace'
+      - 'PATH=/workspace/bin:$PATH' # Add /go/bin to PATH to find installed tools
+    dir: 'devops-mcp-server'
+    waitFor: ['Install Tools'] # Run after tools are installed
+
+  # Step 3: Run the linter.
+  # This uses the cached golangci-lint from /go/bin and the cached
+  # dependencies from /go/pkg/mod.
+  - name: 'golang:1.24'
+    id: 'Run Linter'
+    entrypoint: 'golangci-lint'
+    args: ['run', '--timeout=5m', './...']
+    env:
+      - 'GOPATH=/workspace'
+      - 'PATH=/workspace/bin:$PATH' # Add /go/bin to PATH to find installed tools
+    dir: 'devops-mcp-server'
+    waitFor: ['Download Dependencies']
+
+  # Step 4: Build the code.
+  - name: 'golang:1.24'
+    id: 'Run Build'
+    entrypoint: 'go'
+    args: ['build', './...']
+    env:
+      - 'GOPATH=/workspace'
+      - 'PATH=/workspace/bin:$PATH' # Add /go/bin to PATH to find installed tools
+    dir: 'devops-mcp-server'
+    waitFor: ['Run Linter'] # Wait for lint to pass
+
+  # Step 5: Run tests.
+  - name: 'golang:1.24'
+    id: 'Run Tests'
+    entrypoint: 'go'
+    args: ['test', './...']
+    env:
+      - 'GOPATH=/workspace'
+      - 'PATH=/workspace/bin:$PATH' # Add /go/bin to PATH to find installed tools
+    dir: 'devops-mcp-server'
+    waitFor: ['Run Build'] # Wait for build to pass
+
 options:
   logging: CLOUD_LOGGING_ONLY
