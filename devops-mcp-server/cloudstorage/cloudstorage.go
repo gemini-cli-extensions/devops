@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
+
 	"os"
 	"path/filepath"
 	"strings"
@@ -102,7 +102,7 @@ func (c *Client) ReadFile(ctx context.Context, bucketName, objectName string) ([
 	}
 	defer r.Close()
 
-	data, err := ioutil.ReadAll(r)
+	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}

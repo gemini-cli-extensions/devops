@@ -17,7 +17,7 @@ package artifactregistryiface
 import (
 	"context"
 
-	artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1"
+	artifactregistrypb "cloud.google.com/go/artifactregistry/apiv1/artifactregistrypb"
 )
 
 // CreateRepositoryOperation is an interface that wraps the artifactregistry.CreateRepositoryOperation.

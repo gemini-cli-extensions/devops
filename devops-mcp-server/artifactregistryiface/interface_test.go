@@ -21,7 +21,7 @@ import (
 	"devops-mcp-server/artifactregistryiface/mocks"
 
 	"github.com/golang/mock/gomock"
-	artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1"
+	artifactregistrypb "cloud.google.com/go/artifactregistry/apiv1/artifactregistrypb"
 )
 
 func TestMockGRPClient(t *testing.T) {
