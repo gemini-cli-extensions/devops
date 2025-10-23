@@ -22,7 +22,7 @@ import (
 	"devops-mcp-server/artifactregistryiface"
 
 	artifactregistry "cloud.google.com/go/artifactregistry/apiv1"
-	artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1"
+	artifactregistrypb "cloud.google.com/go/artifactregistry/apiv1/artifactregistrypb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -50,8 +50,7 @@ func (c *client) GetRepository(ctx context.Context, projectID, location, reposit
 	}
 
 	repo, err := c.client.GetRepository(ctx, req)
-	    return repo, err
-	return repo, nil
+	return repo, err
 }
 
 // CreateRepository creates a new Artifact Registry repository.
@@ -121,4 +120,5 @@ func NewGRPCClient(ctx context.Context) (artifactregistryiface.GRPClient, error)
 		log.Printf("%v", err)
 		return nil, fmt.Errorf("failed to create artifact registry client: %v", err)
 	}
-	return &gRPCClient{c}, nil}
+	return &gRPCClient{c}, nil
+}

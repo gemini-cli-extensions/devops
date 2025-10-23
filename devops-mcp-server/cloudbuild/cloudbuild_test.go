@@ -25,7 +25,7 @@ import (
 	"devops-mcp-server/cloudbuildiface"
 
 	"github.com/golang/mock/gomock"
-	"google.golang.org/api/cloudbuild/v1"
+	cloudbuildv1 "google.golang.org/api/cloudbuild/v1"
 
 	"devops-mcp-server/cloudbuildiface/mocks"
 	cloudstorage_mocks "devops-mcp-server/cloudstorage/mocks"
@@ -57,8 +57,8 @@ func TestBuildContainer(t *testing.T) {
 	tmpDir := t.TempDir()
 	dockerfilePath := filepath.Join(tmpDir, "Dockerfile")
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
-	startOperation := &cloudbuild.Operation{Name: "operations/test-op"}
-	doneOperation := &cloudbuild.Operation{Name: "operations/test-op", Done: true}
+	startOperation := &cloudbuildv1.Operation{Name: "operations/test-op"}
+	doneOperation := &cloudbuildv1.Operation{Name: "operations/test-op", Done: true}
 
 	// Create a dummy Dockerfile
 	if err := os.WriteFile(dockerfilePath, []byte("FROM busybox"), 0644); err != nil {
@@ -102,7 +102,7 @@ func TestCreateTrigger(t *testing.T) {
 	branch := "main"
 
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
-	expectedTrigger := &cloudbuild.BuildTrigger{Name: triggerID}
+	expectedTrigger := &cloudbuildv1.BuildTrigger{Name: triggerID}
 
 	t.Run("success", func(t *testing.T) {
 		mockTriggersService.EXPECT().Create(parent, gomock.Any()).Return(mockCreateCall)
@@ -150,7 +150,7 @@ func TestRunTrigger(t *testing.T) {
 	location := "us-central1"
 	triggerID := "test-trigger"
 	name := fmt.Sprintf("projects/%s/locations/%s/triggers/%s", projectID, location, triggerID)
-	expectedOp := &cloudbuild.Operation{Name: "operations/test-op"}
+	expectedOp := &cloudbuildv1.Operation{Name: "operations/test-op"}
 
 	t.Run("success", func(t *testing.T) {
 		mockTriggersService.EXPECT().Run(name, gomock.Any()).Return(mockRunCall)
@@ -190,11 +190,11 @@ func TestListTriggers(t *testing.T) {
 	projectID := "test-project"
 	location := "us-central1"
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
-	expectedTriggers := []*cloudbuild.BuildTrigger{
+	expectedTriggers := []*cloudbuildv1.BuildTrigger{
 		{Name: "trigger1"},
 		{Name: "trigger2"},
 	}
-	expectedResp := &cloudbuild.ListBuildTriggersResponse{Triggers: expectedTriggers}
+	expectedResp := &cloudbuildv1.ListBuildTriggersResponse{Triggers: expectedTriggers}
 
 	t.Run("success", func(t *testing.T) {
 		mockTriggersService.EXPECT().List(parent).Return(mockListCall)
