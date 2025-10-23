@@ -14,7 +14,7 @@ steps:
         go clean -modcache
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/go/bin:$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/go/bin:$$$PATH' # Add /go/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
 
   # Step 2: Download dependencies.
@@ -26,7 +26,7 @@ steps:
     args: ['mod', 'tidy']
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/workspace/bin:$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/workspace/bin:$$PATH' # Add /go/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
     waitFor: ['Install Tools'] # Run after tools are installed
 
@@ -39,7 +39,7 @@ steps:
     args: ['run', '--timeout=5m', './...']
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/workspace/bin:$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/workspace/bin:$$PATH' # Add /go/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
     waitFor: ['Download Dependencies']
 
@@ -50,7 +50,7 @@ steps:
     args: ['build', './...']
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/workspace/bin:$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/workspace/bin:$$PATH' # Add /go/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
     waitFor: ['Run Linter'] # Wait for lint to pass
 
@@ -61,7 +61,7 @@ steps:
     args: ['test', './...']
     env:
       - 'GOPATH=/workspace'
-      - 'PATH=/workspace/bin:$PATH' # Add /go/bin to PATH to find installed tools
+      - 'PATH=/workspace/bin:$$PATH' # Add /go/bin to PATH to find installed tools
     dir: 'devops-mcp-server'
     waitFor: ['Run Build'] # Wait for build to pass
 
