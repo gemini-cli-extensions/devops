@@ -22,19 +22,19 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-//go:embed cicd_design_prompt.txt
-var promptCICDText string
+//go:embed deploy_prompt.txt
+var promptDeployText string
 
-// Helps design and implement GCP CI/CD pipelines.
-func DesignPrompt(ctx context.Context, server *mcp.Server) {
+// Helps deploy applications to GCP.
+func DeployPrompt(ctx context.Context, server *mcp.Server) {
 	promptHandler := func(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return &mcp.GetPromptResult{
-			Description: "Helps design and implement GCP CI/CD pipelines.",
+			Description: "Helps deploy applications to GCP.",
 			Messages: []*mcp.PromptMessage{
 				{
 					Role:    "user",
 					Content: &mcp.TextContent{
-						Text: fmt.Sprintf(promptCICDText, req.Params.Arguments["query"]),
+						Text: fmt.Sprintf(promptDeployText, req.Params.Arguments["query"]),
 					},
 				},
 			},
@@ -43,12 +43,12 @@ func DesignPrompt(ctx context.Context, server *mcp.Server) {
 
 	// Create a server with a single prompt.
 	prompt := &mcp.Prompt{
-		Name: "devops:design",
-		Title: "Design and implement a Google Cloud based CI/CD pipeline.",
+		Name: "devops:deploy",
+		Title: "Deploy an application to GCP.",
 		Arguments: []*mcp.PromptArgument{
 			{
 				Name:        "query",
-				Description: "CICD pipeline description, as explained by te user",
+				Description: "application to deploy, as explained by the user",
 				Required:    true,
 			},
 		},

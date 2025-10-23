@@ -17,15 +17,31 @@ package cloudrun
 import (
 	"context"
 	"fmt"
+	"os/exec"
 
 	run "cloud.google.com/go/run/apiv2"
 	runpb "google.golang.org/genproto/googleapis/cloud/run/v2"
 )
 
+// Exec interface for running commands.
+type Exec interface {
+	Command(name string, arg ...string) *exec.Cmd
+}
+
+type execer struct{}
+
+func (e *execer) Command(name string, arg ...string) *exec.Cmd {
+	return exec.Command(name, arg...)
+}
+
+var defaultExecer Exec = &execer{}
+
+
 // Client is a client for interacting with the Cloud Run API.
 type Client struct {
 	servicesClient  *run.ServicesClient
 	revisionsClient *run.RevisionsClient
+	execer          Exec
 }
 
 // NewClient creates a new Client.
@@ -38,7 +54,7 @@ func NewClient(ctx context.Context) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cloud run revisions client: %v", err)
 	}
-	return &Client{servicesClient: servicesClient, revisionsClient: revisionsClient}, nil
+	return &Client{servicesClient: servicesClient, revisionsClient: revisionsClient, execer: defaultExecer}, nil
 }
 
 // CreateService creates a new Cloud Run service.
@@ -107,4 +123,33 @@ func (c *Client) CreateRevision(ctx context.Context, projectID, location, servic
 	}
 
 	return latestRevision, nil
+}
+
+// DeployFromImage deploys a new Cloud Run service from a container image.
+func (c *Client) DeployFromImage(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) error {
+	args := []string{"run", "deploy", serviceName, "--image", imageURL, "--project", projectID, "--region", location, "--format", "json", "--quiet"}
+	if port != 0 {
+		args = append(args, "--port", fmt.Sprintf("%d", port))
+	}
+	cmd := c.execer.Command("gcloud", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to deploy from image: %v, output: %s", err, out)
+	}
+
+	return nil
+}
+
+// DeployFromSource deploys a new Cloud Run service or updates an existing one from source.
+func (c *Client) DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32) error {
+	args := []string{"run", "deploy", serviceName, "--project", projectID, "--region", location, "--source", source, "--format", "json", "--quiet"}
+	if port != 0 {
+		args = append(args, "--port", fmt.Sprintf("%d", port))
+	}
+	cmd := c.execer.Command("gcloud", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to deploy from source: %v, output: %s", err, out)
+	}
+	return nil
 }

@@ -120,7 +120,7 @@ func TestDesignPrompt(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected Content to be *mcp.TextContent, got %T", result.Messages[0].Content)
 	}
-	expectedContent := fmt.Sprintf(promptText, query)
+	expectedContent := fmt.Sprintf(promptCICDText, query)
 	if textContent.Text != expectedContent {
 		t.Errorf("Message content mismatch: got %q, want %q", textContent.Text, expectedContent)
 	}

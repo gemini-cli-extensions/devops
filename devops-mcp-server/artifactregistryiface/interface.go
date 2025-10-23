@@ -27,5 +27,6 @@ type CreateRepositoryOperation interface {
 
 // GRPClient is an interface that wraps the artifactregistry.Client.
 type GRPClient interface {
+	GetRepository(context.Context, *artifactregistrypb.GetRepositoryRequest) (*artifactregistrypb.Repository, error)
 	CreateRepository(context.Context, *artifactregistrypb.CreateRepositoryRequest) (CreateRepositoryOperation, error)
 }

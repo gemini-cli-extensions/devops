@@ -6,4 +6,5 @@ dist/
 **/.DS_Store
 .vscode/
 *.code-workspace
+server
 .rag-sources

@@ -27,6 +27,7 @@ import (
 	"devops-mcp-server/cloudbuild"
 	"devops-mcp-server/clouddeploy"
 	"devops-mcp-server/cloudrun"
+	"devops-mcp-server/cloudstorage"
 	"devops-mcp-server/containeranalysis"
 	"devops-mcp-server/devconnect"
 	"devops-mcp-server/iam"
@@ -61,6 +62,8 @@ func createServer() *mcp.Server {
 func addAllPrompts(ctx context.Context, server *mcp.Server) {
 	// Add design prompt.
 	prompts.DesignPrompt(ctx, server)
+	// Add deploy prompt.
+	prompts.DeployPrompt(ctx, server)
 }
 
 func addAllTools(ctx context.Context, server *mcp.Server) error {
@@ -85,6 +88,45 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := addIAMTools(ctx, server); err != nil {
 		return err
 	}
+	if err := addCloudStorageTools(ctx, server); err != nil {
+		return err
+	}
+	return nil
+}
+
+func addCloudStorageTools(ctx context.Context, server *mcp.Server) error {
+	gcs, err := cloudstorage.NewClient(ctx, "")
+	if err != nil {
+		return fmt.Errorf("failed to create Cloud Storage client: %v", err)
+	}
+	type createBucketArgs struct {
+		ProjectID  string `json:"project_id"`
+		BucketName string `json:"bucket_name"`
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.create_bucket", Description: "Creates a new Cloud Storage bucket."}, func(ctx context.Context, req *mcp.CallToolRequest, args createBucketArgs) (*mcp.CallToolResult, any, error) {
+		err := gcs.CreateBucket(ctx, args.ProjectID, args.BucketName)
+		return &mcp.CallToolResult{}, nil, err
+	})
+	type uploadFileArgs struct {
+		ProjectID  string `json:"project_id"`
+		BucketName string `json:"bucket_name"`
+		ObjectName string `json:"object_name"`
+		FilePath   string `json:"file_path"`
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.upload_file", Description: "Uploads a file to a Cloud Storage bucket."}, func(ctx context.Context, req *mcp.CallToolRequest, args uploadFileArgs) (*mcp.CallToolResult, any, error) {
+		err := gcs.UploadFile(ctx, args.ProjectID, args.BucketName, args.ObjectName, args.FilePath)
+		return &mcp.CallToolResult{}, nil, err
+	})
+	type uploadDirectoryArgs struct {
+		ProjectID      string `json:"project_id"`
+		BucketName     string `json:"bucket_name"`
+		DestinationDir string `json:"destination_dir"`
+		SourcePath     string `json:"source_path"`
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.upload_directory", Description: "Uploads a directory to a Cloud Storage bucket."}, func(ctx context.Context, req *mcp.CallToolRequest, args uploadDirectoryArgs) (*mcp.CallToolResult, any, error) {
+		err := gcs.UploadDirectory(ctx, args.ProjectID, args.BucketName, args.DestinationDir, args.SourcePath)
+		return &mcp.CallToolResult{}, nil, err
+	})
 	return nil
 }
 
@@ -107,6 +149,15 @@ func addArtifactRegistryTools(ctx context.Context, server *mcp.Server) error {
 		res, err := ar.CreateRepository(ctx, args.ProjectID, args.Location, args.RepositoryID, args.Format)
 		return &mcp.CallToolResult{}, res, err
 	})
+	// type getRepoArgs struct {
+	// 	ProjectID    string `json:"project_id"`
+	// 	Location     string `json:"location"`
+	// 	RepositoryID string `json:"repository_id"`
+	// }
+	// mcp.AddTool(server, &mcp.Tool{Name: "artifactregistry.get_repository", Description: "Gets an Artifact Registry repository."}, func(ctx context.Context, req *mcp.CallToolRequest, args getRepoArgs) (*mcp.CallToolResult, any, error) {
+	// 	res, err := ar.GetRepository(ctx, args.ProjectID, args.Location, args.RepositoryID)
+	// 	return &mcp.CallToolResult{}, res, err
+	// })
 	return nil
 }
 
@@ -143,6 +194,18 @@ func addCloudBuildTools(ctx context.Context, server *mcp.Server) error {
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.list_triggers", Description: "Lists all Cloud Build triggers in a given location."}, func(ctx context.Context, req *mcp.CallToolRequest, args listTriggersArgs) (*mcp.CallToolResult, any, error) {
 		res, err := cb.ListTriggers(ctx, args.ProjectID, args.Location)
+		return &mcp.CallToolResult{}, res, err
+	})
+	type buildContainerArgs struct {
+		ProjectID      string `json:"project_id"`
+		Location       string `json:"location"`
+		Repository     string `json:"repository"`
+		ImageName      string `json:"image_name"`
+		Tag            string `json:"tag"`
+		DockerfilePath string `json:"dockerfile_path"`
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.build_container", Description: "Builds a container image using Cloud Build."}, func(ctx context.Context, req *mcp.CallToolRequest, args buildContainerArgs) (*mcp.CallToolResult, any, error) {
+		res, err := cb.BuildContainer(ctx, args.ProjectID, args.Location, args.Repository, args.ImageName, args.Tag, args.DockerfilePath)
 		return &mcp.CallToolResult{}, res, err
 	})
 	return nil
@@ -260,6 +323,28 @@ func addCloudRunTools(ctx context.Context, server *mcp.Server) error {
 	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_revision", Description: "Creates a new Cloud Run revision for a service with a new Docker image."}, func(ctx context.Context, req *mcp.CallToolRequest, args createRevisionArgs) (*mcp.CallToolResult, any, error) {
 		res, err := cr.CreateRevision(ctx, args.ProjectID, args.Location, args.ServiceName, args.ImageURL, args.RevisionName)
 		return &mcp.CallToolResult{}, res, err
+	})
+	type deployFromSourceArgs struct {
+		ProjectID   string `json:"project_id"`
+		Location    string `json:"location"`
+		ServiceName string `json:"service_name"`
+		Source      string `json:"source"`
+		Port        int32  `json:"port"`
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.deploy_from_source", Description: "Deploys a new Cloud Run service or updates an existing one from source."}, func(ctx context.Context, req *mcp.CallToolRequest, args deployFromSourceArgs) (*mcp.CallToolResult, any, error) {
+		err := cr.DeployFromSource(ctx, args.ProjectID, args.Location, args.ServiceName, args.Source, args.Port)
+		return &mcp.CallToolResult{}, nil, err
+	})
+	type deployFromImageArgs struct {
+		ProjectID   string `json:"project_id"`
+		Location    string `json:"location"`
+		ServiceName string `json:"service_name"`
+		ImageURL    string `json:"image_url"`
+		Port        int32  `json:"port"`
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.deploy_from_image", Description: "Deploys a new Cloud Run service from a container image."}, func(ctx context.Context, req *mcp.CallToolRequest, args deployFromImageArgs) (*mcp.CallToolResult, any, error) {
+		err := cr.DeployFromImage(ctx, args.ProjectID, args.Location, args.ServiceName, args.ImageURL, args.Port)
+		return &mcp.CallToolResult{}, nil, err
 	})
 	return nil
 }

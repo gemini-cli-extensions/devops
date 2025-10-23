@@ -1,0 +1,8 @@
+steps:
+- name: 'golangci/golangci-lint:v1.55.2'
+  args: ['golangci-lint', 'run', './...']
+- name: 'golang:1.22'
+  args: ['go', 'test', './...']
+
+options:
+  logging: CLOUD_LOGGING_ONLY

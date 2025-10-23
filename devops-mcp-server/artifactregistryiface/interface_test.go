@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"devops-mcp-server/artifactregistryiface/mocks"
+
 	"github.com/golang/mock/gomock"
 	artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1"
 )
@@ -28,9 +29,9 @@ func TestMockGRPClient(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mocks.NewMockGRPClient(ctrl)
-	mockOperation := mocks.NewMockCreateRepositoryOperation(ctrl)
 
-	req := &artifactregistrypb.CreateRepositoryRequest{
+	// Test CreateRepository
+	createReq := &artifactregistrypb.CreateRepositoryRequest{
 		Parent: "projects/my-project/locations/us-central1",
 		Repository: &artifactregistrypb.Repository{
 			Format: artifactregistrypb.Repository_DOCKER,
@@ -38,24 +39,46 @@ func TestMockGRPClient(t *testing.T) {
 		RepositoryId: "my-repo",
 	}
 
-	repo := &artifactregistrypb.Repository{
+	createRepo := &artifactregistrypb.Repository{
 		Name: "projects/my-project/locations/us-central1/repositories/my-repo",
 	}
 
-	mockClient.EXPECT().CreateRepository(gomock.Any(), req).Return(mockOperation, nil)
-	mockOperation.EXPECT().Wait(gomock.Any()).Return(repo, nil)
+	mockCreateOp := mocks.NewMockCreateRepositoryOperation(ctrl)
+	mockClient.EXPECT().CreateRepository(gomock.Any(), createReq).Return(mockCreateOp, nil)
+	mockCreateOp.EXPECT().Wait(gomock.Any()).Return(createRepo, nil)
 
-	op, err := mockClient.CreateRepository(context.Background(), req)
+	gotCreateRepoOp, err := mockClient.CreateRepository(context.Background(), createReq)
 	if err != nil {
 		t.Fatalf("CreateRepository() err = %v, want nil", err)
 	}
 
-	gotRepo, err := op.Wait(context.Background())
+	gotCreateRepo, err := gotCreateRepoOp.Wait(context.Background())
 	if err != nil {
-		t.Fatalf("Wait() err = %v, want nil", err)
+		t.Fatalf("CreateRepositoryOperation.Wait() err = %v, want nil", err)
 	}
 
-	if gotRepo.Name != repo.Name {
-		t.Errorf("Wait() = %v, want %v", gotRepo, repo)
+	if gotCreateRepo.Name != createRepo.Name {
+		t.Errorf("CreateRepository() = %v, want %v", gotCreateRepo, createRepo)
+	}
+
+	// Test GetRepository
+	getReq := &artifactregistrypb.GetRepositoryRequest{
+		Name: "projects/my-project/locations/us-central1/repositories/my-repo",
+	}
+
+	getRepo := &artifactregistrypb.Repository{
+		Name: "projects/my-project/locations/us-central1/repositories/my-repo",
+		Format: artifactregistrypb.Repository_DOCKER,
+	}
+
+	mockClient.EXPECT().GetRepository(gomock.Any(), getReq).Return(getRepo, nil)
+
+	gotGetRepo, err := mockClient.GetRepository(context.Background(), getReq)
+	if err != nil {
+		t.Fatalf("GetRepository() err = %v, want nil", err)
+	}
+
+	if gotGetRepo.Name != getRepo.Name {
+		t.Errorf("GetRepository() = %v, want %v", gotGetRepo, getRepo)
 	}
 }
