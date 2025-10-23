@@ -149,7 +149,7 @@ type Client struct {
 // NewClient creates a new Client.
 func NewClient() (*Client, error) {
 	ctx := context.Background()
-	service, err := cloudbuild.NewService(ctx)
+	service, err := cloudbuildv1.NewService(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cloud build service: %v", err)
 	}
@@ -176,12 +176,12 @@ func NewClient() (*Client, error) {
 }
 
 // CreateTrigger creates a new Cloud Build trigger.
-func (c *Client) CreateTrigger(ctx context.Context, projectID, location, triggerID, repoLink, serviceAccount, branch, tag string) (*cloudbuild.BuildTrigger, error) {
+func (c *Client) CreateTrigger(ctx context.Context, projectID, location, triggerID, repoLink, serviceAccount, branch, tag string) (*cloudbuildv1.BuildTrigger, error) {
 	if (branch == "") == (tag == "") {
 		return nil, fmt.Errorf("exactly one of 'branch' or 'tag' must be provided")
 	}
 
-	pushConfig := &cloudbuild.PushFilter{}
+	pushConfig := &cloudbuildv1.PushFilter{}
 	if branch != "" {
 		pushConfig.Branch = branch
 	}
@@ -189,9 +189,9 @@ func (c *Client) CreateTrigger(ctx context.Context, projectID, location, trigger
 		pushConfig.Tag = tag
 	}
 
-	trigger := &cloudbuild.BuildTrigger{
+	trigger := &cloudbuildv1.BuildTrigger{
 		Name: triggerID,
-		DeveloperConnectEventConfig: &cloudbuild.DeveloperConnectEventConfig{
+		DeveloperConnectEventConfig: &cloudbuildv1.DeveloperConnectEventConfig{
 			GitRepositoryLink: repoLink,
 			Push:              pushConfig,
 		},
@@ -209,7 +209,7 @@ func (c *Client) CreateTrigger(ctx context.Context, projectID, location, trigger
 }
 
 // RunTrigger runs a Cloud Build trigger.
-func (c *Client) RunTrigger(ctx context.Context, projectID, location, triggerID string) (*cloudbuild.Operation, error) {
+func (c *Client) RunTrigger(ctx context.Context, projectID, location, triggerID string) (*cloudbuildv1.Operation, error) {
 	name := fmt.Sprintf("projects/%s/locations/%s/triggers/%s", projectID, location, triggerID)
 	op, err := c.triggersService.Run(name, &cloudbuild.RunBuildTriggerRequest{}).Context(ctx).Do()
 	if err != nil {
@@ -219,7 +219,7 @@ func (c *Client) RunTrigger(ctx context.Context, projectID, location, triggerID 
 }
 
 // ListTriggers lists all Cloud Build triggers in a given location.
-func (c *Client) ListTriggers(ctx context.Context, projectID, location string) ([]*cloudbuild.BuildTrigger, error) {
+func (c *Client) ListTriggers(ctx context.Context, projectID, location string) (*ListResult[*cloudbuildv1.BuildTrigger], error) {
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
 	resp, err := c.triggersService.List(parent).Context(ctx).Do()
 	if err != nil {

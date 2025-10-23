@@ -1,4 +1,5 @@
 .venv/
+dist/
 .gemini
 **/__pycache__/
 **/*.pyc

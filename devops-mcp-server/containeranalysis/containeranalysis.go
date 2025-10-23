@@ -23,37 +23,82 @@ import (
 	grafeaspb "google.golang.org/genproto/googleapis/grafeas/v1"
 )
 
-// Client is a client for interacting with the Container Analysis API.
-type Client struct {
-	client *containeranalysis.Client
+
+
+// ListResult defines a generic struct to wrap a list of items.
+
+type ListResult[T any] struct {
+
+	Items []T `json:"items"`
+
 }
+
+
+
+// Client is a client for interacting with the Container Analysis API.
+
+type Client struct {
+
+	client *containeranalysis.Client
+
+}
+
+
 
 // NewClient creates a new Client.
+
 func NewClient(ctx context.Context) (*Client, error) {
+
 	c, err := containeranalysis.NewClient(ctx)
+
 	if err != nil {
+
 		return nil, fmt.Errorf("failed to create container analysis client: %v", err)
+
 	}
+
 	return &Client{client: c}, nil
+
 }
 
+
+
 // ListVulnerabilities lists vulnerabilities for a given image resource URL.
-func (c *Client) ListVulnerabilities(ctx context.Context, projectID, resourceURL string) ([]*grafeaspb.Occurrence, error) {
+
+func (c *Client) ListVulnerabilities(ctx context.Context, projectID, resourceURL string) (*ListResult[*grafeaspb.Occurrence], error) {
+
 	req := &grafeaspb.ListOccurrencesRequest{
+
 		Parent: fmt.Sprintf("projects/%s", projectID),
+
 		Filter: fmt.Sprintf("resourceUrl=\"%s\" AND kind=\"VULNERABILITY\"", resourceURL),
+
 	}
+
 	it := c.client.GetGrafeasClient().ListOccurrences(ctx, req)
+
 	var vulnerabilities []*grafeaspb.Occurrence
+
 	for {
+
 		occurrence, err := it.Next()
+
 		if err == iterator.Done {
+
 			break
+
 		}
+
 		if err != nil {
+
 			return nil, fmt.Errorf("failed to list vulnerabilities: %v", err)
+
 		}
+
 		vulnerabilities = append(vulnerabilities, occurrence)
+
 	}
-	return vulnerabilities, nil
+
+	return &ListResult[*grafeaspb.Occurrence]{Items: vulnerabilities}, nil
+
 }

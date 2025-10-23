@@ -160,7 +160,7 @@ func main() {
 		log.Fatalf("Failed to get project ID: %v", err)
 	}
 	if projectID == "" {
-		//Try quota project 
+		//Try quota project
 		projectID, err = creds.QuotaProjectID(ctx)
 		if err != nil {
 			log.Fatalf("Failed to get project ID: %v", err)
@@ -190,9 +190,9 @@ func main() {
 		//check if file exists, only import if it does
 		if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 			log.Printf("RAG_DB_PATH file does not exist, skipping import: %v", dbFile)
-		}else{
+		} else {
 			err := db.ImportFromFile(dbFile, "")
-			log.Printf("Imported RAG with collections:%d",len(db.ListCollections()))
+			log.Printf("Imported RAG with collections:%d", len(db.ListCollections()))
 			if err != nil {
 				log.Fatalf("Unable to import from the RAG DB file:%s - %v", dbFile, err)
 			}
@@ -214,16 +214,16 @@ func main() {
 	}
 
 	patternsDir := filepath.Join(pwd, "patterns")
-	addDirectoryToRag(ctx,collectionPattern, patternsDir)
+	addDirectoryToRag(ctx, collectionPattern, patternsDir)
 
 	knowledgeDir := filepath.Join(pwd, "knowledge")
-	addDirectoryToRag(ctx,collectionKnowledge, knowledgeDir)
+	addDirectoryToRag(ctx, collectionKnowledge, knowledgeDir)
 
 	// Create a temporary directory for downloads
 	//tmpDir, err := os.MkdirTemp("", "rag-data-")
-	ragSourceDir,err := os.Getwd() 
+	ragSourceDir, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Unable to get working directory: %v",err)
+		log.Fatalf("Unable to get working directory: %v", err)
 	}
 	ragSourceDir = ragSourceDir + "/.rag-sources"
 	//Create dir if it does not exist
@@ -237,26 +237,26 @@ func main() {
 	//defer os.RemoveAll(tmpDir)
 
 	// Process data sources if destination is empty
-	// otherwise we assume last run was successful in 
+	// otherwise we assume last run was successful in
 	// fetching sources
 	entries, err := os.ReadDir(ragSourceDir)
 	if err != nil {
-		log.Fatalf("Unable to read directory: %v",err)
+		log.Fatalf("Unable to read directory: %v", err)
 	}
-	if (len(entries)==0){
+	if len(entries) == 0 {
 		for _, source := range KNOWLEDGE_RAG_SOURCES {
 			processSource(source, ragSourceDir)
 		}
 	}
 
 	// Upload all files in the temporary directory to RAG
-	addDirectoryToRag(ctx,collectionKnowledge, ragSourceDir)
+	addDirectoryToRag(ctx, collectionKnowledge, ragSourceDir)
 
 	// Export the database to a file
 	if len(dbFile) > 0 {
-		log.Printf("Exporting database Knowledge base docs:%d, Pattern docs:%d", 
-					collectionKnowledge.Count(), 
-					collectionPattern.Count())
+		log.Printf("Exporting database Knowledge base docs:%d, Pattern docs:%d",
+			collectionKnowledge.Count(),
+			collectionPattern.Count())
 		err = db.ExportToFile(dbFile, true, "")
 		if err != nil {
 			log.Fatal(err)

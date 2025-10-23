@@ -1,0 +1,54 @@
+name: Prepare Release
+
+on:
+    workflow_call:
+        inputs:
+            release:
+                required: true
+                type: string
+                default: dev
+    workflow_dispatch: # Allows manual triggering of the workflow
+
+env:
+    RELEASE: dev
+    GH_TOKEN: ${{ github.token }}
+
+jobs:
+    prep-release:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Prepare for a new release
+              id: prep
+              run: |
+                  export RELEASE="${{ env.RELEASE }}"
+                  if [[ "${{ inputs.release }}" != "" ]]; then
+                    echo "Updating to RELEASE to ${{ inputs.release }}"
+                    RELEASE="${{ inputs.release }}"
+                  fi
+                  echo "RELEASE=${RELEASE}" >> "$GITHUB_OUTPUT"
+
+                  echo "Preparing for \"${RELEASE}\" release"
+                  git config --local user.email "action@github.com"
+                  git config --local user.name "GitHub Action"
+                  git tag -fa -m "${RELEASE} release" "${RELEASE}"
+                  git push --force origin "${RELEASE}"
+
+                  # check of a release already exists
+                  if [[ $(gh release view "${RELEASE}" >/dev/null ) ]]; then
+                    echo "CREATE_RELEASE=true" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "CREATE_RELEASE=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Create a GitHub Release
+              uses: softprops/action-gh-release@v1
+              if: ${{ steps.prep.CREATE_RELEASE }}
+              with:
+                  name: ${{ steps.prep.RELEASE }}
+                  tag: ${{ steps.prep.RELEASE }}
+
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

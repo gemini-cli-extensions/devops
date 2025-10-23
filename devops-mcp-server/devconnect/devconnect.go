@@ -22,107 +22,222 @@ import (
 	"google.golang.org/api/developerconnect/v1"
 )
 
-// Client is a client for interacting with the Developer Connect API.
-type Client struct {
-	service *developerconnect.Service
+
+
+// ListResult defines a generic struct to wrap a list of items.
+
+type ListResult[T any] struct {
+
+	Items []T `json:"items"`
+
 }
+
+
+
+// Client is a client for interacting with the Developer Connect API.
+
+type Client struct {
+
+	service *developerconnect.Service
+
+}
+
+
 
 // NewClient creates a new Client.
+
 func NewClient(ctx context.Context) (*Client, error) {
+
 	service, err := developerconnect.NewService(ctx)
+
 	if err != nil {
+
 		return nil, fmt.Errorf("failed to create developer connect service: %v", err)
+
 	}
+
 	return &Client{service: service}, nil
+
 }
+
+
 
 func (c *Client) waitForOperation(ctx context.Context, operation *developerconnect.Operation) (*developerconnect.Operation, error) {
+
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+
 	defer cancel()
 
+
+
 	for !operation.Done {
+
 		select {
+
 		case <-ctx.Done():
+
 			return nil, fmt.Errorf("timed out waiting for operation: %v", ctx.Err())
+
 		case <-time.After(1 * time.Second):
+
 			op, err := c.service.Projects.Locations.Operations.Get(operation.Name).Do()
+
 			if err != nil {
+
 				return nil, fmt.Errorf("failed to get operation: %v", err)
+
 			}
+
 			operation = op
+
 		}
+
 	}
+
 	return operation, nil
+
 }
+
+
 
 // CreateConnection creates a new Developer Connect connection.
+
 func (c *Client) CreateConnection(ctx context.Context, projectID, location, connectionID string) (*developerconnect.Connection, error) {
+
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
+
 	req := &developerconnect.Connection{
+
 		GithubConfig: &developerconnect.GitHubConfig{
+
 			GithubApp: "DEVELOPER_CONNECT",
+
 		},
-	}
-	op, err := c.service.Projects.Locations.Connections.Create(parent, req).ConnectionId(connectionID).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create connection: %v", err)
-	}
-	op, err = c.waitForOperation(ctx, op)
-	if err != nil {
-		return nil, err
-	}
-	if op.Error != nil {
-		return nil, fmt.Errorf("operation failed: %v", op.Error)
+
 	}
 
+	op, err := c.service.Projects.Locations.Connections.Create(parent, req).ConnectionId(connectionID).Do()
+
+	if err != nil {
+
+		return nil, fmt.Errorf("failed to create connection: %v", err)
+
+	}
+
+	op, err = c.waitForOperation(ctx, op)
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+	if op.Error != nil {
+
+		return nil, fmt.Errorf("operation failed: %v", op.Error)
+
+	}
+
+
+
 	name := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
+
 	return c.service.Projects.Locations.Connections.Get(name).Do()
+
 }
+
+
 
 // CreateGitRepositoryLink creates a new Developer Connect Git Repository Link.
+
 func (c *Client) CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*developerconnect.GitRepositoryLink, error) {
+
 	parent := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
+
 	req := &developerconnect.GitRepositoryLink{
+
 		CloneUri: repoURI,
+
 	}
+
 	op, err := c.service.Projects.Locations.Connections.GitRepositoryLinks.Create(parent, req).GitRepositoryLinkId(repoLinkID).Do()
+
 	if err != nil {
+
 		return nil, fmt.Errorf("failed to create git repository link: %v", err)
+
 	}
+
 	op, err = c.waitForOperation(ctx, op)
+
 	if err != nil {
+
 		return nil, err
+
 	}
+
 	if op.Error != nil {
+
 		return nil, fmt.Errorf("operation failed: %v", op.Error)
+
 	}
+
+
 
 	name := fmt.Sprintf("%s/gitRepositoryLinks/%s", parent, repoLinkID)
+
 	return c.service.Projects.Locations.Connections.GitRepositoryLinks.Get(name).Do()
+
 }
+
+
 
 // ListConnections lists Developer Connect connections.
-func (c *Client) ListConnections(ctx context.Context, projectID, location string) ([]*developerconnect.Connection, error) {
+
+func (c *Client) ListConnections(ctx context.Context, projectID, location string) (*ListResult[*developerconnect.Connection], error) {
+
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
+
 	resp, err := c.service.Projects.Locations.Connections.List(parent).Do()
+
 	if err != nil {
+
 		return nil, fmt.Errorf("failed to list connections: %v", err)
+
 	}
-	return resp.Connections, nil
+
+	return &ListResult[*developerconnect.Connection]{Items: resp.Connections}, nil
+
 }
+
+
 
 // GetConnection gets a Developer Connect connection.
+
 func (c *Client) GetConnection(ctx context.Context, projectID, location, connectionID string) (*developerconnect.Connection, error) {
+
 	name := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
+
 	return c.service.Projects.Locations.Connections.Get(name).Do()
+
 }
 
+
+
 // FindGitRepositoryLinksForGitRepo finds already configured Developer Connect Git Repository Links for a particular git repository.
-func (c *Client) FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) ([]*developerconnect.GitRepositoryLink, error) {
+
+func (c *Client) FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) (*ListResult[*developerconnect.GitRepositoryLink], error) {
+
 	parent := fmt.Sprintf("projects/%s/locations/%s/connections/-", projectID, location)
+
 	resp, err := c.service.Projects.Locations.Connections.GitRepositoryLinks.List(parent).Filter(fmt.Sprintf("clone_uri=\"%s\"", repoURI)).Do()
+
 	if err != nil {
+
 		return nil, fmt.Errorf("failed to list git repository links: %v", err)
+
 	}
-	return resp.GitRepositoryLinks, nil
+
+	return &ListResult[*developerconnect.GitRepositoryLink]{Items: resp.GitRepositoryLinks}, nil
+
 }

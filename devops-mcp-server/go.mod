@@ -3,6 +3,8 @@ module devops-mcp-server
 go 1.24.4
 
 require (
+	cloud.google.com/go/auth v0.17.0
+	github.com/philippgille/chromem-go v0.7.0
 	cloud.google.com/go/artifactregistry v1.17.2
 	cloud.google.com/go/containeranalysis v0.14.2
 	cloud.google.com/go/deploy v1.27.3
@@ -18,7 +20,6 @@ require (
 require (
 	cel.dev/expr v0.24.0 // indirect
 	cloud.google.com/go v0.123.0 // indirect
-	cloud.google.com/go/auth v0.17.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/grafeas v0.3.17 // indirect
