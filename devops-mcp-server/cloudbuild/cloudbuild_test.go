@@ -205,8 +205,8 @@ func TestListTriggers(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ListTriggers() error = %v, want nil", err)
 		}
-		if len(triggers) != 2 {
-			t.Errorf("ListTriggers() got %d triggers, want 2", len(triggers))
+		if len(triggers.Items) != 2 {
+			t.Errorf("ListTriggers() got %d triggers, want 2", len(triggers.Items))
 		}
 	})
 

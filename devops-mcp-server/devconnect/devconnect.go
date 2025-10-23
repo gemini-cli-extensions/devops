@@ -22,25 +22,17 @@ import (
 	devconnectv1 "google.golang.org/api/developerconnect/v1"
 )
 
-
-
 // ListResult defines a generic struct to wrap a list of items.
 
 type ListResult[T any] struct {
-
 	Items []T `json:"items"`
-
 }
-
-
 
 // Client is a client for interacting with the Developer Connect API.
 
 type Client struct {
 	service *devconnectv1.Service
 }
-
-
 
 // NewClient creates a new Client.
 
@@ -60,8 +52,6 @@ func (c *Client) waitForOperation(ctx context.Context, operation *devconnectv1.O
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 
 	defer cancel()
-
-
 
 	for !operation.Done {
 
@@ -91,17 +81,13 @@ func (c *Client) waitForOperation(ctx context.Context, operation *devconnectv1.O
 
 }
 
-
-
 // CreateConnection creates a new Developer Connect connection.
 func (c *Client) CreateConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error) {
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
 	req := &devconnectv1.Connection{
 		GithubConfig: &devconnectv1.GitHubConfig{
 			GithubApp: "DEVELOPER_CONNECT",
-
 		},
-
 	}
 
 	op, err := c.service.Projects.Locations.Connections.Create(parent, req).ConnectionId(connectionID).Do()
@@ -126,22 +112,17 @@ func (c *Client) CreateConnection(ctx context.Context, projectID, location, conn
 
 	}
 
-
-
 	name := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
 
 	return c.service.Projects.Locations.Connections.Get(name).Do()
 
 }
 
-
-
 // CreateGitRepositoryLink creates a new Developer Connect Git Repository Link.
 func (c *Client) CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectv1.GitRepositoryLink, error) {
 	parent := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
 	req := &devconnectv1.GitRepositoryLink{
 		CloneUri: repoURI,
-
 	}
 
 	op, err := c.service.Projects.Locations.Connections.GitRepositoryLinks.Create(parent, req).GitRepositoryLinkId(repoLinkID).Do()
@@ -166,15 +147,11 @@ func (c *Client) CreateGitRepositoryLink(ctx context.Context, projectID, locatio
 
 	}
 
-
-
 	name := fmt.Sprintf("%s/gitRepositoryLinks/%s", parent, repoLinkID)
 
 	return c.service.Projects.Locations.Connections.GitRepositoryLinks.Get(name).Do()
 
 }
-
-
 
 // ListConnections lists Developer Connect connections.
 func (c *Client) ListConnections(ctx context.Context, projectID, location string) (*ListResult[*devconnectv1.Connection], error) {
@@ -188,11 +165,9 @@ func (c *Client) ListConnections(ctx context.Context, projectID, location string
 
 	}
 
-	return &ListResult[*developerconnect.Connection]{Items: resp.Connections}, nil
+	return &ListResult[*devconnectv1.Connection]{Items: resp.Connections}, nil
 
 }
-
-
 
 // GetConnection gets a Developer Connect connection.
 func (c *Client) GetConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error) {
@@ -201,8 +176,6 @@ func (c *Client) GetConnection(ctx context.Context, projectID, location, connect
 	return c.service.Projects.Locations.Connections.Get(name).Do()
 
 }
-
-
 
 // FindGitRepositoryLinksForGitRepo finds already configured Developer Connect Git Repository Links for a particular git repository.
 
@@ -218,6 +191,6 @@ func (c *Client) FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID
 
 	}
 
-	return &ListResult[*developerconnect.GitRepositoryLink]{Items: resp.GitRepositoryLinks}, nil
+	return &ListResult[*devconnectv1.GitRepositoryLink]{Items: resp.GitRepositoryLinks}, nil
 
 }
