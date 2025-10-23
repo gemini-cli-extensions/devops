@@ -4,19 +4,19 @@ go 1.24.4
 
 require (
 	cloud.google.com/go/artifactregistry v1.17.1
+	cloud.google.com/go/auth v0.17.0
 	cloud.google.com/go/containeranalysis v0.14.1
 	cloud.google.com/go/deploy v1.27.3
 	cloud.google.com/go/run v1.12.0
 	github.com/golang/mock v1.6.0
-	github.com/google/jsonschema-go v0.3.0
 	github.com/modelcontextprotocol/go-sdk v1.0.0
+	github.com/philippgille/chromem-go v0.7.0
 	google.golang.org/api v0.251.0
 	google.golang.org/genproto v0.0.0-20251006185510-65f7160b3a87
 )
 
 require (
 	cloud.google.com/go v0.123.0 // indirect
-	cloud.google.com/go/auth v0.17.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/grafeas v0.3.16 // indirect
@@ -25,6 +25,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/google/jsonschema-go v0.3.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
