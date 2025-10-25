@@ -8,3 +8,8 @@ dist/
 *.code-workspace
 server
 .rag-sources
+# gemini-cli settings
+.gemini/
+
+# GitHub App credentials
+gha-creds-*.json

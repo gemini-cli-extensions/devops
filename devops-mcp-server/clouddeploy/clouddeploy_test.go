@@ -20,7 +20,6 @@ import (
 )
 
 func TestCloudDeployClient(t *testing.T) {
-	// In a real-world scenario, you would use a mock client to avoid making actual API calls.
 	_, err := NewClient(context.Background())
 	if err != nil {
 		t.Fatalf("NewClient() failed: %v", err)

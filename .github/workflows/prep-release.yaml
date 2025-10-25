@@ -18,7 +18,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
             - name: Prepare for a new release
               id: prep
@@ -34,21 +34,13 @@ jobs:
                   git config --local user.email "action@github.com"
                   git config --local user.name "GitHub Action"
                   git tag -fa -m "${RELEASE} release" "${RELEASE}"
-                  git push --force origin "${RELEASE}"
+                  #git push --force origin "${RELEASE}"
+                  echo "Release tag created \"${RELEASE}\""
 
                   # check of a release already exists
-                  if [[ $(gh release view "${RELEASE}" >/dev/null ) ]]; then
-                    echo "CREATE_RELEASE=true" >> "$GITHUB_OUTPUT"
+                  if [[ $(gh release view "${RELEASE}") ]]; then
+                    echo "Release already exists!"
                   else
-                    echo "CREATE_RELEASE=false" >> "$GITHUB_OUTPUT"
+                    echo "Creating new release ${RELEASE}"
+                    gh release create --prerelease ${RELEASE}
                   fi
-
-            - name: Create a GitHub Release
-              uses: softprops/action-gh-release@v1
-              if: ${{ steps.prep.CREATE_RELEASE }}
-              with:
-                  name: ${{ steps.prep.RELEASE }}
-                  tag: ${{ steps.prep.RELEASE }}
-
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,6 +5,9 @@ on:
         - cron: "0 0 * * *" # Runs daily at midnight UTC
     workflow_dispatch: # Allows manual triggering of the workflow
 
+permissions:
+    contents: write
+
 env:
     RELEASE: nightly
 
@@ -14,85 +17,98 @@ jobs:
         with:
             release: nightly
 
-    release:
+    build-release:
         needs: prep-release
         runs-on: ubuntu-latest
         defaults:
             run:
                 working-directory: devops-mcp-server
+        env:
+            RELEASE_DIR: "${{ github.workspace }}/release"
+            DIST_DIR: "${{ github.workspace }}/dist"
+            ACTIONS_RUNNER_DEBUG: true
+            ACTIONS_STEP_DEBUG: true
         strategy:
             matrix:
                 goos: [linux, windows, darwin]
                 goarch: [amd64, arm64]
-                exclude:
-                    - goos: windows
-                      goarch: arm64
-                    - goos: darwin
-                      goarch: amd64
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
             - name: prep-release
+              env:
+                  RAG_DB_PATH: "${RELEASE_DIR}/devops-rag.db"
               run: |
-                  mkdir -p release dist
-                  cp ../gemini-extension.json release/
-                  cp ../README.md release/
-                  cp ../local-rag/devops-rag.db release/
+                  mkdir -p "${RELEASE_DIR}"
+                  cp ../gemini-extension.json "${RELEASE_DIR}/"
+                  cp ../README.md "${RELEASE_DIR}/"
+                  cp ../local-rag/devops-rag.db "${RELEASE_DIR}/"
 
             - name: Set up Go
-              uses: actions/setup-go@v3
+              uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
               with:
-                  go-version: "1.24"
+                  go-version: "1.24.8"
 
-            - name: Run Go Vet
-              run: go vet ./...
-
-            - name: Run Go Fmt
-              run: go fmt ./...
-
-            # - name: Run Go Tests
-            #   run: go test ./...
-
-            # - name: Install golangci-lint
-            #   run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
-            # - name: Run golangci-lint
-            #   run: golangci-lint run
+            - name: Download Dependencies
+              run: go mod tidy
 
             - name: Build
               run: |
                   export GOOS=${{ matrix.goos }}
                   export GOARCH=${{ matrix.goarch }}
-                  go build -o "release/devops-mcp-server-${GOOS}-${GOARCH}"
+
+                  bin_name="${RELEASE_DIR}/devops-mcp-server-${GOOS}-${GOARCH}"
+                  if [[ "${GOOS}" == "windows" ]];then
+                    bin_name="${bin_name}.exe"
+                  fi
+                  go build -o "${bin_name}"
 
             - name: Create release assets
               id: archive
               run: |
-                  archive="dist/devops-mcp-server-${{ matrix.goos }}-${{ matrix.goarch }}"
-                  if [[ "matrix.goos" == "windows" ]];then
-                    archive="${archive}.zip"
-                    zip -J "${archive}" -C release .
+                  echo "Running for OS ${{ matrix.goos }}  and ARCH ${{ matrix.goarch }}"
+                  mkdir -p "${DIST_DIR}"
+                  archive_name="devops-mcp-server-${{ matrix.goos }}-${{ matrix.goarch }}"
+                  if [[ "${{ matrix.goos }}" == "windows" ]];then
+                    archive_name="${archive_name}.zip"
+                    archive=""${DIST_DIR}"/${archive_name}"
+                    zip -j "${archive}" "${RELEASE_DIR}"/*
                   else
-                    archive="${archive}.tar.gz"
-                    tar -czvf "${archive}" -C release .
+                    archive_name="${archive_name}.tar.gz"
+                    archive="${DIST_DIR}/${archive_name}"
+                    tar -czvf "${archive}" -C "${RELEASE_DIR}" .
                   fi
                   echo "Created ${archive}"
-                  echo "ARCHIVE_NAME=${archive}" >> "$GITHUB_OUTPUT"
+                  echo "ARCHIVE_NAME=${archive_name}" >> "$GITHUB_OUTPUT"
 
-            - name: Create release assets
-              id: test
-              run: |
-                  pwd
-                  ls dist/*
-                  ls ${{ steps.archive.ARCHIVE_NAME }}
-
-            - name: UpUpload archive to GitHub Release
-              uses: softprops/action-gh-release@v1
+            - name: Upload archive as artifact
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
               with:
-                  files: dist/*
-                  overwrite_files: true
-                  tag_name: ${{ env.RELEASE }}
-                  fail_on_unmatched_files: true
+                  name: ${{ steps.archive.outputs.ARCHIVE_NAME }}
+                  path: ${{ github.workspace }}/dist/*
+
+    upload-assets:
+        needs: [build-release]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+
+            - name: Download all archives from artifacts
+              uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+              with:
+                  path: artifacts
+
+            - name: List downloaded files
+              run: |
+                  echo "--- Downloaded files ---"
+                  ls -Rlrt artifacts/*
+                  echo "------------------------"
+            - name: Upload release assets
+              id: upload-assets
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  gh release upload --clobber \
+                    ${{ env.RELEASE }} \
+                    artifacts/*/*
