@@ -1,161 +1,132 @@
-// Copyright 2024 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     https://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package artifactregistry
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
-	artifactregistrypb "cloud.google.com/go/artifactregistry/apiv1/artifactregistrypb"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"devops-mcp-server/artifactregistryiface/mocks"
+	armocks "devops-mcp-server/artifactregistry/client/mocks"
+	iammocks "devops-mcp-server/iam/client/mocks"
+
+	artifactregistrypb "cloud.google.com/go/artifactregistry/apiv1/artifactregistrypb"
+	cloudresourcemanagerv1 "google.golang.org/api/cloudresourcemanager/v1"
 )
 
-func TestGetRepository(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockGRPClient := mocks.NewMockGRPClient(ctrl)
-	client, err := NewClient(mockGRPClient)
-	if err != nil {
-		t.Fatalf("NewClient() failed: %v", err)
-	}
-
-	ctx := context.Background()
-	projectID := "test-project"
-	location := "us-central1"
-	repositoryID := "test-repo"
-
-	getRequest := &artifactregistrypb.GetRepositoryRequest{
-		Name: "projects/test-project/locations/us-central1/repositories/test-repo",
-	}
-	repo := &artifactregistrypb.Repository{
-		Name:   "projects/test-project/locations/us-central1/repositories/test-repo",
-		Format: artifactregistrypb.Repository_DOCKER,
-	}
-
-	tests := []struct {
-		name      string
-		setupMock func()
-		expectErr bool
-	}{
-		{
-			name: "Repository Found",
-			setupMock: func() {
-				mockGRPClient.EXPECT().GetRepository(ctx, getRequest).Return(repo, nil)
-			},
-			expectErr: false,
-		},
-		{
-			name: "Repository Not Found",
-			setupMock: func() {
-				mockGRPClient.EXPECT().GetRepository(ctx, getRequest).Return(nil, status.Error(codes.NotFound, "not found"))
-			},
-			expectErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setupMock()
-			_, err := client.GetRepository(ctx, projectID, location, repositoryID)
-			if (err != nil) != tt.expectErr {
-				t.Errorf("GetRepository() error = %v, expectErr %v", err, tt.expectErr)
-			}
-		})
-	}
-}
-
-func TestCreateRepository(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockGRPClient := mocks.NewMockGRPClient(ctrl)
-	client, err := NewClient(mockGRPClient)
-	if err != nil {
-		t.Fatalf("NewClient() failed: %v", err)
-	}
-
+func TestAddSetupRepositoryTool(t *testing.T) {
 	ctx := context.Background()
 	projectID := "test-project"
 	location := "us-central1"
 	repositoryID := "test-repo"
 	format := "DOCKER"
+	saEmail := "test-sa@example.com"
 
-	getRequest := &artifactregistrypb.GetRepositoryRequest{
-		Name: "projects/test-project/locations/us-central1/repositories/test-repo",
-	}
-
-	createRequest := &artifactregistrypb.CreateRepositoryRequest{
-		Parent:       "projects/test-project/locations/us-central1",
-		RepositoryId: "test-repo",
-		Repository: &artifactregistrypb.Repository{
-			Format: artifactregistrypb.Repository_DOCKER,
-		},
-	}
 	repo := &artifactregistrypb.Repository{
-		Name:   "projects/test-project/locations/us-central1/repositories/test-repo",
+		Name:   fmt.Sprintf("projects/%s/locations/%s/repositories/%s", projectID, location, repositoryID),
 		Format: artifactregistrypb.Repository_DOCKER,
 	}
 
 	tests := []struct {
 		name          string
-		setupMock     func()
+		args          SetupRepoArgs
+		setupMocks    func(*armocks.MockArtifactRegistryClient, *iammocks.MockIAMClient)
 		expectErr     bool
 		expectedError string
 	}{
 		{
-			name: "Repository Exists",
-			setupMock: func() {
-				mockGRPClient.EXPECT().GetRepository(ctx, getRequest).Return(repo, nil)
+			name: "Success case",
+			args: SetupRepoArgs{
+				ProjectID:           projectID,
+				Location:            location,
+				RepositoryID:        repositoryID,
+				Format:              format,
+				ServiceAccountEmail: saEmail,
+			},
+			setupMocks: func(arMock *armocks.MockArtifactRegistryClient, iamMock *iammocks.MockIAMClient) {
+				arMock.CreateRepositoryFunc = func(ctx context.Context, p, l, r, f string) (*artifactregistrypb.Repository, error) {
+					return repo, nil
+				}
+				iamMock.AddIAMRoleBindingFunc = func(ctx context.Context, resourceID, role, member string) (*cloudresourcemanagerv1.Policy, error) {
+					return &cloudresourcemanagerv1.Policy{}, nil
+				}
 			},
 			expectErr: false,
 		},
 		{
-			name: "Repository Does Not Exist, Create New",
-			setupMock: func() {
-				mockGRPClient.EXPECT().GetRepository(ctx, getRequest).Return(nil, status.Error(codes.NotFound, "not found"))
-				mockCreateOp := mocks.NewMockCreateRepositoryOperation(ctrl)
-				mockGRPClient.EXPECT().CreateRepository(ctx, createRequest).Return(mockCreateOp, nil)
-				mockCreateOp.EXPECT().Wait(ctx).Return(repo, nil)
+			name: "Already Exists case",
+			args: SetupRepoArgs{
+				ProjectID:    projectID,
+				Location:     location,
+				RepositoryID: repositoryID,
+				Format:       format,
+			},
+			setupMocks: func(arMock *armocks.MockArtifactRegistryClient, iamMock *iammocks.MockIAMClient) {
+				arMock.CreateRepositoryFunc = func(ctx context.Context, p, l, r, f string) (*artifactregistrypb.Repository, error) {
+					return nil, errors.New("rpc error: code = AlreadyExists desc = repository already exists")
+				}
+				arMock.GetRepositoryFunc = func(ctx context.Context, p, l, r string) (*artifactregistrypb.Repository, error) {
+					return repo, nil
+				}
 			},
 			expectErr: false,
 		},
 		{
-			name: "GetRepository Returns Unexpected Error",
-			setupMock: func() {
-				mockGRPClient.EXPECT().GetRepository(ctx, getRequest).Return(nil, errors.New("unexpected error"))
+			name: "IAM Fails case",
+			args: SetupRepoArgs{
+				ProjectID:           projectID,
+				Location:            location,
+				RepositoryID:        repositoryID,
+				Format:              format,
+				ServiceAccountEmail: saEmail,
+			},
+			setupMocks: func(arMock *armocks.MockArtifactRegistryClient, iamMock *iammocks.MockIAMClient) {
+				arMock.CreateRepositoryFunc = func(ctx context.Context, p, l, r, f string) (*artifactregistrypb.Repository, error) {
+					return repo, nil
+				}
+				iamMock.AddIAMRoleBindingFunc = func(ctx context.Context, resourceID, role, member string) (*cloudresourcemanagerv1.Policy, error) {
+					return nil, errors.New("iam failed")
+				}
 			},
 			expectErr:     true,
-			expectedError: "failed to get repository: unexpected error",
+			expectedError: "repository created, but failed to grant permissions: iam failed",
+		},
+		{
+			name: "Create Fails case",
+			args: SetupRepoArgs{
+				ProjectID:    projectID,
+				Location:     location,
+				RepositoryID: repositoryID,
+				Format:       format,
+			},
+			setupMocks: func(arMock *armocks.MockArtifactRegistryClient, iamMock *iammocks.MockIAMClient) {
+				arMock.CreateRepositoryFunc = func(ctx context.Context, p, l, r, f string) (*artifactregistrypb.Repository, error) {
+					return nil, errors.New("creation failed")
+				}
+			},
+			expectErr:     true,
+			expectedError: "failed to create repository: creation failed",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setupMock()
-			_, err := client.CreateRepository(ctx, projectID, location, repositoryID, format)
+			arMock := &armocks.MockArtifactRegistryClient{}
+			iamMock := &iammocks.MockIAMClient{}
+			tt.setupMocks(arMock, iamMock)
+
+			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
+			addSetupRepositoryTool(server, arMock, iamMock)
+
+			_, _, err := setupRepositoryToolFunc(ctx, nil, tt.args)
+
 			if (err != nil) != tt.expectErr {
-				t.Errorf("CreateRepository() error = %v, expectErr %v", err, tt.expectErr)
+				t.Errorf("setupRepositoryToolFunc() error = %v, expectErr %v", err, tt.expectErr)
 			}
+
 			if tt.expectErr && err.Error() != tt.expectedError {
-				t.Errorf("CreateRepository() error = %v, expectedError %v", err.Error(), tt.expectedError)
+				t.Errorf("setupRepositoryToolFunc() error = %q, expectedError %q", err.Error(), tt.expectedError)
 			}
 		})
 	}
