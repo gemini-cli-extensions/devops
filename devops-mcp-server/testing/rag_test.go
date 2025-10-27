@@ -46,5 +46,4 @@ func TestRAGQuery(t *testing.T) {
 	if (knowledgeResult == nil) || (len(knowledgeResult.Items) < 3) || (knowledgeResult.Items[0].Content == "") {
 		log.Fatalf("Failed to find knowledge: %v", knowledgeResult)
 	}
-
 }
