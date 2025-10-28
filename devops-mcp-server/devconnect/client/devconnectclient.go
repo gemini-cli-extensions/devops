@@ -59,27 +59,17 @@ func (c *Client) waitForOperation(ctx context.Context, operation *devconnectv1.O
 	defer cancel()
 
 	for !operation.Done {
-
 		select {
-
 		case <-ctx.Done():
-
 			return nil, fmt.Errorf("timed out waiting for operation: %v", ctx.Err())
-
 		case <-time.After(1 * time.Second):
-
 			op, err := c.service.Projects.Locations.Operations.Get(operation.Name).Do()
-
 			if err != nil {
-
 				return nil, fmt.Errorf("failed to get operation: %v", err)
-
 			}
-
 			operation = op
 		}
 	}
-
 	return operation, nil
 
 }
