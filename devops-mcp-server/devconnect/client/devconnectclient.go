@@ -37,9 +37,7 @@ func New(ctx context.Context) (DevConnectClient, error) {
 		return nil, fmt.Errorf("failed to create developer connect service: %v", err)
 
 	}
-
 	return &Client{service: service}, nil
-
 }
 
 type clientKey struct{}
