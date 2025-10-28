@@ -41,7 +41,7 @@ type ListConnectionsArgs struct {
 
 var listConnectionsToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args ListConnectionsArgs) (*mcp.CallToolResult, any, error)
 
-func addListConnectionsTool(server *mcp.Server, dcClient devconnectclient.DevConnectClient) {
+func addListConnectionsTool(server *mcp.Server, dcClient devconnectclient.DeveloperConnectClient) {
 	listConnectionsToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args ListConnectionsArgs) (*mcp.CallToolResult, any, error) {
 		res, err := dcClient.ListConnections(ctx, args.ProjectID, args.Location)
 		if err != nil {

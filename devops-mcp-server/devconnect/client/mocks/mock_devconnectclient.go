@@ -18,15 +18,16 @@ import (
 	"context"
 
 	"devops-mcp-server/devconnect/client"
+
 	devconnectv1 "google.golang.org/api/developerconnect/v1"
 )
 
 // MockDevConnectClient is a mock implementation of the DevConnectClient interface.
 type MockDevConnectClient struct {
-	CreateConnectionFunc               func(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error)
-	CreateGitRepositoryLinkFunc        func(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectv1.GitRepositoryLink, error)
-	ListConnectionsFunc                func(ctx context.Context, projectID, location string) (*client.ListResult[*devconnectv1.Connection], error)
-	GetConnectionFunc                  func(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error)
+	CreateConnectionFunc                 func(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error)
+	CreateGitRepositoryLinkFunc          func(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectv1.GitRepositoryLink, error)
+	ListConnectionsFunc                  func(ctx context.Context, projectID, location string) (*client.ListResult[*devconnectv1.Connection], error)
+	GetConnectionFunc                    func(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error)
 	FindGitRepositoryLinksForGitRepoFunc func(ctx context.Context, projectID, location, repoURI string) (*client.ListResult[*devconnectv1.GitRepositoryLink], error)
 }
 
