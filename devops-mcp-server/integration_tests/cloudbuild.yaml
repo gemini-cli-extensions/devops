@@ -1,0 +1,16 @@
+steps:
+- name: 'gcr.io/cloud-builders/go'
+  args: ['mod', 'tidy']
+  id: 'go-mod-tidy'
+
+- name: 'gcr.io/cloud-builders/go'
+  args: ['build', '-o', 'test_binary', './integration_tests']
+  id: 'go-build'
+  waitFor: ['go-mod-tidy']
+
+- name: './test_binary'
+  args: []
+  id: 'run-integration-test'
+  waitFor: ['go-build']
+  env:
+  - 'GCP_PROJECT_ID=${PROJECT_ID}'

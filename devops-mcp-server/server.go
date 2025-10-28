@@ -16,22 +16,22 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
-
-	_ "embed"
-
-	"github.com/modelcontextprotocol/go-sdk/mcp"
-
 	"devops-mcp-server/artifactregistry"
+	artifactregistryclient "devops-mcp-server/artifactregistry/client"
 	"devops-mcp-server/cloudbuild"
 	"devops-mcp-server/clouddeploy"
 	"devops-mcp-server/cloudrun"
 	"devops-mcp-server/cloudstorage"
 	"devops-mcp-server/containeranalysis"
 	"devops-mcp-server/devconnect"
-	"devops-mcp-server/iam"
+	iamclient "devops-mcp-server/iam/client"
 	"devops-mcp-server/prompts"
+	"fmt"
+	"log"
+
+	_ "embed"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 //go:embed version.txt
@@ -67,7 +67,18 @@ func addAllPrompts(ctx context.Context, server *mcp.Server) {
 }
 
 func addAllTools(ctx context.Context, server *mcp.Server) error {
-	if err := addArtifactRegistryTools(ctx, server); err != nil {
+	arClient, err := artifactregistryclient.NewArtifactRegistryClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create ArtifactRegistry client: %w", err)
+	}
+	iamClient, err := iamclient.NewClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create IAM client: %w", err)
+	}
+	ctxWithDeps := artifactregistryclient.ContextWithClient(ctx, arClient)
+	ctxWithDeps = iamclient.ContextWithClient(ctxWithDeps, iamClient)
+
+	if err := artifactregistry.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
 	if err := addCloudBuildTools(ctx, server); err != nil {
@@ -83,9 +94,6 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 		return err
 	}
 	if err := addDevConnectTools(ctx, server); err != nil {
-		return err
-	}
-	if err := addIAMTools(ctx, server); err != nil {
 		return err
 	}
 	if err := addCloudStorageTools(ctx, server); err != nil {
@@ -127,37 +135,6 @@ func addCloudStorageTools(ctx context.Context, server *mcp.Server) error {
 		err := gcs.UploadDirectory(ctx, args.ProjectID, args.BucketName, args.DestinationDir, args.SourcePath)
 		return &mcp.CallToolResult{}, nil, err
 	})
-	return nil
-}
-
-func addArtifactRegistryTools(ctx context.Context, server *mcp.Server) error {
-	c, err := artifactregistry.NewGRPCClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create artifact registry client: %v", err)
-	}
-	ar, err := artifactregistry.NewClient(c)
-	if err != nil {
-		return fmt.Errorf("failed to create Artifact Registry client: %v", err)
-	}
-	type createRepoArgs struct {
-		ProjectID    string `json:"project_id"`
-		Location     string `json:"location"`
-		RepositoryID string `json:"repository_id"`
-		Format       string `json:"format"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "artifactregistry.create_repository", Description: "Creates a new Artifact Registry repository."}, func(ctx context.Context, req *mcp.CallToolRequest, args createRepoArgs) (*mcp.CallToolResult, any, error) {
-		res, err := ar.CreateRepository(ctx, args.ProjectID, args.Location, args.RepositoryID, args.Format)
-		return &mcp.CallToolResult{}, res, err
-	})
-	// type getRepoArgs struct {
-	// 	ProjectID    string `json:"project_id"`
-	// 	Location     string `json:"location"`
-	// 	RepositoryID string `json:"repository_id"`
-	// }
-	// mcp.AddTool(server, &mcp.Tool{Name: "artifactregistry.get_repository", Description: "Gets an Artifact Registry repository."}, func(ctx context.Context, req *mcp.CallToolRequest, args getRepoArgs) (*mcp.CallToolResult, any, error) {
-	// 	res, err := ar.GetRepository(ctx, args.ProjectID, args.Location, args.RepositoryID)
-	// 	return &mcp.CallToolResult{}, res, err
-	// })
 	return nil
 }
 
@@ -414,47 +391,6 @@ func addDevConnectTools(ctx context.Context, server *mcp.Server) error {
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.find_git_repository_links_for_git_repo", Description: "Finds already configured Developer Connect Git Repository Links for a particular git repository."}, func(ctx context.Context, req *mcp.CallToolRequest, args findGitRepositoryLinksForGitRepoArgs) (*mcp.CallToolResult, any, error) {
 		res, err := dc.FindGitRepositoryLinksForGitRepo(ctx, args.ProjectID, args.Location, args.RepoURI)
-		return &mcp.CallToolResult{}, res, err
-	})
-	return nil
-}
-
-func addIAMTools(ctx context.Context, server *mcp.Server) error {
-	iamClient, err := iam.NewClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create IAM client: %v", err)
-	}
-	type createServiceAccountArgs struct {
-		ProjectID   string `json:"project_id"`
-		DisplayName string `json:"display_name"`
-		AccountID   string `json:"account_id"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "iam.create_service_account", Description: "Creates a new Google Cloud Platform service account."}, func(ctx context.Context, req *mcp.CallToolRequest, args createServiceAccountArgs) (*mcp.CallToolResult, any, error) {
-		res, err := iamClient.CreateServiceAccount(ctx, args.ProjectID, args.DisplayName, args.AccountID)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type addIAMRoleBindingArgs struct {
-		ResourceID string `json:"resource_id"`
-		Role       string `json:"role"`
-		Member     string `json:"member"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "iam.add_iam_role_binding", Description: "Adds an IAM role binding to a Google Cloud Platform resource."}, func(ctx context.Context, req *mcp.CallToolRequest, args addIAMRoleBindingArgs) (*mcp.CallToolResult, any, error) {
-		res, err := iamClient.AddIAMRoleBinding(ctx, args.ResourceID, args.Role, args.Member)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type listServiceAccountsArgs struct {
-		ProjectID string `json:"project_id"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "iam.list_service_accounts", Description: "Lists all service accounts in a project."}, func(ctx context.Context, req *mcp.CallToolRequest, args listServiceAccountsArgs) (*mcp.CallToolResult, any, error) {
-		res, err := iamClient.ListServiceAccounts(ctx, args.ProjectID)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type getIAMRoleBindingArgs struct {
-		ProjectID           string `json:"project_id"`
-		ServiceAccountEmail string `json:"service_account_email"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "iam.get_iam_role_binding", Description: "Gets the IAM role bindings for a service account."}, func(ctx context.Context, req *mcp.CallToolRequest, args getIAMRoleBindingArgs) (*mcp.CallToolResult, any, error) {
-		res, err := iamClient.GetIAMRoleBinding(ctx, args.ProjectID, args.ServiceAccountEmail)
 		return &mcp.CallToolResult{}, res, err
 	})
 	return nil

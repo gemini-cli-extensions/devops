@@ -3,18 +3,18 @@ module devops-mcp-server
 go 1.24.8
 
 require (
-	cloud.google.com/go/auth v0.17.0
-	github.com/philippgille/chromem-go v0.7.0
 	cloud.google.com/go/artifactregistry v1.17.2
+	cloud.google.com/go/auth v0.17.0
 	cloud.google.com/go/containeranalysis v0.14.2
 	cloud.google.com/go/deploy v1.27.3
 	cloud.google.com/go/run v1.12.1
 	cloud.google.com/go/storage v1.57.0
 	github.com/golang/mock v1.7.0-rc.1
+	github.com/mark3labs/mcp-go v0.42.0
 	github.com/modelcontextprotocol/go-sdk v1.0.0
+	github.com/philippgille/chromem-go v0.7.0
 	google.golang.org/api v0.252.0
 	google.golang.org/genproto v0.0.0-20251020155222-88f65dc88635
-	google.golang.org/grpc v1.76.0
 )
 
 require (
@@ -29,6 +29,8 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.30.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.54.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.54.0 // indirect
+	github.com/bahlo/generic-list-go v0.2.0 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20251014123835-2ee22ca58382 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.35.0 // indirect
@@ -42,8 +44,12 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
+	github.com/invopop/jsonschema v0.13.0 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
+	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.38.0 // indirect
@@ -64,5 +70,7 @@ require (
 	golang.org/x/tools v0.38.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251020155222-88f65dc88635 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251020155222-88f65dc88635 // indirect
+	google.golang.org/grpc v1.76.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
