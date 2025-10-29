@@ -17,136 +17,121 @@ package cloudstorage
 import (
 	"context"
 	"fmt"
-	"io"
-
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"cloud.google.com/go/storage"
-	"google.golang.org/api/option"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	cloudstorageclient "devops-mcp-server/cloudstorage/client"
+
+	cloudstorage "cloud.google.com/go/storage"
 )
 
-// Client is a client for interacting with Google Cloud Storage.
-type Client struct {
-	client *storage.Client
-	projectID string
-}
-
-// NewClient creates a new Client.
-func NewClient(ctx context.Context, projectID string, opts ...option.ClientOption) (*Client, error) {
-	client, err := storage.NewClient(ctx, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create storage client: %w", err)
-	}
-	return &Client{
-		client:    client,
-		projectID: projectID,
-	}, nil
-}
-
-// CreateBucket creates a new GCS bucket.
-func (c *Client) CreateBucket(ctx context.Context, projectID, bucketName string) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
-
-	// Check if the bucket already exists
-	_, err := c.client.Bucket(bucketName).Attrs(ctx)
-	if err == nil {
-		// Bucket already exists, return nil
-		return nil
-	}
-	if err != storage.ErrBucketNotExist {
-		// An unexpected error occurred while checking for the bucket
-		return fmt.Errorf("failed to check if bucket exists: %w", err)
+// AddTools adds all cloud storage related tools to the mcp server.
+// It expects the cloudstorageclient and mcp.Server to be in the context.
+func AddTools(ctx context.Context, server *mcp.Server) error {
+	c, ok := cloudstorageclient.ClientFrom(ctx)
+	if !ok {
+		return fmt.Errorf("cloud storage client not found in context")
 	}
 
-	// Bucket does not exist, proceed to create it
-	err = c.client.Bucket(bucketName).Create(ctx, projectID, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create bucket: %w", err)
-	}
+	addCreateBucketTool(server, c)
+	addUploadFileTool(server, c)
+	addUploadDirectoryTool(server, c)
+
 	return nil
 }
 
-// UploadFile uploads a file to a GCS bucket.
-func (c *Client) UploadFile(ctx context.Context, projectID, bucketName, objectName, filePath string) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
-	defer cancel()
+type CreateBucketArgs struct {
+	ProjectID  string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	BucketName string `json:"bucket_name" jsonschema:"The name of the bucket."`
+}
+var createBucketToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args CreateBucketArgs) (*mcp.CallToolResult, any, error)
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
+func addCreateBucketTool(server *mcp.Server, csClient cloudstorageclient.CloudStorageClient) {
+	createBucketToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateBucketArgs) (*mcp.CallToolResult, any, error) {
+		err := csClient.CheckBucketExists(ctx, args.BucketName)
+		if err != nil {
+			if err != cloudstorage.ErrBucketNotExist {
+				// An unexpected error occurred while checking for the bucket
+				return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to check if bucket exists: %w", err)
+			}
+			err = csClient.CreateBucket(ctx, args.ProjectID, args.BucketName)
+			if err != nil {
+				return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create bucket: %w", err)
+			}
+		}
+		return &mcp.CallToolResult{}, nil, nil
 	}
-	defer file.Close()
-
-	wc := c.client.Bucket(bucketName).Object(objectName).NewWriter(ctx)
-	if _, err := io.Copy(wc, file); err != nil {
-		return fmt.Errorf("failed to copy file to bucket: %w", err)
-	}
-	if err := wc.Close(); err != nil {
-		return fmt.Errorf("failed to close writer: %w", err)
-	}
-	return nil
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.create_bucket", Description: "Creates a new Cloud Storage bucket."}, createBucketToolFunc)
 }
 
-// ReadFile reads a file from a GCS bucket.
-func (c *Client) ReadFile(ctx context.Context, bucketName, objectName string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
-	defer cancel()
-
-	r, err := c.client.Bucket(bucketName).Object(objectName).NewReader(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create reader: %w", err)
-	}
-	defer r.Close()
-
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
+type UploadFileArgs struct {
+		BucketName string `json:"bucket_name" jsonschema:"The name of the bucket."`
+		ObjectName string `json:"object_name" jsonschema:"The name of the object to upload to the bucket."`
+		FilePath   string `json:"file_path" jsonschema:"The path to the source file."`
 	}
 
-	return data, nil
+var uploadFileToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args UploadFileArgs) (*mcp.CallToolResult, any, error)
+
+func addUploadFileTool(server *mcp.Server, csClient cloudstorageclient.CloudStorageClient) {
+	uploadFileToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args UploadFileArgs) (*mcp.CallToolResult, any, error) {
+		file, err := os.Open(args.FilePath)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to open source file: %w", err)
+		}
+		defer file.Close()
+
+		err = csClient.UploadFile(ctx, args.BucketName, args.ObjectName, file)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to upload file: %w", err)
+		}
+		return &mcp.CallToolResult{}, nil, nil
+
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.upload_file", Description: "Uploads a file to a Cloud Storage bucket."}, uploadFileToolFunc)
 }
 
-// UploadDirectory uploads a directory to a GCS bucket.
-func (c *Client) UploadDirectory(ctx context.Context, projectID, bucketName, destinationDir, sourcePath string) error {
-	return filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
+type UploadDirectoryArgs struct {
+	BucketName     string `json:"bucket_name" jsonschema:"The name of the bucket."`
+	DestinationDir string `json:"destination_dir" jsonschema:"The name of the destination directory."`
+	SourcePath     string `json:"source_path" jsonschema:"The path to the source directory."`
+}
 
-        if info.IsDir() {
-            return nil
-        }
+var uploadDirectoryToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args UploadDirectoryArgs) (*mcp.CallToolResult, any, error)
 
-        err = func() error {
-            relPath, err := filepath.Rel(sourcePath, path)
-            if err != nil {
-                return fmt.Errorf("failed to get relative path: %w", err)
-            }
+func addUploadDirectoryTool(server *mcp.Server, csClient cloudstorageclient.CloudStorageClient) {
+	uploadDirectoryToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args UploadDirectoryArgs) (*mcp.CallToolResult, any, error) {
+		return  &mcp.CallToolResult{}, nil, filepath.Walk(args.SourcePath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return fmt.Errorf("failed to access source path: %w", err)
+			}
 
-            objectName := filepath.Join(destinationDir, relPath)
-            // Ensure objectName uses forward slashes for GCS compatibility
-            objectName = strings.ReplaceAll(objectName, "\\", "/")
+			if info.IsDir() {
+				return nil
+			}
+			relPath, err := filepath.Rel(args.SourcePath, path)
+			if err != nil {
+				return fmt.Errorf("failed to get relative path: %w", err)
+			}
 
-            file, err := os.Open(path)
-            if err != nil {
-                return fmt.Errorf("failed to open file %s: %w", path, err)
-            }
-            defer file.Close() // This defer is now scoped to this anonymous function
+			objectName := filepath.Join(args.DestinationDir, relPath)
+			// Ensure objectName uses forward slashes for GCS compatibility
+			objectName = strings.ReplaceAll(objectName, "\\", "/")
 
-            wc := c.client.Bucket(bucketName).Object(objectName).NewWriter(ctx)
-            if _, err := io.Copy(wc, file); err != nil {
-                return fmt.Errorf("failed to copy file %s to bucket: %w", path, err)
-            }
-            if err := wc.Close(); err != nil {
-                return fmt.Errorf("failed to close writer for file %s: %w", path, err)
-            }
-            return nil
-        }()
+			file, err := os.Open(path)
+			if err != nil {
+				return fmt.Errorf("failed to open file %s: %w", path, err)
+			}
+			defer file.Close() // This defer is now scoped to this anonymous function
 
-        return err // Return the error from the anonymous function to filepath.Walk
-    })
+			err = csClient.UploadFile(ctx, args.BucketName, objectName, file)
+			if err != nil {
+				return fmt.Errorf("failed to upload file: %w", err)
+			}
+			return  nil
+		})
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.upload_directory", Description: "Uploads a directory to a Cloud Storage bucket."}, uploadDirectoryToolFunc)
 }

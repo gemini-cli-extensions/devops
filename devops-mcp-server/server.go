@@ -17,17 +17,19 @@ package main
 import (
 	"context"
 	"devops-mcp-server/artifactregistry"
-	artifactregistryclient "devops-mcp-server/artifactregistry/client"
 	"devops-mcp-server/cloudbuild"
 	"devops-mcp-server/clouddeploy"
 	"devops-mcp-server/cloudrun"
 	"devops-mcp-server/cloudstorage"
 	"devops-mcp-server/containeranalysis"
 	"devops-mcp-server/devconnect"
-	iamclient "devops-mcp-server/iam/client"
 	"devops-mcp-server/prompts"
 	"fmt"
 	"log"
+
+	artifactregistryclient "devops-mcp-server/artifactregistry/client"
+	cloudstorageclient "devops-mcp-server/cloudstorage/client"
+	iamclient "devops-mcp-server/iam/client"
 
 	_ "embed"
 
@@ -96,45 +98,16 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := addDevConnectTools(ctx, server); err != nil {
 		return err
 	}
-	if err := addCloudStorageTools(ctx, server); err != nil {
+
+	csClient, err := cloudstorageclient.NewCloudStorageClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create CloudStorage client: %w", err)
+	}
+	ctxWithDeps = cloudstorageclient.ContextWithClient(ctxWithDeps, csClient)
+
+	if err := cloudstorage.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
-	return nil
-}
-
-func addCloudStorageTools(ctx context.Context, server *mcp.Server) error {
-	gcs, err := cloudstorage.NewClient(ctx, "")
-	if err != nil {
-		return fmt.Errorf("failed to create Cloud Storage client: %v", err)
-	}
-	type createBucketArgs struct {
-		ProjectID  string `json:"project_id"`
-		BucketName string `json:"bucket_name"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.create_bucket", Description: "Creates a new Cloud Storage bucket."}, func(ctx context.Context, req *mcp.CallToolRequest, args createBucketArgs) (*mcp.CallToolResult, any, error) {
-		err := gcs.CreateBucket(ctx, args.ProjectID, args.BucketName)
-		return &mcp.CallToolResult{}, nil, err
-	})
-	type uploadFileArgs struct {
-		ProjectID  string `json:"project_id"`
-		BucketName string `json:"bucket_name"`
-		ObjectName string `json:"object_name"`
-		FilePath   string `json:"file_path"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.upload_file", Description: "Uploads a file to a Cloud Storage bucket."}, func(ctx context.Context, req *mcp.CallToolRequest, args uploadFileArgs) (*mcp.CallToolResult, any, error) {
-		err := gcs.UploadFile(ctx, args.ProjectID, args.BucketName, args.ObjectName, args.FilePath)
-		return &mcp.CallToolResult{}, nil, err
-	})
-	type uploadDirectoryArgs struct {
-		ProjectID      string `json:"project_id"`
-		BucketName     string `json:"bucket_name"`
-		DestinationDir string `json:"destination_dir"`
-		SourcePath     string `json:"source_path"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.upload_directory", Description: "Uploads a directory to a Cloud Storage bucket."}, func(ctx context.Context, req *mcp.CallToolRequest, args uploadDirectoryArgs) (*mcp.CallToolResult, any, error) {
-		err := gcs.UploadDirectory(ctx, args.ProjectID, args.BucketName, args.DestinationDir, args.SourcePath)
-		return &mcp.CallToolResult{}, nil, err
-	})
 	return nil
 }
 

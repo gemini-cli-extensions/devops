@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"devops-mcp-server/cloudbuildiface"
-	"devops-mcp-server/cloudstorage"
+	cloudstorageclient "devops-mcp-server/cloudstorage/client"
 
 	cloudbuild "google.golang.org/api/cloudbuild/v1"
 	"google.golang.org/api/googleapi"
@@ -144,7 +144,7 @@ type Client struct {
 	triggersService                  cloudbuildiface.TriggersServiceAPI
 	buildsService                    cloudbuildiface.BuildsServiceAPI
 	operationsService                cloudbuildiface.OperationsServiceAPI
-	gcsClient                        cloudstorage.GRPClient
+	gcsClient	cloudstorageclient.CloudStorageClient
 	regionalOperationsServiceFactory func(ctx context.Context, location string) (cloudbuildiface.OperationsServiceAPI, error)
 }
 
@@ -156,7 +156,7 @@ func NewClient() (*Client, error) {
 		return nil, fmt.Errorf("failed to create cloud build service: %v", err)
 	}
 
-	gcsClient, err := cloudstorage.NewClient(ctx, "")
+	gcsClient, err := cloudstorageclient.NewCloudStorageClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cloud storage client: %v", err)
 	}
@@ -276,7 +276,21 @@ func (c *Client) BuildContainer(ctx context.Context, projectID, location, reposi
 	// Upload the zip file to GCS
 	bucketName := fmt.Sprintf("run-sources-%s-%s", projectID, location)
 	objectName := fmt.Sprintf("source-%d.zip", time.Now().UnixNano())
-	if err := c.gcsClient.UploadFile(ctx, projectID, bucketName, objectName, zipFile.Name()); err != nil {
+
+	// Check if the bucket exists, and create it if it doesn't
+	if err := c.gcsClient.CheckBucketExists(ctx, bucketName); err != nil {
+		if err := c.gcsClient.CreateBucket(ctx, projectID, bucketName); err != nil {
+			return nil, fmt.Errorf("failed to create GCS bucket: %w", err)
+		}
+	}
+
+	file, err := os.Open(zipFile.Name())
+	if err != nil {
+		return nil, fmt.Errorf("failed to open zip file: %w", err)
+	}
+	defer file.Close()
+
+	if err := c.gcsClient.UploadFile(ctx, bucketName, objectName, file); err != nil {
 		return nil, fmt.Errorf("failed to upload source to GCS: %w", err)
 	}
 

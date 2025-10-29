@@ -28,7 +28,7 @@ import (
 	cloudbuildv1 "google.golang.org/api/cloudbuild/v1"
 
 	"devops-mcp-server/cloudbuildiface/mocks"
-	cloudstorage_mocks "devops-mcp-server/cloudstorage/mocks"
+	cloudstorage_mocks "devops-mcp-server/cloudstorage/client/mocks"
 )
 
 func TestBuildContainer(t *testing.T) {
@@ -37,7 +37,7 @@ func TestBuildContainer(t *testing.T) {
 
 	mockBuildsService := mocks.NewMockBuildsServiceAPI(ctrl)
 	mockCreateCall := mocks.NewMockBuildsCreateCallAPI(ctrl)
-	mockGCSClient := cloudstorage_mocks.NewMockGRPClient(ctrl)
+	mockGCSClient := &cloudstorage_mocks.MockCloudStorageClient{}
 	mockOperationsService := mocks.NewMockOperationsServiceAPI(ctrl)
 	mockGetCall := mocks.NewMockOperationsGetCallAPI(ctrl)
 	c := &Client{
@@ -66,7 +66,39 @@ func TestBuildContainer(t *testing.T) {
 	}
 
 	t.Run("success", func(t *testing.T) {
-		mockGCSClient.EXPECT().UploadFile(gomock.Any(), projectID, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+		mockGCSClient.CheckBucketExistsFunc = func(ctx context.Context, bucketName string) error {
+			return nil
+		}
+		mockGCSClient.UploadFileFunc = func(ctx context.Context, bucketName, objectName string, file *os.File) error {
+			return nil
+		}
+		mockBuildsService.EXPECT().Create(parent, gomock.Any()).Return(mockCreateCall)
+		mockCreateCall.EXPECT().Context(ctx).Return(mockCreateCall)
+		mockCreateCall.EXPECT().Do().Return(startOperation, nil)
+		mockOperationsService.EXPECT().Get(startOperation.Name).Return(mockGetCall).Times(2)
+		mockGetCall.EXPECT().Context(ctx).Return(mockGetCall).Times(2)
+		mockGetCall.EXPECT().Do(gomock.Any()).Return(startOperation, nil)
+		mockGetCall.EXPECT().Do(gomock.Any()).Return(doneOperation, nil)
+
+		op, err := c.BuildContainer(ctx, projectID, location, repository, imageName, tag, dockerfilePath)
+		if err != nil {
+			t.Fatalf("BuildContainer() error = %v, want nil", err)
+		}
+		if !op.Done {
+			t.Error("BuildContainer() did not return a done operation")
+		}
+	})
+
+	t.Run("success-bucket-creates", func(t *testing.T) {
+		mockGCSClient.CheckBucketExistsFunc = func(ctx context.Context, bucketName string) error {
+			return errors.New("bucket not found")
+		}
+		mockGCSClient.CreateBucketFunc = func(ctx context.Context, projectID, bucketName string) error {
+			return nil
+		}
+		mockGCSClient.UploadFileFunc = func(ctx context.Context, bucketName, objectName string, file *os.File) error {
+			return nil
+		}
 		mockBuildsService.EXPECT().Create(parent, gomock.Any()).Return(mockCreateCall)
 		mockCreateCall.EXPECT().Context(ctx).Return(mockCreateCall)
 		mockCreateCall.EXPECT().Do().Return(startOperation, nil)
