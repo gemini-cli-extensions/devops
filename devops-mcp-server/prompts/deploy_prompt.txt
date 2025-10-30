@@ -27,7 +27,7 @@ This workflow is for container based applications.
 1.  **Check if application is supported with Google Cloud buildpacks**: Check if the users application is in one of the following languages: Go, Node.js, Python, Java, Kotlin, Groovy, Scala, .NET, Ruby, PHP. If the application is in one of these supported languages, continue with this workflow. Else follow **Workflow C: Manual Container Build**.
 2.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Run(e.g., `repo_name: "my-app-images"`).
 3.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Run, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
-4.  **Deploy**: Deploy the users application to Google Cloud Run using the `cloudrun.deploy_from_source` tool and return the URL of the deployed application.
+4.  **Deploy**: Deploy the users application to Google Cloud Run using the `cloudrun.create_service_from_source` tool and return the URL of the deployed application.
 
 
 ## Workflow C: Manual Container Build
@@ -38,8 +38,8 @@ This workflow is for applications which are not static and are not supported by 
 2.  **Gather Parameters**: Analyze the request to find all necessary parameters to build this container using Google Cloud Build and deploy to Google Cloud Run(e.g., `repo_name: "my-app-images"`).
 3.  **Clarify if Needed**: If any mandatory parameters are missing to build using Cloud Build and deploy to Google Cloud Run, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
 4.  **Create Artifact Registry Repository** Ask the user for an Artifact Registry repository name if not already provided, and create this repository using the `artifactregistry.create_repository` tool.
-5.  **Build the container**: Build and push the container image using the `cloudbuild.build_container` tool, make sure to specify the full path to the Dockerfile.
-6.  **Deploy**: Deploy the built application to Google Cloud Run using the `cloudrun.cloudrun.deploy_from_image` tool and return the URL of the deployed application.
+5.  **Build the container**: Build and push the container image using the `cloudbuild.build_container` tool, make sure to specify the absolute path to the Dockerfile.
+6.  **Deploy**: Deploy the built application to Google Cloud Run using the `cloudrun.cloudrun.create_service` tool and return the URL of the deployed application.
 
 
 ## Universal Protocols & Constraints

@@ -28,6 +28,7 @@ import (
 	"log"
 
 	artifactregistryclient "devops-mcp-server/artifactregistry/client"
+	cloudrunclient "devops-mcp-server/cloudrun/client"
 	cloudstorageclient "devops-mcp-server/cloudstorage/client"
 	iamclient "devops-mcp-server/iam/client"
 
@@ -89,9 +90,17 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := addCloudDeployTools(ctx, server); err != nil {
 		return err
 	}
-	if err := addCloudRunTools(ctx, server); err != nil {
+
+	crClient, err := cloudrunclient.NewCloudRunClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create CloudRun client: %w", err)
+	}
+	ctxWithDeps = cloudrunclient.ContextWithClient(ctxWithDeps, crClient)
+
+	if err := cloudrun.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
+
 	if err := addContainerAnalysisTools(ctx, server); err != nil {
 		return err
 	}
@@ -243,58 +252,6 @@ func addCloudDeployTools(ctx context.Context, server *mcp.Server) error {
 	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.list_rollouts", Description: "Lists all Cloud Deploy rollouts for a given release."}, func(ctx context.Context, req *mcp.CallToolRequest, args listRolloutsArgs) (*mcp.CallToolResult, any, error) {
 		res, err := cd.ListRollouts(ctx, args.ProjectID, args.Location, args.PipelineID, args.ReleaseID)
 		return &mcp.CallToolResult{}, res, err
-	})
-	return nil
-}
-
-func addCloudRunTools(ctx context.Context, server *mcp.Server) error {
-	cr, err := cloudrun.NewClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create Cloud Run client: %v", err)
-	}
-	type createServiceArgs struct {
-		ProjectID   string `json:"project_id"`
-		Location    string `json:"location"`
-		ServiceName string `json:"service_name"`
-		ImageURL    string `json:"image_url"`
-		Port        int32  `json:"port"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_service", Description: "Creates a new Cloud Run service."}, func(ctx context.Context, req *mcp.CallToolRequest, args createServiceArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cr.CreateService(ctx, args.ProjectID, args.Location, args.ServiceName, args.ImageURL, args.Port)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type createRevisionArgs struct {
-		ProjectID    string `json:"project_id"`
-		Location     string `json:"location"`
-		ServiceName  string `json:"service_name"`
-		ImageURL     string `json:"image_url"`
-		RevisionName string `json:"revision_name"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_revision", Description: "Creates a new Cloud Run revision for a service with a new Docker image."}, func(ctx context.Context, req *mcp.CallToolRequest, args createRevisionArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cr.CreateRevision(ctx, args.ProjectID, args.Location, args.ServiceName, args.ImageURL, args.RevisionName)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type deployFromSourceArgs struct {
-		ProjectID   string `json:"project_id"`
-		Location    string `json:"location"`
-		ServiceName string `json:"service_name"`
-		Source      string `json:"source"`
-		Port        int32  `json:"port"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.deploy_from_source", Description: "Deploys a new Cloud Run service or updates an existing one from source."}, func(ctx context.Context, req *mcp.CallToolRequest, args deployFromSourceArgs) (*mcp.CallToolResult, any, error) {
-		err := cr.DeployFromSource(ctx, args.ProjectID, args.Location, args.ServiceName, args.Source, args.Port)
-		return &mcp.CallToolResult{}, nil, err
-	})
-	type deployFromImageArgs struct {
-		ProjectID   string `json:"project_id"`
-		Location    string `json:"location"`
-		ServiceName string `json:"service_name"`
-		ImageURL    string `json:"image_url"`
-		Port        int32  `json:"port"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.deploy_from_image", Description: "Deploys a new Cloud Run service from a container image."}, func(ctx context.Context, req *mcp.CallToolRequest, args deployFromImageArgs) (*mcp.CallToolResult, any, error) {
-		err := cr.DeployFromImage(ctx, args.ProjectID, args.Location, args.ServiceName, args.ImageURL, args.Port)
-		return &mcp.CallToolResult{}, nil, err
 	})
 	return nil
 }
