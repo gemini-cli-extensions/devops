@@ -17,180 +17,37 @@ package devconnect
 import (
 	"context"
 	"fmt"
-	"time"
 
-	devconnectv1 "google.golang.org/api/developerconnect/v1"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	devconnectclient "devops-mcp-server/devconnect/client"
 )
 
-// ListResult defines a generic struct to wrap a list of items.
-
-type ListResult[T any] struct {
-	Items []T `json:"items"`
-}
-
-// Client is a client for interacting with the Developer Connect API.
-
-type Client struct {
-	service *devconnectv1.Service
-}
-
-// NewClient creates a new Client.
-
-func NewClient(ctx context.Context) (*Client, error) {
-	service, err := devconnectv1.NewService(ctx)
-	if err != nil {
-
-		return nil, fmt.Errorf("failed to create developer connect service: %v", err)
-
+// AddTools adds all devconnect related tools to the mcp server.
+// It expects the devconnectclient and mcp.Server to be in the context.
+func AddTools(ctx context.Context, server *mcp.Server) error {
+	d, ok := devconnectclient.ClientFrom(ctx)
+	if !ok {
+		return fmt.Errorf("devconnect client not found in context")
 	}
-
-	return &Client{service: service}, nil
-
+	addListConnectionsTool(server, d)
+	return nil
 }
 
-func (c *Client) waitForOperation(ctx context.Context, operation *devconnectv1.Operation) (*devconnectv1.Operation, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+type ListConnectionsArgs struct {
+	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location  string `json:"location" jsonschema:"The Google Cloud location for the repository."`
+}
 
-	defer cancel()
+var listConnectionsToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args ListConnectionsArgs) (*mcp.CallToolResult, any, error)
 
-	for !operation.Done {
-
-		select {
-
-		case <-ctx.Done():
-
-			return nil, fmt.Errorf("timed out waiting for operation: %v", ctx.Err())
-
-		case <-time.After(1 * time.Second):
-
-			op, err := c.service.Projects.Locations.Operations.Get(operation.Name).Do()
-
-			if err != nil {
-
-				return nil, fmt.Errorf("failed to get operation: %v", err)
-
-			}
-
-			operation = op
-
+func addListConnectionsTool(server *mcp.Server, dcClient devconnectclient.DevConnectClient) {
+	listConnectionsToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args ListConnectionsArgs) (*mcp.CallToolResult, any, error) {
+		res, err := dcClient.ListConnections(ctx, args.ProjectID, args.Location)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to list connections: %w", err)
 		}
-
+		return &mcp.CallToolResult{}, res, nil
 	}
-
-	return operation, nil
-
-}
-
-// CreateConnection creates a new Developer Connect connection.
-func (c *Client) CreateConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error) {
-	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
-	req := &devconnectv1.Connection{
-		GithubConfig: &devconnectv1.GitHubConfig{
-			GithubApp: "DEVELOPER_CONNECT",
-		},
-	}
-
-	op, err := c.service.Projects.Locations.Connections.Create(parent, req).ConnectionId(connectionID).Do()
-
-	if err != nil {
-
-		return nil, fmt.Errorf("failed to create connection: %v", err)
-
-	}
-
-	op, err = c.waitForOperation(ctx, op)
-
-	if err != nil {
-
-		return nil, err
-
-	}
-
-	if op.Error != nil {
-
-		return nil, fmt.Errorf("operation failed: %v", op.Error)
-
-	}
-
-	name := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
-
-	return c.service.Projects.Locations.Connections.Get(name).Do()
-
-}
-
-// CreateGitRepositoryLink creates a new Developer Connect Git Repository Link.
-func (c *Client) CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectv1.GitRepositoryLink, error) {
-	parent := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
-	req := &devconnectv1.GitRepositoryLink{
-		CloneUri: repoURI,
-	}
-
-	op, err := c.service.Projects.Locations.Connections.GitRepositoryLinks.Create(parent, req).GitRepositoryLinkId(repoLinkID).Do()
-
-	if err != nil {
-
-		return nil, fmt.Errorf("failed to create git repository link: %v", err)
-
-	}
-
-	op, err = c.waitForOperation(ctx, op)
-
-	if err != nil {
-
-		return nil, err
-
-	}
-
-	if op.Error != nil {
-
-		return nil, fmt.Errorf("operation failed: %v", op.Error)
-
-	}
-
-	name := fmt.Sprintf("%s/gitRepositoryLinks/%s", parent, repoLinkID)
-
-	return c.service.Projects.Locations.Connections.GitRepositoryLinks.Get(name).Do()
-
-}
-
-// ListConnections lists Developer Connect connections.
-func (c *Client) ListConnections(ctx context.Context, projectID, location string) (*ListResult[*devconnectv1.Connection], error) {
-	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
-
-	resp, err := c.service.Projects.Locations.Connections.List(parent).Do()
-
-	if err != nil {
-
-		return nil, fmt.Errorf("failed to list connections: %v", err)
-
-	}
-
-	return &ListResult[*devconnectv1.Connection]{Items: resp.Connections}, nil
-
-}
-
-// GetConnection gets a Developer Connect connection.
-func (c *Client) GetConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error) {
-	name := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
-
-	return c.service.Projects.Locations.Connections.Get(name).Do()
-
-}
-
-// FindGitRepositoryLinksForGitRepo finds already configured Developer Connect Git Repository Links for a particular git repository.
-
-func (c *Client) FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) (*ListResult[*devconnectv1.GitRepositoryLink], error) {
-
-	parent := fmt.Sprintf("projects/%s/locations/%s/connections/-", projectID, location)
-
-	resp, err := c.service.Projects.Locations.Connections.GitRepositoryLinks.List(parent).Filter(fmt.Sprintf("clone_uri=\"%s\"", repoURI)).Do()
-
-	if err != nil {
-
-		return nil, fmt.Errorf("failed to list git repository links: %v", err)
-
-	}
-
-	return &ListResult[*devconnectv1.GitRepositoryLink]{Items: resp.GitRepositoryLinks}, nil
-
+	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.list_connections", Description: "Lists Developer Connect connections."}, listConnectionsToolFunc)
 }
