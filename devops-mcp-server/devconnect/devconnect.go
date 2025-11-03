@@ -30,24 +30,64 @@ func AddTools(ctx context.Context, server *mcp.Server) error {
 	if !ok {
 		return fmt.Errorf("devconnect client not found in context")
 	}
-	addListConnectionsTool(server, d)
+	addSetupDevConnectConnectionTool(server, d)
+	addAddDevConnectGitRepoLinkTool(server, d)
 	return nil
 }
 
-type ListConnectionsArgs struct {
-	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
-	Location  string `json:"location" jsonschema:"The Google Cloud location for the repository."`
+type AddDevConnectGitRepoLinkArgs struct {
+	ProjectID    string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location     string `json:"location" jsonschema:"The Google Cloud location for the repository."`
+	ConnectionID string `json:"connection_id" jsonschema:"The ID of the Developer Connect connection."`
+	GitRepoURI   string `json:"git_repo_uri" jsonschema:"The URI of the git repository to link. e.g. https://github.com/gemini-cli-extensions/devops.git"`
 }
 
-var listConnectionsToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args ListConnectionsArgs) (*mcp.CallToolResult, any, error)
+var addDevConnectGitRepoLinkToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args AddDevConnectGitRepoLinkArgs) (*mcp.CallToolResult, any, error)
 
-func addListConnectionsTool(server *mcp.Server, dcClient devconnectclient.DeveloperConnectClient) {
-	listConnectionsToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args ListConnectionsArgs) (*mcp.CallToolResult, any, error) {
-		res, err := dcClient.ListConnections(ctx, args.ProjectID, args.Location)
+func addAddDevConnectGitRepoLinkTool(server *mcp.Server, dcClient devconnectclient.DeveloperConnectClient) {
+	addDevConnectGitRepoLinkToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args AddDevConnectGitRepoLinkArgs) (*mcp.CallToolResult, any, error) {
+		// We need a repoLinkID. We can derive it from the URI.
+		repoLinkID := "link-" + args.GitRepoURI
+		newLink, err := dcClient.CreateGitRepositoryLink(ctx, args.ProjectID, args.Location, args.ConnectionID, repoLinkID, args.GitRepoURI)
 		if err != nil {
-			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to list connections: %w", err)
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create git repository link: %w", err)
 		}
-		return &mcp.CallToolResult{}, res, nil
+
+		return &mcp.CallToolResult{}, newLink, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.list_connections", Description: "Lists Developer Connect connections."}, listConnectionsToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.add_git_repo_link", Description: "Creates a Developer Connect git repository link when a connection already exists."}, addDevConnectGitRepoLinkToolFunc)
+}
+
+type ResultWrapper struct {
+	Message string
+	Result  any
+}
+
+type SetupDevConnectConnectionArgs struct {
+	ProjectID  string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location   string `json:"location" jsonschema:"The Google Cloud location for the repository."`
+	GitRepoURI string `json:"git_repo_uri" jsonschema:"The URI of the git repository to connect to."`
+}
+
+var setupDevConnectConnectionToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args SetupDevConnectConnectionArgs) (*mcp.CallToolResult, any, error)
+
+func addSetupDevConnectConnectionTool(server *mcp.Server, dcClient devconnectclient.DeveloperConnectClient) {
+	setupDevConnectConnectionToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args SetupDevConnectConnectionArgs) (*mcp.CallToolResult, any, error) {
+		// First, check if a git repository link already exists for this URI.
+		existingLinks, err := dcClient.FindGitRepositoryLinksForGitRepo(ctx, args.ProjectID, args.Location, args.GitRepoURI)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to check for existing git repository links: %w", err)
+		}
+		if len(existingLinks) > 0 {
+			return &mcp.CallToolResult{}, ResultWrapper{Message: "pre-exsisting connection found", Result: existingLinks[0]}, nil
+		}
+
+		newConnection, err := dcClient.CreateConnection(ctx, args.ProjectID, args.Location, dcClient.GenerateUUID())
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create new connection: %w", err)
+		}
+
+		return &mcp.CallToolResult{}, ResultWrapper{Message: "Created connection, authorize the connection by visiting the `installationUri`. After authorizing, call the AddDevConnectGitRepoLink fo finalize.", Result: newConnection}, nil
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.setup_connection", Description: "Sets up a Developer Connect connection and git repository link."}, setupDevConnectConnectionToolFunc)
 }

@@ -17,41 +17,44 @@ package mocks
 import (
 	"context"
 
-	"devops-mcp-server/devconnect/client"
-
-	devconnectv1 "google.golang.org/api/developerconnect/v1"
+	devconnectpb "cloud.google.com/go/developerconnect/apiv1/developerconnectpb"
 )
 
 // MockDevConnectClient is a mock implementation of the DevConnectClient interface.
 type MockDevConnectClient struct {
-	CreateConnectionFunc                 func(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error)
-	CreateGitRepositoryLinkFunc          func(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectv1.GitRepositoryLink, error)
-	ListConnectionsFunc                  func(ctx context.Context, projectID, location string) (*client.ListResult[*devconnectv1.Connection], error)
-	GetConnectionFunc                    func(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error)
-	FindGitRepositoryLinksForGitRepoFunc func(ctx context.Context, projectID, location, repoURI string) (*client.ListResult[*devconnectv1.GitRepositoryLink], error)
+	CreateConnectionFunc                 func(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error)
+	CreateGitRepositoryLinkFunc          func(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectpb.GitRepositoryLink, error)
+	ListConnectionsFunc                  func(ctx context.Context, projectID, location string) ([]*devconnectpb.Connection, error)
+	GetConnectionFunc                    func(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error)
+	FindGitRepositoryLinksForGitRepoFunc func(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error)
 }
 
 // CreateConnection mocks the CreateConnection method.
-func (m *MockDevConnectClient) CreateConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error) {
+func (m *MockDevConnectClient) CreateConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error) {
 	return m.CreateConnectionFunc(ctx, projectID, location, connectionID)
 }
 
 // CreateGitRepositoryLink mocks the CreateGitRepositoryLink method.
-func (m *MockDevConnectClient) CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectv1.GitRepositoryLink, error) {
+func (m *MockDevConnectClient) CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectpb.GitRepositoryLink, error) {
 	return m.CreateGitRepositoryLinkFunc(ctx, projectID, location, connectionID, repoLinkID, repoURI)
 }
 
 // ListConnections mocks the ListConnections method.
-func (m *MockDevConnectClient) ListConnections(ctx context.Context, projectID, location string) (*client.ListResult[*devconnectv1.Connection], error) {
+func (m *MockDevConnectClient) ListConnections(ctx context.Context, projectID, location string) ([]*devconnectpb.Connection, error) {
 	return m.ListConnectionsFunc(ctx, projectID, location)
 }
 
 // GetConnection mocks the GetConnection method.
-func (m *MockDevConnectClient) GetConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectv1.Connection, error) {
+func (m *MockDevConnectClient) GetConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error) {
 	return m.GetConnectionFunc(ctx, projectID, location, connectionID)
 }
 
 // FindGitRepositoryLinksForGitRepo mocks the FindGitRepositoryLinksForGitRepo method.
-func (m *MockDevConnectClient) FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) (*client.ListResult[*devconnectv1.GitRepositoryLink], error) {
+func (m *MockDevConnectClient) FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error) {
 	return m.FindGitRepositoryLinksForGitRepoFunc(ctx, projectID, location, repoURI)
+}
+
+// GenerateUUID generates a static UUID.
+func (m *MockDevConnectClient) GenerateUUID() string {
+	return "mock-connection"
 }

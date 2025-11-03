@@ -17,11 +17,118 @@ package devconnect
 import (
 	"context"
 	"testing"
+
+	"devops-mcp-server/devconnect/client/mocks"
+
+	devconnectpb "cloud.google.com/go/developerconnect/apiv1/developerconnectpb"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func TestDevConnectClient(t *testing.T) {
-	_, err := NewClient(context.Background())
+func TestSetupDevConnectConnection_ExistingLink(t *testing.T) {
+	mockClient := &mocks.MockDevConnectClient{
+		FindGitRepositoryLinksForGitRepoFunc: func(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error) {
+			return []*devconnectpb.GitRepositoryLink{
+				&devconnectpb.GitRepositoryLink{Name: "existing-link"},
+			}, nil
+		},
+	}
+
+	server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
+	addSetupDevConnectConnectionTool(server, mockClient)
+
+	args := SetupDevConnectConnectionArgs{
+		ProjectID:  "test-project",
+		Location:   "us-central1",
+		GitRepoURI: "https://github.com/test/repo.git",
+	}
+
+	_, res, err := setupDevConnectConnectionToolFunc(context.Background(), nil, args)
 	if err != nil {
-		t.Fatalf("NewClient() failed: %v", err)
+		t.Fatalf("tool function returned an error: %v", err)
+	}
+
+	resultWrapper, ok := res.(ResultWrapper)
+	if !ok {
+		t.Fatalf("result is not of the expected type")
+	}
+
+	link, ok := resultWrapper.Result.(*devconnectpb.GitRepositoryLink)
+	if !ok {
+		t.Fatalf("result is not of the expected type for links")
+	}
+
+	if link.Name != "existing-link" {
+		t.Errorf("expected link name 'existing-link', got '%s'", link.Name)
+	}
+}
+
+func TestSetupDevConnectConnection_NoExistingLink_NoExistingConnection(t *testing.T) {
+	mockClient := &mocks.MockDevConnectClient{
+		FindGitRepositoryLinksForGitRepoFunc: func(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error) {
+			return []*devconnectpb.GitRepositoryLink{}, nil
+		},
+		CreateConnectionFunc: func(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error) {
+			return &devconnectpb.Connection{Name: "projects/test-project/locations/us-central1/connections/mcp-connection"}, nil
+		},
+	}
+
+	server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
+	addSetupDevConnectConnectionTool(server, mockClient)
+
+	args := SetupDevConnectConnectionArgs{
+		ProjectID:  "test-project",
+		Location:   "us-central1",
+		GitRepoURI: "https://github.com/test/repo.git",
+	}
+
+	_, res, err := setupDevConnectConnectionToolFunc(context.Background(), nil, args)
+	if err != nil {
+		t.Fatalf("tool function returned an error: %v", err)
+	}
+
+	resultWrapper, ok := res.(ResultWrapper)
+	if !ok {
+		t.Fatalf("result is not of the expected type")
+	}
+
+	connection, ok := resultWrapper.Result.(*devconnectpb.Connection)
+	if !ok {
+		t.Fatalf("result is not of the expected type for connections")
+	}
+
+	if connection.Name != "projects/test-project/locations/us-central1/connections/mcp-connection" {
+		t.Errorf("expected link name 'projects/test-project/locations/us-central1/connections/mcp-connection', got '%s'", connection.Name)
+	}
+}
+
+func TestAddDevConnectGitRepoLink(t *testing.T) {
+	mockClient := &mocks.MockDevConnectClient{
+		CreateGitRepositoryLinkFunc: func(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectpb.GitRepositoryLink, error) {
+			return &devconnectpb.GitRepositoryLink{Name: "new-link"}, nil
+		},
+	}
+
+	server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
+	addAddDevConnectGitRepoLinkTool(server, mockClient)
+
+	args := AddDevConnectGitRepoLinkArgs{
+		ProjectID:    "test-project",
+		Location:     "us-central1",
+		ConnectionID: "test-connection",
+		GitRepoURI:   "https://github.com/test/repo.git",
+	}
+
+	_, result, err := addDevConnectGitRepoLinkToolFunc(context.Background(), nil, args)
+	if err != nil {
+		t.Fatalf("tool function returned an error: %v", err)
+	}
+
+	link, ok := result.(*devconnectpb.GitRepositoryLink)
+	if !ok {
+		t.Fatalf("tool function returned incorrect type")
+	}
+
+	if link.Name != "new-link" {
+		t.Errorf("expected link name 'new-link', got '%s'", link.Name)
 	}
 }

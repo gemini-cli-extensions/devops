@@ -23,6 +23,7 @@ import (
 	"devops-mcp-server/cloudstorage"
 	"devops-mcp-server/containeranalysis"
 	"devops-mcp-server/devconnect"
+	developerconnectclient "devops-mcp-server/devconnect/client"
 	"devops-mcp-server/prompts"
 	"fmt"
 	"log"
@@ -104,7 +105,13 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := addContainerAnalysisTools(ctx, server); err != nil {
 		return err
 	}
-	if err := addDevConnectTools(ctx, server); err != nil {
+	devConnectClient, err := developerconnectclient.NewDeveloperConnectClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create dev connect client: %w", err)
+	}
+	ctxWithDeps = developerconnectclient.ContextWithClient(ctxWithDeps, devConnectClient)
+
+	if err := devconnect.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
 
@@ -267,60 +274,6 @@ func addContainerAnalysisTools(ctx context.Context, server *mcp.Server) error {
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "containeranalysis.list_vulnerabilities", Description: "Lists vulnerabilities for a given image resource URL using Container Analysis."}, func(ctx context.Context, req *mcp.CallToolRequest, args listVulnerabilitiesArgs) (*mcp.CallToolResult, any, error) {
 		res, err := ca.ListVulnerabilities(ctx, args.ProjectID, args.ResourceURL)
-		return &mcp.CallToolResult{}, res, err
-	})
-	return nil
-}
-
-func addDevConnectTools(ctx context.Context, server *mcp.Server) error {
-	dc, err := devconnect.NewClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create Dev Connect client: %v", err)
-	}
-	type createConnectionArgs struct {
-		ProjectID    string `json:"project_id"`
-		Location     string `json:"location"`
-		ConnectionID string `json:"connection_id"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.create_connection", Description: "Creates a new Developer Connect connection."}, func(ctx context.Context, req *mcp.CallToolRequest, args createConnectionArgs) (*mcp.CallToolResult, any, error) {
-		res, err := dc.CreateConnection(ctx, args.ProjectID, args.Location, args.ConnectionID)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type createGitRepositoryLinkArgs struct {
-		ProjectID    string `json:"project_id"`
-		Location     string `json:"location"`
-		ConnectionID string `json:"connection_id"`
-		RepoLinkID   string `json:"repo_link_id"`
-		RepoURI      string `json:"repo_uri"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.create_git_repository_link", Description: "Creates a new Developer Connect Git Repository Link."}, func(ctx context.Context, req *mcp.CallToolRequest, args createGitRepositoryLinkArgs) (*mcp.CallToolResult, any, error) {
-		res, err := dc.CreateGitRepositoryLink(ctx, args.ProjectID, args.Location, args.ConnectionID, args.RepoLinkID, args.RepoURI)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type listConnectionsArgs struct {
-		ProjectID string `json:"project_id"`
-		Location  string `json:"location"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.list_connections", Description: "Lists Developer Connect connections."}, func(ctx context.Context, req *mcp.CallToolRequest, args listConnectionsArgs) (*mcp.CallToolResult, any, error) {
-		res, err := dc.ListConnections(ctx, args.ProjectID, args.Location)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type getConnectionArgs struct {
-		ProjectID    string `json:"project_id"`
-		Location     string `json:"location"`
-		ConnectionID string `json:"connection_id"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.get_connection", Description: "Gets a Developer Connect connection."}, func(ctx context.Context, req *mcp.CallToolRequest, args getConnectionArgs) (*mcp.CallToolResult, any, error) {
-		res, err := dc.GetConnection(ctx, args.ProjectID, args.Location, args.ConnectionID)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type findGitRepositoryLinksForGitRepoArgs struct {
-		ProjectID string `json:"project_id"`
-		Location  string `json:"location"`
-		RepoURI   string `json:"repo_uri"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.find_git_repository_links_for_git_repo", Description: "Finds already configured Developer Connect Git Repository Links for a particular git repository."}, func(ctx context.Context, req *mcp.CallToolRequest, args findGitRepositoryLinksForGitRepoArgs) (*mcp.CallToolResult, any, error) {
-		res, err := dc.FindGitRepositoryLinksForGitRepo(ctx, args.ProjectID, args.Location, args.RepoURI)
 		return &mcp.CallToolResult{}, res, err
 	})
 	return nil

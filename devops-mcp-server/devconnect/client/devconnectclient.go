@@ -6,6 +6,7 @@ import (
 
 	devconnect "cloud.google.com/go/developerconnect/apiv1"
 	devconnectpb "cloud.google.com/go/developerconnect/apiv1/developerconnectpb"
+	"github.com/google/uuid"
 	"google.golang.org/api/iterator"
 )
 
@@ -32,20 +33,15 @@ func ContextWithClient(ctx context.Context, client DeveloperConnectClient) conte
 type DeveloperConnectClient interface {
 	GetConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error)
 	CreateConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error)
-	ListConnections(ctx context.Context, projectID, location string) (*ListResult[*devconnectpb.Connection], error)
+	ListConnections(ctx context.Context, projectID, location string) ([]*devconnectpb.Connection, error)
 	CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectpb.GitRepositoryLink, error)
-	FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) (*ListResult[*devconnectpb.GitRepositoryLink], error)
+	FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error)
+	GenerateUUID() string
 }
 
 // DeveloperConnectClientImpl is the concrete implementation.
 type DeveloperConnectClientImpl struct {
 	v1client *devconnect.Client
-}
-
-// ListResult defines a generic struct to wrap a list of items.
-
-type ListResult[T any] struct {
-	Items []T `json:"items"`
 }
 
 // NewDeveloperConnectClient creates a new Developer Connect client.
@@ -57,14 +53,20 @@ func NewDeveloperConnectClient(ctx context.Context) (DeveloperConnectClient, err
 	return &DeveloperConnectClientImpl{v1client: c}, nil
 }
 
+func (c *DeveloperConnectClientImpl) GenerateUUID() string {
+	return uuid.New().String()
+}
+
 // CreateConnection creates a new Developer Connect connection.
 func (c *DeveloperConnectClientImpl) CreateConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error) {
 	req := &devconnectpb.CreateConnectionRequest{
 		Parent:       fmt.Sprintf("projects/%s/locations/%s", projectID, location),
 		ConnectionId: connectionID,
 		Connection: &devconnectpb.Connection{
-			GithubConfig: &devconnectpb.GitHubConfig{
-				GithubApp: "DEVELOPER_CONNECT",
+			ConnectionConfig: &devconnectpb.Connection_GithubConfig{
+				GithubConfig: &devconnectpb.GitHubConfig{
+					GithubApp: devconnectpb.GitHubConfig_DEVELOPER_CONNECT,
+				},
 			},
 		},
 	}
@@ -75,7 +77,6 @@ func (c *DeveloperConnectClientImpl) CreateConnection(ctx context.Context, proje
 		return nil, fmt.Errorf("failed to start connection creation: %v", err)
 	}
 
-	// Use the built-in .Wait() method for polling
 	conn, err := op.Wait(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create connection after waiting: %v", err)
@@ -118,8 +119,6 @@ func (c *DeveloperConnectClientImpl) GetConnection(ctx context.Context, projectI
 	return c.v1client.GetConnection(ctx, req)
 }
 
-// --- Note on List and Find methods: These do not return LROs and remain simple. ---
-
 // ListConnections lists Developer Connect connections.
 func (c *DeveloperConnectClientImpl) ListConnections(ctx context.Context, projectID, location string) ([]*devconnectpb.Connection, error) {
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
@@ -146,9 +145,7 @@ func (c *DeveloperConnectClientImpl) ListConnections(ctx context.Context, projec
 
 // FindGitRepositoryLinksForGitRepo finds already configured Developer Connect Git Repository Links for a particular git repository.
 func (c *DeveloperConnectClientImpl) FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error) {
-	// The filter structure in the modern client uses a strongly typed iterator,
-	// but assuming a single-location list filter for simplicity based on your original logic.
-	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location) // List across all connections '-' is often omitted in these clients
+	parent := fmt.Sprintf("projects/%s/locations/%s/connections/-", projectID, location)
 	filter := fmt.Sprintf("clone_uri=\"%s\"", repoURI)
 	req := &devconnectpb.ListGitRepositoryLinksRequest{
 		Parent: parent,
