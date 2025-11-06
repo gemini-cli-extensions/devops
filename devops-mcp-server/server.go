@@ -33,6 +33,7 @@ import (
 	cloudstorageclient "devops-mcp-server/cloudstorage/client"
 	developerconnectclient "devops-mcp-server/devconnect/client"
 	iamclient "devops-mcp-server/iam/client"
+	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
 
 	_ "embed"
 
@@ -72,16 +73,25 @@ func addAllPrompts(ctx context.Context, server *mcp.Server) {
 }
 
 func addAllTools(ctx context.Context, server *mcp.Server) error {
-	arClient, err := artifactregistryclient.NewArtifactRegistryClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create ArtifactRegistry client: %w", err)
-	}
-	iamClient, err := iamclient.NewClient(ctx)
+	i, err := iamclient.NewClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create IAM client: %w", err)
 	}
-	ctxWithDeps := artifactregistryclient.ContextWithClient(ctx, arClient)
-	ctxWithDeps = iamclient.ContextWithClient(ctxWithDeps, iamClient)
+
+	ctxWithDeps := iamclient.ContextWithClient(ctx, i)
+
+	r, err := resourcemanagerclient.NewClient(ctxWithDeps)
+	if err != nil {
+		return fmt.Errorf("failed to create resource manager client: %w", err)
+	}
+
+	ctxWithDeps = resourcemanagerclient.ContextWithClient(ctxWithDeps, r)
+
+	arClient, err := artifactregistryclient.NewArtifactRegistryClient(ctxWithDeps)
+	if err != nil {
+		return fmt.Errorf("failed to create ArtifactRegistry client: %w", err)
+	}
+	ctxWithDeps = artifactregistryclient.ContextWithClient(ctxWithDeps, arClient)
 
 	if err := artifactregistry.AddTools(ctxWithDeps, server); err != nil {
 		return err
@@ -90,7 +100,7 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 		return err
 	}
 
-	crClient, err := cloudrunclient.NewCloudRunClient(ctx)
+	crClient, err := cloudrunclient.NewCloudRunClient(ctxWithDeps)
 	if err != nil {
 		return fmt.Errorf("failed to create CloudRun client: %w", err)
 	}
@@ -99,7 +109,7 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := cloudrun.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
-	devConnectClient, err := developerconnectclient.NewDeveloperConnectClient(ctx)
+	devConnectClient, err := developerconnectclient.NewDeveloperConnectClient(ctxWithDeps)
 	if err != nil {
 		return fmt.Errorf("failed to create dev connect client: %w", err)
 	}
@@ -109,7 +119,7 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 		return err
 	}
 
-	csClient, err := cloudstorageclient.NewCloudStorageClient(ctx)
+	csClient, err := cloudstorageclient.NewCloudStorageClient(ctxWithDeps)
 	if err != nil {
 		return fmt.Errorf("failed to create CloudStorage client: %w", err)
 	}
@@ -118,7 +128,7 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := cloudstorage.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
-	cbClient, err := cloudbuildclient.NewCloudBuildClient(ctx)
+	cbClient, err := cloudbuildclient.NewCloudBuildClient(ctxWithDeps)
 	if err != nil {
 		return fmt.Errorf("failed to create CloudBuild client: %w", err)
 	}
