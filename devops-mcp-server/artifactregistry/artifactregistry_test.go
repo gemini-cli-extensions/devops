@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	armocks "devops-mcp-server/artifactregistry/client/mocks"
@@ -48,9 +49,7 @@ func TestAddSetupRepositoryTool(t *testing.T) {
 				arMock.CreateRepositoryFunc = func(ctx context.Context, p, l, r, f string) (*artifactregistrypb.Repository, error) {
 					return repo, nil
 				}
-				iamMock.AddIAMRoleBindingFunc = func(ctx context.Context, resourceID, role, member string) (*cloudresourcemanagerv1.Policy, error) {
-					return &cloudresourcemanagerv1.Policy{}, nil
-				}
+				iamMock.EXPECT().AddIAMRoleBinding(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&cloudresourcemanagerv1.Policy{}, nil)
 			},
 			expectErr: false,
 		},
@@ -85,9 +84,7 @@ func TestAddSetupRepositoryTool(t *testing.T) {
 				arMock.CreateRepositoryFunc = func(ctx context.Context, p, l, r, f string) (*artifactregistrypb.Repository, error) {
 					return repo, nil
 				}
-				iamMock.AddIAMRoleBindingFunc = func(ctx context.Context, resourceID, role, member string) (*cloudresourcemanagerv1.Policy, error) {
-					return nil, errors.New("iam failed")
-				}
+				iamMock.EXPECT().AddIAMRoleBinding(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("iam failed"))
 			},
 			expectErr:     true,
 			expectedError: "repository created, but failed to grant permissions: iam failed",
@@ -112,8 +109,11 @@ func TestAddSetupRepositoryTool(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			arMock := &armocks.MockArtifactRegistryClient{}
-			iamMock := &iammocks.MockIAMClient{}
+			iamMock := iammocks.NewMockIAMClient(ctrl)
 			tt.setupMocks(arMock, iamMock)
 
 			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})

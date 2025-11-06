@@ -39,7 +39,6 @@ func AddTools(ctx context.Context, server *mcp.Server) error {
 	addCreateBucketTool(server, c)
 	addUploadFileTool(server, c)
 	addUploadDirectoryTool(server, c)
-
 	return nil
 }
 
@@ -47,6 +46,7 @@ type CreateBucketArgs struct {
 	ProjectID  string `json:"project_id" jsonschema:"The Google Cloud project ID."`
 	BucketName string `json:"bucket_name" jsonschema:"The name of the bucket."`
 }
+
 var createBucketToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args CreateBucketArgs) (*mcp.CallToolResult, any, error)
 
 func addCreateBucketTool(server *mcp.Server, csClient cloudstorageclient.CloudStorageClient) {
@@ -68,10 +68,10 @@ func addCreateBucketTool(server *mcp.Server, csClient cloudstorageclient.CloudSt
 }
 
 type UploadFileArgs struct {
-		BucketName string `json:"bucket_name" jsonschema:"The name of the bucket."`
-		ObjectName string `json:"object_name" jsonschema:"The name of the object to upload to the bucket."`
-		FilePath   string `json:"file_path" jsonschema:"The path to the source file."`
-	}
+	BucketName string `json:"bucket_name" jsonschema:"The name of the bucket."`
+	ObjectName string `json:"object_name" jsonschema:"The name of the object to upload to the bucket."`
+	FilePath   string `json:"file_path" jsonschema:"The path to the source file."`
+}
 
 var uploadFileToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args UploadFileArgs) (*mcp.CallToolResult, any, error)
 
@@ -103,7 +103,7 @@ var uploadDirectoryToolFunc func(ctx context.Context, req *mcp.CallToolRequest, 
 
 func addUploadDirectoryTool(server *mcp.Server, csClient cloudstorageclient.CloudStorageClient) {
 	uploadDirectoryToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args UploadDirectoryArgs) (*mcp.CallToolResult, any, error) {
-		return  &mcp.CallToolResult{}, nil, filepath.Walk(args.SourcePath, func(path string, info os.FileInfo, err error) error {
+		return &mcp.CallToolResult{}, nil, filepath.Walk(args.SourcePath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return fmt.Errorf("failed to access source path: %w", err)
 			}
@@ -130,7 +130,7 @@ func addUploadDirectoryTool(server *mcp.Server, csClient cloudstorageclient.Clou
 			if err != nil {
 				return fmt.Errorf("failed to upload file: %w", err)
 			}
-			return  nil
+			return nil
 		})
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.upload_directory", Description: "Uploads a directory to a Cloud Storage bucket."}, uploadDirectoryToolFunc)

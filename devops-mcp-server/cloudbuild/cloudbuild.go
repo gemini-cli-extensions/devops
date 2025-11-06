@@ -15,331 +15,120 @@
 package cloudbuild
 
 import (
-	"archive/zip"
 	"context"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
-	"time"
 
-	"devops-mcp-server/cloudbuildiface"
-	cloudstorageclient "devops-mcp-server/cloudstorage/client"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	cloudbuild "google.golang.org/api/cloudbuild/v1"
-	"google.golang.org/api/googleapi"
-	"google.golang.org/api/option"
+	cloudbuildclient "devops-mcp-server/cloudbuild/client"
+	iamclient "devops-mcp-server/iam/client"
+	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
 )
 
-// ProjectsLocationsTriggersServiceWrapper wraps cloudbuild.ProjectsLocationsTriggersService
-type ProjectsLocationsTriggersServiceWrapper struct {
-	*cloudbuild.ProjectsLocationsTriggersService
-}
-
-type ListResult[T any] struct {
-	Items []T `json:"items"`
-}
-type triggersCreateCallWrapper struct {
-	*cloudbuild.ProjectsLocationsTriggersCreateCall
-}
-
-func (w *triggersCreateCallWrapper) Context(ctx context.Context) cloudbuildiface.TriggersCreateCallAPI {
-	w.ProjectsLocationsTriggersCreateCall.Context(ctx)
-	return w
-}
-
-func (w *triggersCreateCallWrapper) Do(opts ...googleapi.CallOption) (*cloudbuild.BuildTrigger, error) {
-	return w.ProjectsLocationsTriggersCreateCall.Do(opts...)
-}
-
-type triggersRunCallWrapper struct {
-	*cloudbuild.ProjectsLocationsTriggersRunCall
-}
-
-func (w *triggersRunCallWrapper) Context(ctx context.Context) cloudbuildiface.TriggersRunCallAPI {
-	w.ProjectsLocationsTriggersRunCall.Context(ctx)
-	return w
-}
-
-func (w *triggersRunCallWrapper) Do(opts ...googleapi.CallOption) (*cloudbuild.Operation, error) {
-	return w.ProjectsLocationsTriggersRunCall.Do(opts...)
-}
-
-type triggersListCallWrapper struct {
-	*cloudbuild.ProjectsLocationsTriggersListCall
-}
-
-func (w *triggersListCallWrapper) Context(ctx context.Context) cloudbuildiface.TriggersListCallAPI {
-	w.ProjectsLocationsTriggersListCall.Context(ctx)
-	return w
-}
-
-func (w *triggersListCallWrapper) Do(opts ...googleapi.CallOption) (*cloudbuild.ListBuildTriggersResponse, error) {
-	return w.ProjectsLocationsTriggersListCall.Do(opts...)
-}
-
-// Create overrides the Create method to return the correct call type.
-func (w *ProjectsLocationsTriggersServiceWrapper) Create(parent string, buildtrigger *cloudbuild.BuildTrigger) cloudbuildiface.TriggersCreateCallAPI {
-	return &triggersCreateCallWrapper{w.ProjectsLocationsTriggersService.Create(parent, buildtrigger)}
-}
-
-// Run overrides the Run method to return the correct call type.
-func (w *ProjectsLocationsTriggersServiceWrapper) Run(name string, runbuildtriggerrequest *cloudbuild.RunBuildTriggerRequest) cloudbuildiface.TriggersRunCallAPI {
-	return &triggersRunCallWrapper{w.ProjectsLocationsTriggersService.Run(name, runbuildtriggerrequest)}
-}
-
-// List overrides the List method to return the correct call type.
-func (w *ProjectsLocationsTriggersServiceWrapper) List(parent string) cloudbuildiface.TriggersListCallAPI {
-	return &triggersListCallWrapper{w.ProjectsLocationsTriggersService.List(parent)}
-}
-
-// ProjectsLocationsBuildsServiceWrapper wraps cloudbuild.ProjectsLocationsBuildsService
-type ProjectsLocationsBuildsServiceWrapper struct {
-	*cloudbuild.ProjectsLocationsBuildsService
-}
-
-type buildsCreateCallWrapper struct {
-	*cloudbuild.ProjectsLocationsBuildsCreateCall
-}
-
-func (w *buildsCreateCallWrapper) Context(ctx context.Context) cloudbuildiface.BuildsCreateCallAPI {
-	w.ProjectsLocationsBuildsCreateCall.Context(ctx)
-	return w
-}
-
-func (w *buildsCreateCallWrapper) Do(opts ...googleapi.CallOption) (*cloudbuild.Operation, error) {
-	return w.ProjectsLocationsBuildsCreateCall.Do(opts...)
-}
-
-// Create overrides the Create method to return the correct call type.
-func (w *ProjectsLocationsBuildsServiceWrapper) Create(parent string, build *cloudbuild.Build) cloudbuildiface.BuildsCreateCallAPI {
-	return &buildsCreateCallWrapper{w.ProjectsLocationsBuildsService.Create(parent, build)}
-}
-
-// ProjectsLocationsOperationsServiceWrapper wraps cloudbuild.ProjectsLocationsOperationsService
-type ProjectsLocationsOperationsServiceWrapper struct {
-	*cloudbuild.ProjectsLocationsOperationsService
-}
-
-type operationsGetCallWrapper struct {
-	*cloudbuild.ProjectsLocationsOperationsGetCall
-}
-
-func (w *operationsGetCallWrapper) Context(ctx context.Context) cloudbuildiface.OperationsGetCallAPI {
-	w.ProjectsLocationsOperationsGetCall.Context(ctx)
-	return w
-}
-
-func (w *operationsGetCallWrapper) Do(opts ...googleapi.CallOption) (*cloudbuild.Operation, error) {
-	return w.ProjectsLocationsOperationsGetCall.Do(opts...)
-}
-
-// Get overrides the Get method to return the correct call type.
-func (w *ProjectsLocationsOperationsServiceWrapper) Get(name string) cloudbuildiface.OperationsGetCallAPI {
-	return &operationsGetCallWrapper{w.ProjectsLocationsOperationsService.Get(name)}
-}
-
-// Client is a client for interacting with the Cloud Build API.
-type Client struct {
-	triggersService                  cloudbuildiface.TriggersServiceAPI
-	buildsService                    cloudbuildiface.BuildsServiceAPI
-	operationsService                cloudbuildiface.OperationsServiceAPI
-	gcsClient	cloudstorageclient.CloudStorageClient
-	regionalOperationsServiceFactory func(ctx context.Context, location string) (cloudbuildiface.OperationsServiceAPI, error)
-}
-
-// NewClient creates a new Client.
-func NewClient() (*Client, error) {
-	ctx := context.Background()
-	service, err := cloudbuild.NewService(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create cloud build service: %v", err)
+// AddTools adds all cloud build related tools to the mcp server.
+// It expects the cloudbuildclient and mcp.Server to be in the context.
+func AddTools(ctx context.Context, server *mcp.Server) error {
+	c, ok := cloudbuildclient.ClientFrom(ctx)
+	if !ok {
+		return fmt.Errorf("cloud build client not found in context")
 	}
-
-	gcsClient, err := cloudstorageclient.NewCloudStorageClient(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create cloud storage client: %v", err)
+	i, ok := iamclient.ClientFrom(ctx)
+	if !ok {
+		return fmt.Errorf("iam client not found in context")
 	}
-
-	return &Client{
-		triggersService:   &ProjectsLocationsTriggersServiceWrapper{service.Projects.Locations.Triggers},
-		buildsService:     &ProjectsLocationsBuildsServiceWrapper{service.Projects.Locations.Builds},
-		operationsService: &ProjectsLocationsOperationsServiceWrapper{service.Projects.Locations.Operations},
-		gcsClient:         gcsClient,
-		regionalOperationsServiceFactory: func(ctx context.Context, location string) (cloudbuildiface.OperationsServiceAPI, error) {
-			endpoint := fmt.Sprintf("%s-cloudbuild.googleapis.com", location)
-			regionalService, err := cloudbuild.NewService(ctx, option.WithEndpoint(endpoint))
-			if err != nil {
-				return nil, fmt.Errorf("failed to create regional cloudbuild service: %w", err)
-			}
-			return &ProjectsLocationsOperationsServiceWrapper{regionalService.Projects.Locations.Operations}, nil
-		},
-	}, nil
+	r, ok := resourcemanagerclient.ClientFrom(ctx)
+	if !ok {
+		return fmt.Errorf("resource manager client not found in context")
+	}
+	addCreateTriggerTool(server, c, i, r)
+	addRunTriggerTool(server, c)
+	addListTriggersTool(server, c)
+	return nil
 }
 
-// CreateTrigger creates a new Cloud Build trigger.
-func (c *Client) CreateTrigger(ctx context.Context, projectID, location, triggerID, repoLink, serviceAccount, branch, tag string) (*cloudbuild.BuildTrigger, error) {
-	if (branch == "") == (tag == "") {
-		return nil, fmt.Errorf("exactly one of 'branch' or 'tag' must be provided")
-	}
-
-	pushConfig := &cloudbuild.PushFilter{}
-	if branch != "" {
-		pushConfig.Branch = branch
-	}
-	if tag != "" {
-		pushConfig.Tag = tag
-	}
-
-	trigger := &cloudbuild.BuildTrigger{
-		Name: triggerID,
-		DeveloperConnectEventConfig: &cloudbuild.DeveloperConnectEventConfig{
-			GitRepositoryLink: repoLink,
-			Push:              pushConfig,
-		},
-		Autodetect:     true,
-		ServiceAccount: serviceAccount,
-	}
-
-	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
-	createdTrigger, err := c.triggersService.Create(parent, trigger).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create trigger: %v", err)
-	}
-
-	return createdTrigger, nil
+type RunTriggerArgs struct {
+	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location  string `json:"location" jsonschema:"The Google Cloud location for the trigger."`
+	TriggerID string `json:"trigger_id" jsonschema:"The ID of the trigger."`
 }
 
-// RunTrigger runs a Cloud Build trigger.
-func (c *Client) RunTrigger(ctx context.Context, projectID, location, triggerID string) (*cloudbuild.Operation, error) {
-	name := fmt.Sprintf("projects/%s/locations/%s/triggers/%s", projectID, location, triggerID)
-	op, err := c.triggersService.Run(name, &cloudbuild.RunBuildTriggerRequest{}).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to run trigger: %v", err)
-	}
-	return op, nil
-}
+var runTriggerToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args RunTriggerArgs) (*mcp.CallToolResult, any, error)
 
-// ListTriggers lists all Cloud Build triggers in a given location.
-func (c *Client) ListTriggers(ctx context.Context, projectID, location string) (*ListResult[*cloudbuild.BuildTrigger], error) {
-	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
-	resp, err := c.triggersService.List(parent).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list triggers: %v", err)
-	}
-	return &ListResult[*cloudbuild.BuildTrigger]{Items: resp.Triggers}, nil
-}
-
-// BuildContainer builds a container image using Cloud Build.
-func (c *Client) BuildContainer(ctx context.Context, projectID, location, repository, imageName, tag, dockerfilePath string) (*cloudbuild.Operation, error) {
-	imagePath := fmt.Sprintf("%s-docker.pkg.dev/%s/%s/%s:%s", location, projectID, repository, imageName, tag)
-	sourceDir := filepath.Dir(dockerfilePath)
-
-	// Create a temporary zip file
-	zipFile, err := os.CreateTemp("", "source-*.zip")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp file: %w", err)
-	}
-	defer os.Remove(zipFile.Name())
-
-	// Create a new zip archive.
-	writer := zip.NewWriter(zipFile)
-	err = filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
+func addRunTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
+	runTriggerToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args RunTriggerArgs) (*mcp.CallToolResult, any, error) {
+		res, err := cbClient.RunBuildTrigger(ctx, args.ProjectID, args.Location, args.TriggerID)
 		if err != nil {
-			return err
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to run trigger: %w", err)
 		}
-		if info.IsDir() {
-			return nil
-		}
-		relPath, err := filepath.Rel(sourceDir, path)
+		return &mcp.CallToolResult{}, res, nil
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.run_trigger", Description: "Runs a Cloud Build trigger."}, runTriggerToolFunc)
+}
+
+type ListTriggersArgs struct {
+	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location  string `json:"location" jsonschema:"The Google Cloud location for the triggers."`
+}
+
+var listTriggersToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args ListTriggersArgs) (*mcp.CallToolResult, any, error)
+
+func addListTriggersTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
+	listTriggersToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args ListTriggersArgs) (*mcp.CallToolResult, any, error) {
+		res, err := cbClient.ListBuildTriggers(ctx, args.ProjectID, args.Location)
 		if err != nil {
-			return err
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to list triggers: %w", err)
 		}
-		zipFileWriter, err := writer.Create(relPath)
+		return &mcp.CallToolResult{}, res, nil
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.list_triggers", Description: "Lists all Cloud Build triggers in a given location."}, listTriggersToolFunc)
+}
+
+type CreateTriggerArgs struct {
+	ProjectID      string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location       string `json:"location" jsonschema:"The Google Cloud location for the trigger."`
+	TriggerID      string `json:"trigger_id" jsonschema:"The ID of the trigger."`
+	RepoLink       string `json:"repo_link" jsonschema:"The Developer Connect repository link."`
+	ServiceAccount string `json:"service_account" jsonschema:"The service account to use for the build."`
+	Branch         string `json:"branch,omitempty" jsonschema:"The branch to filter on."`
+	Tag            string `json:"tag,omitempty" jsonschema:"The tag to filter on."`
+}
+
+var createTriggerToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args CreateTriggerArgs) (*mcp.CallToolResult, any, error)
+
+func addCreateTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient, iamClient iamclient.IAMClient, rmClient resourcemanagerclient.ResourcemanagerClient) {
+	createTriggerToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateTriggerArgs) (*mcp.CallToolResult, any, error) {
+		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, args.ProjectID, args.ServiceAccount, rmClient, iamClient)
 		if err != nil {
-			return err
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to grant necessary permissions for the Cloud build service account: %w", err)
 		}
-		fileToZip, err := os.Open(path)
+		res, err := cbClient.CreateBuildTrigger(ctx, args.ProjectID, args.Location, args.TriggerID, args.RepoLink, args.Branch, args.Tag, resolvedSA)
 		if err != nil {
-			return err
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create trigger: %w", err)
 		}
-		defer fileToZip.Close()
-		_, err = io.Copy(zipFileWriter, fileToZip)
-		return err
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to walk and zip source dir: %w", err)
+		return &mcp.CallToolResult{}, res, nil
 	}
-	writer.Close()
-	zipFile.Close()
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.create_trigger", Description: "Creates a new Cloud Build trigger."}, createTriggerToolFunc)
+}
 
-	// Upload the zip file to GCS
-	bucketName := fmt.Sprintf("run-sources-%s-%s", projectID, location)
-	objectName := fmt.Sprintf("source-%d.zip", time.Now().UnixNano())
-
-	// Check if the bucket exists, and create it if it doesn't
-	if err := c.gcsClient.CheckBucketExists(ctx, bucketName); err != nil {
-		if err := c.gcsClient.CreateBucket(ctx, projectID, bucketName); err != nil {
-			return nil, fmt.Errorf("failed to create GCS bucket: %w", err)
-		}
-	}
-
-	file, err := os.Open(zipFile.Name())
-	if err != nil {
-		return nil, fmt.Errorf("failed to open zip file: %w", err)
-	}
-	defer file.Close()
-
-	if err := c.gcsClient.UploadFile(ctx, bucketName, objectName, file); err != nil {
-		return nil, fmt.Errorf("failed to upload source to GCS: %w", err)
-	}
-
-	build := &cloudbuild.Build{
-		Steps: []*cloudbuild.BuildStep{
-			{
-				Name: "gcr.io/cloud-builders/docker",
-				Args: []string{"build", "-t", imagePath, "."},
-			},
-			{
-				Name: "gcr.io/cloud-builders/docker",
-				Args: []string{"push", imagePath},
-			},
-		},
-		Source: &cloudbuild.Source{
-			StorageSource: &cloudbuild.StorageSource{
-				Bucket: bucketName,
-				Object: objectName,
-			},
-		},
-	}
-
-	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
-	op, err := c.buildsService.Create(parent, build).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create build: %v", err)
-	}
-
-	regionalOperationsService, err := c.regionalOperationsServiceFactory(ctx, location)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create regional cloudbuild service for operations: %w", err)
-	}
-
-	// Wait for the operation to complete
-	for {
-		getOp, err := regionalOperationsService.Get(op.Name).Context(ctx).Do()
+// setPermissionsForSA resolves the SA (if default) and grants it a role.
+// It creates and manages its own Resource Manager client.
+func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccount string, rmClient resourcemanagerclient.ResourcemanagerClient, iamClient iamclient.IAMClient) (string, error) {
+	// Construct the Compute Engine default service account email
+	resolvedSA := serviceAccount
+	if resolvedSA == "" {
+		projectNumber, err := rmClient.ToProjectNumber(ctx, projectID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get operation: %v", err)
+			return "", fmt.Errorf("unable to resolve project id to number: %w", err)
 		}
-		if getOp.Done {
-			op = getOp
-			break
-		}
-		time.Sleep(10 * time.Second)
+		resolvedSA = fmt.Sprintf("%d-compute@developer.gserviceaccount.com", projectNumber)
 	}
 
-	if op.Error != nil {
-		return nil, fmt.Errorf("build operation failed: %v", op.Error)
+	roles := []string{"roles/developerconnect.tokenAccessor"}
+	for _, r := range roles {
+		_, err := iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, resolvedSA)
+		if err != nil {
+			return "", fmt.Errorf("unable to add role %s to member %s on resource %s err: %w", r, resolvedSA, fmt.Sprintf("projects/%s", projectID), err)
+		}
 	}
-
-	return op, nil
+	return resolvedSA, nil
 }

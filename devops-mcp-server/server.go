@@ -17,11 +17,9 @@ package main
 import (
 	"context"
 	"devops-mcp-server/artifactregistry"
-	"devops-mcp-server/cloudbuild"
 	"devops-mcp-server/clouddeploy"
 	"devops-mcp-server/cloudrun"
 	"devops-mcp-server/cloudstorage"
-	"devops-mcp-server/containeranalysis"
 	"devops-mcp-server/devconnect"
 	developerconnectclient "devops-mcp-server/devconnect/client"
 	"devops-mcp-server/prompts"
@@ -85,9 +83,6 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := artifactregistry.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
-	if err := addCloudBuildTools(ctx, server); err != nil {
-		return err
-	}
 	if err := addCloudDeployTools(ctx, server); err != nil {
 		return err
 	}
@@ -99,10 +94,6 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	ctxWithDeps = cloudrunclient.ContextWithClient(ctxWithDeps, crClient)
 
 	if err := cloudrun.AddTools(ctxWithDeps, server); err != nil {
-		return err
-	}
-
-	if err := addContainerAnalysisTools(ctx, server); err != nil {
 		return err
 	}
 	devConnectClient, err := developerconnectclient.NewDeveloperConnectClient(ctx)
@@ -124,56 +115,6 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := cloudstorage.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
-	return nil
-}
-
-func addCloudBuildTools(ctx context.Context, server *mcp.Server) error {
-	cb, err := cloudbuild.NewClient()
-	if err != nil {
-		return fmt.Errorf("failed to create Cloud Build client: %v", err)
-	}
-	type createTriggerArgs struct {
-		ProjectID      string `json:"project_id"`
-		Location       string `json:"location"`
-		TriggerID      string `json:"trigger_id"`
-		RepoLink       string `json:"repo_link"`
-		ServiceAccount string `json:"service_account"`
-		Branch         string `json:"branch"`
-		Tag            string `json:"tag"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.create_trigger", Description: "Creates a new Cloud Build trigger."}, func(ctx context.Context, req *mcp.CallToolRequest, args createTriggerArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cb.CreateTrigger(ctx, args.ProjectID, args.Location, args.TriggerID, args.RepoLink, args.ServiceAccount, args.Branch, args.Tag)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type runTriggerArgs struct {
-		ProjectID string `json:"project_id"`
-		Location  string `json:"location"`
-		TriggerID string `json:"trigger_id"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.run_trigger", Description: "Runs a Cloud Build trigger."}, func(ctx context.Context, req *mcp.CallToolRequest, args runTriggerArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cb.RunTrigger(ctx, args.ProjectID, args.Location, args.TriggerID)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type listTriggersArgs struct {
-		ProjectID string `json:"project_id"`
-		Location  string `json:"location"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.list_triggers", Description: "Lists all Cloud Build triggers in a given location."}, func(ctx context.Context, req *mcp.CallToolRequest, args listTriggersArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cb.ListTriggers(ctx, args.ProjectID, args.Location)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type buildContainerArgs struct {
-		ProjectID      string `json:"project_id"`
-		Location       string `json:"location"`
-		Repository     string `json:"repository"`
-		ImageName      string `json:"image_name"`
-		Tag            string `json:"tag"`
-		DockerfilePath string `json:"dockerfile_path"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.build_container", Description: "Builds a container image using Cloud Build."}, func(ctx context.Context, req *mcp.CallToolRequest, args buildContainerArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cb.BuildContainer(ctx, args.ProjectID, args.Location, args.Repository, args.ImageName, args.Tag, args.DockerfilePath)
-		return &mcp.CallToolResult{}, res, err
-	})
 	return nil
 }
 
@@ -258,22 +199,6 @@ func addCloudDeployTools(ctx context.Context, server *mcp.Server) error {
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.list_rollouts", Description: "Lists all Cloud Deploy rollouts for a given release."}, func(ctx context.Context, req *mcp.CallToolRequest, args listRolloutsArgs) (*mcp.CallToolResult, any, error) {
 		res, err := cd.ListRollouts(ctx, args.ProjectID, args.Location, args.PipelineID, args.ReleaseID)
-		return &mcp.CallToolResult{}, res, err
-	})
-	return nil
-}
-
-func addContainerAnalysisTools(ctx context.Context, server *mcp.Server) error {
-	ca, err := containeranalysis.NewClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create Container Analysis client: %v", err)
-	}
-	type listVulnerabilitiesArgs struct {
-		ProjectID   string `json:"project_id"`
-		ResourceURL string `json:"resource_url"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "containeranalysis.list_vulnerabilities", Description: "Lists vulnerabilities for a given image resource URL using Container Analysis."}, func(ctx context.Context, req *mcp.CallToolRequest, args listVulnerabilitiesArgs) (*mcp.CallToolResult, any, error) {
-		res, err := ca.ListVulnerabilities(ctx, args.ProjectID, args.ResourceURL)
 		return &mcp.CallToolResult{}, res, err
 	})
 	return nil

@@ -52,7 +52,6 @@ func addAddDevConnectGitRepoLinkTool(server *mcp.Server, dcClient devconnectclie
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create git repository link: %w", err)
 		}
-
 		return &mcp.CallToolResult{}, newLink, nil
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.add_git_repo_link", Description: "Creates a Developer Connect git repository link when a connection already exists."}, addDevConnectGitRepoLinkToolFunc)

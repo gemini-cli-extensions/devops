@@ -40,17 +40,22 @@ func ContextWithClient(ctx context.Context, client IAMClient) context.Context {
 	return context.WithValue(ctx, iamClientKey, client)
 }
 
-// ListResult defines a generic struct to wrap a list of items.
-type ListResult[T any] struct {
-	Items []T `json:"items"`
+// ServiceAccountList defines a struct to wrap a list of service accounts.
+type ServiceAccountList struct {
+	Items []*iamv1.ServiceAccount `json:"items"`
+}
+
+// RoleBindingList defines a struct to wrap a list of role bindings.
+type RoleBindingList struct {
+	Items []string `json:"items"`
 }
 
 // Client is an interface for interacting with the IAM API.
 type IAMClient interface {
 	CreateServiceAccount(ctx context.Context, projectID, displayName, accountID string) (*iamv1.ServiceAccount, error)
 	AddIAMRoleBinding(ctx context.Context, resourceID, role, member string) (*cloudresourcemanagerv1.Policy, error)
-	ListServiceAccounts(ctx context.Context, projectID string) (*ListResult[*iamv1.ServiceAccount], error)
-	GetIAMRoleBinding(ctx context.Context, projectID, serviceAccountEmail string) (*ListResult[string], error)
+	ListServiceAccounts(ctx context.Context, projectID string) (*ServiceAccountList, error)
+	GetIAMRoleBinding(ctx context.Context, projectID, serviceAccountEmail string) (*RoleBindingList, error)
 }
 
 // clientImpl is a client for interacting with the IAM API.
@@ -106,7 +111,7 @@ func (c *IAMClientImpl) AddIAMRoleBinding(ctx context.Context, resourceID, role,
 }
 
 // ListServiceAccounts lists all service accounts in a project.
-func (c *IAMClientImpl) ListServiceAccounts(ctx context.Context, projectID string) (*ListResult[*iamv1.ServiceAccount], error) {
+func (c *IAMClientImpl) ListServiceAccounts(ctx context.Context, projectID string) (*ServiceAccountList, error) {
 	parent := fmt.Sprintf("projects/%s", projectID)
 
 	resp, err := c.iamService.Projects.ServiceAccounts.List(parent).Context(ctx).Do()
@@ -114,11 +119,11 @@ func (c *IAMClientImpl) ListServiceAccounts(ctx context.Context, projectID strin
 		return nil, fmt.Errorf("failed to list service accounts: %v", err)
 	}
 
-	return &ListResult[*iamv1.ServiceAccount]{Items: resp.Accounts}, nil
+	return &ServiceAccountList{Items: resp.Accounts}, nil
 }
 
 // GetIAMRoleBinding gets the IAM role bindings for a service account.
-func (c *IAMClientImpl) GetIAMRoleBinding(ctx context.Context, projectID, serviceAccountEmail string) (*ListResult[string], error) {
+func (c *IAMClientImpl) GetIAMRoleBinding(ctx context.Context, projectID, serviceAccountEmail string) (*RoleBindingList, error) {
 	policy, err := c.crmService.Projects.GetIamPolicy(projectID, &cloudresourcemanagerv1.GetIamPolicyRequest{}).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get iam policy: %v", err)
@@ -134,5 +139,5 @@ func (c *IAMClientImpl) GetIAMRoleBinding(ctx context.Context, projectID, servic
 		}
 	}
 
-	return &ListResult[string]{Items: roles}, nil
+	return &RoleBindingList{Items: roles}, nil
 }
