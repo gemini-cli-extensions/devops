@@ -16,19 +16,22 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log"
+
 	"devops-mcp-server/artifactregistry"
+	"devops-mcp-server/cloudbuild"
 	"devops-mcp-server/clouddeploy"
 	"devops-mcp-server/cloudrun"
 	"devops-mcp-server/cloudstorage"
 	"devops-mcp-server/devconnect"
-	developerconnectclient "devops-mcp-server/devconnect/client"
 	"devops-mcp-server/prompts"
-	"fmt"
-	"log"
 
 	artifactregistryclient "devops-mcp-server/artifactregistry/client"
+	cloudbuildclient "devops-mcp-server/cloudbuild/client"
 	cloudrunclient "devops-mcp-server/cloudrun/client"
 	cloudstorageclient "devops-mcp-server/cloudstorage/client"
+	developerconnectclient "devops-mcp-server/devconnect/client"
 	iamclient "devops-mcp-server/iam/client"
 
 	_ "embed"
@@ -113,6 +116,15 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	ctxWithDeps = cloudstorageclient.ContextWithClient(ctxWithDeps, csClient)
 
 	if err := cloudstorage.AddTools(ctxWithDeps, server); err != nil {
+		return err
+	}
+	cbClient, err := cloudbuildclient.NewCloudBuildClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create CloudBuild client: %w", err)
+	}
+	ctxWithDeps = cloudbuildclient.ContextWithClient(ctxWithDeps, cbClient)
+
+	if err := cloudbuild.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
 	return nil
