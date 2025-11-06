@@ -27,6 +27,12 @@ type MockCloudRunClient struct {
 	UpdateServiceFunc    func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error)
 	GetRevisionFunc      func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error)
 	DeployFromSourceFunc func(ctx context.Context, projectID, location, serviceName, source string, port int32) error
+	DeleteServiceFunc    func(ctx context.Context, projectID, location, serviceName string) error
+}
+
+// DeleteService mocks the DeleteService method.
+func (m *MockCloudRunClient) DeleteService(ctx context.Context, projectID, location, serviceName string) error {
+	return m.DeleteServiceFunc(ctx, projectID, location, serviceName)
 }
 
 // GetService mocks the GetService method.

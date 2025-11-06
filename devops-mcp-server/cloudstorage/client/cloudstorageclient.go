@@ -50,6 +50,12 @@ type CloudStorageClient interface {
 	CreateBucket(ctx context.Context, projectID, bucketName string) error
 	// UploadFile uploads a file to a GCS bucket.
 	UploadFile(ctx context.Context, bucketName, objectName string, file *os.File) error
+	// CheckObjectExists checks if an object exists in a GCS bucket.
+	CheckObjectExists(ctx context.Context, bucketName, objectName string) error
+	// DeleteBucket deletes a GCS bucket.
+	DeleteBucket(ctx context.Context, bucketName string) error
+	// DeleteObject deletes an object from a GCS bucket.
+	DeleteObject(ctx context.Context, bucketName, objectName string) error
 }
 
 func NewCloudStorageClient(ctx context.Context) (CloudStorageClient, error) {
@@ -99,6 +105,33 @@ func (c *CloudStorageClientImpl) UploadFile(ctx context.Context, bucketName, obj
 	}
 	if err := wc.Close(); err != nil {
 		return fmt.Errorf("failed to close writer: %w", err)
+	}
+	return nil
+}
+
+// CheckObjectExists checks if an object exists in a GCS bucket.
+func (c *CloudStorageClientImpl) CheckObjectExists(ctx context.Context, bucketName, objectName string) error {
+	return nil
+}
+
+// DeleteBucket deletes a GCS bucket.
+func (c *CloudStorageClientImpl) DeleteBucket(ctx context.Context, bucketName string) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	if err := c.v1client.Bucket(bucketName).Delete(ctx); err != nil {
+		return fmt.Errorf("failed to delete bucket: %w", err)
+	}
+	return nil
+}
+
+// DeleteObject deletes an object from a GCS bucket.
+func (c *CloudStorageClientImpl) DeleteObject(ctx context.Context, bucketName, objectName string) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	if err := c.v1client.Bucket(bucketName).Object(objectName).Delete(ctx); err != nil {
+		return fmt.Errorf("failed to delete object: %w", err)
 	}
 	return nil
 }

@@ -44,6 +44,7 @@ func ContextWithClient(ctx context.Context, client ArtifactRegistryClient) conte
 type ArtifactRegistryClient interface {
 	GetRepository(ctx context.Context, projectID, location, repositoryID string) (*artifactregistrypb.Repository, error)
 	CreateRepository(ctx context.Context, projectID, location, repositoryID, format string) (*artifactregistrypb.Repository, error)
+	DeleteRepository(ctx context.Context, projectID, location, repositoryID string) error
 }
 
 // NewArtifactRegistryClient creates a new Artifact Registry client.
@@ -92,4 +93,23 @@ func (c *ArtifactRegistryClientImpl) CreateRepository(ctx context.Context, proje
 	}
 
 	return repo, nil
+}
+
+// DeleteRepository deletes an Artifact Registry repository.
+func (c *ArtifactRegistryClientImpl) DeleteRepository(ctx context.Context, projectID, location, repositoryID string) error {
+	req := &artifactregistrypb.DeleteRepositoryRequest{
+		Name: fmt.Sprintf("projects/%s/locations/%s/repositories/%s", projectID, location, repositoryID),
+	}
+
+	op, err := c.v1client.DeleteRepository(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to delete repository: %v", err)
+	}
+
+	err = op.Wait(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to wait for repository deletion: %v", err)
+	}
+
+	return nil
 }

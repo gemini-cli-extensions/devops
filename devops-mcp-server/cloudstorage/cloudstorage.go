@@ -16,6 +16,7 @@ package cloudstorage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -53,7 +54,7 @@ func addCreateBucketTool(server *mcp.Server, csClient cloudstorageclient.CloudSt
 	createBucketToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateBucketArgs) (*mcp.CallToolResult, any, error) {
 		err := csClient.CheckBucketExists(ctx, args.BucketName)
 		if err != nil {
-			if err != cloudstorage.ErrBucketNotExist {
+			if !errors.Is(err, cloudstorage.ErrBucketNotExist) {
 				// An unexpected error occurred while checking for the bucket
 				return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to check if bucket exists: %w", err)
 			}

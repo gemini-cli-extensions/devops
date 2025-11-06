@@ -24,6 +24,12 @@ import (
 type MockArtifactRegistryClient struct {
 	GetRepositoryFunc    func(ctx context.Context, projectID, location, repositoryID string) (*artifactregistrypb.Repository, error)
 	CreateRepositoryFunc func(ctx context.Context, projectID, location, repositoryID, format string) (*artifactregistrypb.Repository, error)
+	DeleteRepositoryFunc func(ctx context.Context, projectID, location, repositoryID string) error
+}
+
+// DeleteRepository mocks the DeleteRepository method.
+func (m *MockArtifactRegistryClient) DeleteRepository(ctx context.Context, projectID, location, repositoryID string) error {
+	return m.DeleteRepositoryFunc(ctx, projectID, location, repositoryID)
 }
 
 // GetRepository mocks the GetRepository method.

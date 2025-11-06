@@ -48,6 +48,7 @@ type CloudRunClient interface {
 	UpdateService(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error)
 	GetRevision(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error)
 	DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32) error
+	DeleteService(ctx context.Context, projectID, location, serviceName string) error
 }
 
 // NewCloudRunClient creates a new CloudRunClient.
@@ -169,5 +170,26 @@ func (c *CloudRunClientImpl) DeployFromSource(ctx context.Context, projectID, lo
 	if err != nil {
 		return fmt.Errorf("failed to deploy from source: %w, output: %s", err, out)
 	}
+	return nil
+}
+
+// DeleteService deletes a Cloud Run service.
+func (c *CloudRunClientImpl) DeleteService(ctx context.Context, projectID, location, serviceName string) error {
+	name := fmt.Sprintf("projects/%s/locations/%s/services/%s", projectID, location, serviceName)
+
+	req := &cloudrunpb.DeleteServiceRequest{
+		Name: name,
+	}
+
+	op, err := c.servicesClient.DeleteService(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to delete service: %w", err)
+	}
+
+	_, err = op.Wait(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to wait for service deletion: %w", err)
+	}
+
 	return nil
 }
