@@ -21,7 +21,6 @@ import (
 
 	"devops-mcp-server/artifactregistry"
 	"devops-mcp-server/cloudbuild"
-	"devops-mcp-server/clouddeploy"
 	"devops-mcp-server/cloudrun"
 	"devops-mcp-server/cloudstorage"
 	"devops-mcp-server/devconnect"
@@ -96,9 +95,6 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := artifactregistry.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
-	if err := addCloudDeployTools(ctx, server); err != nil {
-		return err
-	}
 
 	crClient, err := cloudrunclient.NewCloudRunClient(ctxWithDeps)
 	if err != nil {
@@ -137,91 +133,5 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err := cloudbuild.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
-	return nil
-}
-
-func addCloudDeployTools(ctx context.Context, server *mcp.Server) error {
-	cd, err := clouddeploy.NewClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create Cloud Deploy client: %v", err)
-	}
-	type createDeliveryPipelineArgs struct {
-		ProjectID   string `json:"project_id"`
-		Location    string `json:"location"`
-		PipelineID  string `json:"pipeline_id"`
-		Description string `json:"description"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.create_delivery_pipeline", Description: "Creates a new Cloud Deploy delivery pipeline."}, func(ctx context.Context, req *mcp.CallToolRequest, args createDeliveryPipelineArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cd.CreateDeliveryPipeline(ctx, args.ProjectID, args.Location, args.PipelineID, args.Description)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type createGKETargetArgs struct {
-		ProjectID   string `json:"project_id"`
-		Location    string `json:"location"`
-		TargetID    string `json:"target_id"`
-		GKECluster  string `json:"gke_cluster"`
-		Description string `json:"description"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.create_gke_target", Description: "Creates a new Cloud Deploy GKE target."}, func(ctx context.Context, req *mcp.CallToolRequest, args createGKETargetArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cd.CreateGKETarget(ctx, args.ProjectID, args.Location, args.TargetID, args.GKECluster, args.Description)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type createCloudRunTargetArgs struct {
-		ProjectID   string `json:"project_id"`
-		Location    string `json:"location"`
-		TargetID    string `json:"target_id"`
-		Description string `json:"description"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.create_cloud_run_target", Description: "Creates a new Cloud Deploy Cloud Run target."}, func(ctx context.Context, req *mcp.CallToolRequest, args createCloudRunTargetArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cd.CreateCloudRunTarget(ctx, args.ProjectID, args.Location, args.TargetID, args.Description)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type createRolloutArgs struct {
-		ProjectID  string `json:"project_id"`
-		Location   string `json:"location"`
-		PipelineID string `json:"pipeline_id"`
-		ReleaseID  string `json:"release_id"`
-		RolloutID  string `json:"rollout_id"`
-		TargetID   string `json:"target_id"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.create_rollout", Description: "Creates a new Cloud Deploy rollout."}, func(ctx context.Context, req *mcp.CallToolRequest, args createRolloutArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cd.CreateRollout(ctx, args.ProjectID, args.Location, args.PipelineID, args.ReleaseID, args.RolloutID, args.TargetID)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type listDeliveryPipelinesArgs struct {
-		ProjectID string `json:"project_id"`
-		Location  string `json:"location"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.list_delivery_pipelines", Description: "Lists all Cloud Deploy delivery pipelines."}, func(ctx context.Context, req *mcp.CallToolRequest, args listDeliveryPipelinesArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cd.ListDeliveryPipelines(ctx, args.ProjectID, args.Location)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type listTargetsArgs struct {
-		ProjectID string `json:"project_id"`
-		Location  string `json:"location"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.list_targets", Description: "Lists all Cloud Deploy targets."}, func(ctx context.Context, req *mcp.CallToolRequest, args listTargetsArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cd.ListTargets(ctx, args.ProjectID, args.Location)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type listReleasesArgs struct {
-		ProjectID  string `json:"project_id"`
-		Location   string `json:"location"`
-		PipelineID string `json:"pipeline_id"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.list_releases", Description: "Lists all Cloud Deploy releases for a given delivery pipeline."}, func(ctx context.Context, req *mcp.CallToolRequest, args listReleasesArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cd.ListReleases(ctx, args.ProjectID, args.Location, args.PipelineID)
-		return &mcp.CallToolResult{}, res, err
-	})
-	type listRolloutsArgs struct {
-		ProjectID  string `json:"project_id"`
-		Location   string `json:"location"`
-		PipelineID string `json:"pipeline_id"`
-		ReleaseID  string `json:"release_id"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "clouddeploy.list_rollouts", Description: "Lists all Cloud Deploy rollouts for a given release."}, func(ctx context.Context, req *mcp.CallToolRequest, args listRolloutsArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cd.ListRollouts(ctx, args.ProjectID, args.Location, args.PipelineID, args.ReleaseID)
-		return &mcp.CallToolResult{}, res, err
-	})
 	return nil
 }
