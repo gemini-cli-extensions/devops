@@ -15,174 +15,43 @@ import (
 	storage "cloud.google.com/go/storage"
 )
 
-func TestAddCreateBucketTool(t *testing.T) {
+func TestAddListBucketsTool(t *testing.T) {
 	ctx := context.Background()
 	projectID := "test-project"
-	bucketName := "test-bucket"
 
 	tests := []struct {
-		name          string
-		args          CreateBucketArgs
-		setupMocks    func(*csmocks.MockCloudStorageClient)
-		expectErr     bool
+		name                   string
+		args                   ListBucketsArgs
+		setupMocks             func(*csmocks.MockCloudStorageClient)
+		expectErr              bool
 		expectedErrorSubstring string
-	}{
-		{
-			name: "Success case - bucket already exists",
-			args: CreateBucketArgs{
-				ProjectID:  projectID,
-				BucketName: bucketName,
-			},
-			setupMocks: func(csMock *csmocks.MockCloudStorageClient) {
-				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
-					return nil
-				}
-				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
-					return nil
-				}
-			},
-			expectErr: false,
-		},
-		{
-			name: "Success case - bucket created",
-			args: CreateBucketArgs{
-				ProjectID:  projectID,
-				BucketName: bucketName,
-			},
-			setupMocks: func(csMock *csmocks.MockCloudStorageClient) {
-				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
-					return storage.ErrBucketNotExist
-				}
-				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
-					return nil
-				}
-			},
-			expectErr: false,
-		},
-		{
-			name: "Fail creating bucket case",
-			args: CreateBucketArgs{
-				ProjectID:  projectID,
-				BucketName: bucketName,
-			},
-			setupMocks: func(csMock *csmocks.MockCloudStorageClient) {
-				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
-					return storage.ErrBucketNotExist
-				}
-				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
-					return errors.New("creation failed")
-				}
-			},
-			expectErr:     true,
-			expectedErrorSubstring: "failed to create bucket: creation failed",
-		},
-		{
-			name: "Failed to check bucket exists case",
-			args: CreateBucketArgs{
-				ProjectID:  projectID,
-				BucketName: bucketName,
-			},
-			setupMocks: func(csMock *csmocks.MockCloudStorageClient) {
-				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
-					return errors.New("attrs error")
-				}
-				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
-					return nil
-				}
-			},
-			expectErr:     true,
-			expectedErrorSubstring: "failed to check if bucket exists: attrs error",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			csMock := &csmocks.MockCloudStorageClient{}
-			tc.setupMocks(csMock)
-
-			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-			addCreateBucketTool(server, csMock)
-
-			_, _, err := createBucketToolFunc(ctx, nil, tc.args)
-
-			if (err != nil) != tc.expectErr {
-				t.Errorf("createBucketToolFunc() error = %v, expectErr %v", err, tc.expectErr)
-			}
-
-            if tc.expectErr {
-                if err == nil {
-                    t.Errorf("Expected error containing %q, but got nil", tc.expectedErrorSubstring)
-                } else if !strings.Contains(err.Error(), tc.expectedErrorSubstring) {
-                    t.Errorf("createBucketToolFunc() error = %q, expectedErrorSubstring %q", err.Error(), tc.expectedErrorSubstring)
-                }
-            }
-		})
-	}
-}
-func TestAddUploadFileTool(t *testing.T) {
-	ctx := context.Background()
-	bucketName := "test-bucket"
-	objectName := "test-object"
-
-    // Create a temporary file for testing
-	tmpfile, err := os.CreateTemp("", "test-file-*.txt")
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-	defer os.Remove(tmpfile.Name()) // Clean up the file afterwards
-
-	filePath := tmpfile.Name()
-
-	tests := []struct {
-		name          string
-		args          UploadFileArgs
-		setupMocks    func(*csmocks.MockCloudStorageClient)
-		expectErr     bool
-		expectedErrorSubstring string
+		expectedResult         []string
 	}{
 		{
 			name: "Success case",
-			args: UploadFileArgs{
-				BucketName: bucketName,
-				ObjectName: objectName,
-				FilePath:   filePath,
+			args: ListBucketsArgs{
+				ProjectID: projectID,
 			},
 			setupMocks: func(csMock *csmocks.MockCloudStorageClient) {
-				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
-					return nil
+				csMock.ListBucketsFunc = func(ctx context.Context, p string) ([]string, error) {
+					return []string{"bucket1", "bucket2"}, nil
 				}
 			},
-			expectErr: false,
+			expectErr:      false,
+			expectedResult: []string{"bucket1", "bucket2"},
 		},
 		{
-			name: "Fail opening source file case",
-			args: UploadFileArgs{
-				BucketName: bucketName,
-				ObjectName: objectName,
-				FilePath:   "invalid-file.txt",
+			name: "Fail listing buckets case",
+			args: ListBucketsArgs{
+				ProjectID: projectID,
 			},
 			setupMocks: func(csMock *csmocks.MockCloudStorageClient) {
-				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
-					return nil
+				csMock.ListBucketsFunc = func(ctx context.Context, p string) ([]string, error) {
+					return nil, errors.New("list error")
 				}
 			},
-			expectErr:     true,
-			expectedErrorSubstring: "failed to open source file",
-		},
-        {
-			name: "Fail uploading file case",
-			args: UploadFileArgs{
-				BucketName: bucketName,
-				ObjectName: objectName,
-				FilePath:   filePath,
-			},
-			setupMocks: func(csMock *csmocks.MockCloudStorageClient) {
-				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
-					return errors.New("upload error")
-				}
-			},
-			expectErr:     true,
-			expectedErrorSubstring: "failed to upload file: upload error",
+			expectErr:              true,
+			expectedErrorSubstring: "failed to list buckets: list error",
 		},
 	}
 
@@ -192,27 +61,38 @@ func TestAddUploadFileTool(t *testing.T) {
 			tc.setupMocks(csMock)
 
 			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-			addUploadFileTool(server, csMock)
+			addListBucketsTool(server, csMock)
 
-			_, _, err := uploadFileToolFunc(ctx, nil, tc.args)
+			_, res, err := listBucketsToolFunc(ctx, nil, tc.args)
 
 			if (err != nil) != tc.expectErr {
-				t.Errorf("uploadFileToolFunc() error = %v, expectErr %v", err, tc.expectErr)
+				t.Errorf("listBucketsToolFunc() error = %v, expectErr %v", err, tc.expectErr)
 			}
 
 			if tc.expectErr {
-                if err == nil {
-                    t.Errorf("Expected error containing %q, but got nil", tc.expectedErrorSubstring)
-                } else if !strings.Contains(err.Error(), tc.expectedErrorSubstring) {
-                    t.Errorf("uploadFileToolFunc() error = %q, expectedErrorSubstring %q", err.Error(), tc.expectedErrorSubstring)
-                }
-            }
+				if err == nil {
+					t.Errorf("Expected error containing %q, but got nil", tc.expectedErrorSubstring)
+				} else if !strings.Contains(err.Error(), tc.expectedErrorSubstring) {
+					t.Errorf("listBucketsToolFunc() error = %q, expectedErrorSubstring %q", err.Error(), tc.expectedErrorSubstring)
+				}
+			}
+
+			if !tc.expectErr {
+				buckets, ok := res.([]string)
+				if !ok {
+					t.Errorf("Unexpected result type: %T", res)
+				}
+				if len(buckets) != len(tc.expectedResult) {
+					t.Errorf("Expected result length %d, got %d", len(tc.expectedResult), len(buckets))
+				}
+			}
 		})
 	}
 }
 
-func TestAddUploadDirectoryTool(t *testing.T) {
+func TestAddUploadSourceTool(t *testing.T) {
 	ctx := context.Background()
+	projectID := "test-project"
 	bucketName := "test-bucket"
 	destinationDir := "test-dest-dir"
 
@@ -237,40 +117,110 @@ func TestAddUploadDirectoryTool(t *testing.T) {
 	tests := []struct {
 		name                   string
 		setupFS                func(t *testing.T) (sourcePath string, cleanup func())
-		getArgs                func(sourcePath string) UploadDirectoryArgs
+		getArgs                func(sourcePath string) UploadSourceArgs
 		setupMocks             func(t *testing.T, csMock *csmocks.MockCloudStorageClient)
 		expectErr              bool
 		expectedErrorSubstring string
 	}{
 		{
-			name:    "Success case",
+			name:    "Success case - bucket exists",
 			setupFS: createTempDir,
-			getArgs: func(sourcePath string) UploadDirectoryArgs {
-				return UploadDirectoryArgs{
+			getArgs: func(sourcePath string) UploadSourceArgs {
+				return UploadSourceArgs{
+					ProjectID:      projectID,
 					BucketName:     bucketName,
 					DestinationDir: destinationDir,
 					SourcePath:     sourcePath,
 				}
 			},
 			setupMocks: func(t *testing.T, csMock *csmocks.MockCloudStorageClient) {
+				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
+					return nil
+				}
 				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
-					return nil // Success
+					return nil
 				}
 			},
 			expectErr: false,
 		},
 		{
-			name:    "Fail accessing source path (dir does not exist)",
+			name:    "Success case - bucket does not exist",
+			setupFS: createTempDir,
+			getArgs: func(sourcePath string) UploadSourceArgs {
+				return UploadSourceArgs{
+					ProjectID:      projectID,
+					BucketName:     bucketName,
+					DestinationDir: destinationDir,
+					SourcePath:     sourcePath,
+				}
+			},
+			setupMocks: func(t *testing.T, csMock *csmocks.MockCloudStorageClient) {
+				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
+					return storage.ErrBucketNotExist
+				}
+				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
+					return nil
+				}
+				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
+					return nil
+				}
+			},
+			expectErr: false,
+		},
+		{
+			name:    "Fail checking bucket exists case",
+			setupFS: createTempDir,
+			getArgs: func(sourcePath string) UploadSourceArgs {
+				return UploadSourceArgs{
+					ProjectID:      projectID,
+					BucketName:     bucketName,
+					DestinationDir: destinationDir,
+					SourcePath:     sourcePath,
+				}
+			},
+			setupMocks: func(t *testing.T, csMock *csmocks.MockCloudStorageClient) {
+				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
+					return errors.New("check error")
+				}
+			},
+			expectErr:              true,
+			expectedErrorSubstring: "failed to check if bucket exists: check error",
+		},
+		{
+			name:    "Fail creating bucket case",
+			setupFS: createTempDir,
+			getArgs: func(sourcePath string) UploadSourceArgs {
+				return UploadSourceArgs{
+					ProjectID:      projectID,
+					BucketName:     bucketName,
+					DestinationDir: destinationDir,
+					SourcePath:     sourcePath,
+				}
+			},
+			setupMocks: func(t *testing.T, csMock *csmocks.MockCloudStorageClient) {
+				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
+					return storage.ErrBucketNotExist
+				}
+				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
+					return errors.New("create error")
+				}
+			},
+			expectErr:              true,
+			expectedErrorSubstring: "failed to create bucket: create error",
+		},
+		{
+			name:    "Fail accessing source path",
 			setupFS: nil,
-			getArgs: func(sourcePath string) UploadDirectoryArgs {
-				return UploadDirectoryArgs{
+			getArgs: func(sourcePath string) UploadSourceArgs {
+				return UploadSourceArgs{
+					ProjectID:      projectID,
 					BucketName:     bucketName,
 					DestinationDir: destinationDir,
 					SourcePath:     "invalid-dir",
 				}
 			},
 			setupMocks: func(t *testing.T, csMock *csmocks.MockCloudStorageClient) {
-				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
+				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
 					return nil
 				}
 			},
@@ -278,16 +228,20 @@ func TestAddUploadDirectoryTool(t *testing.T) {
 			expectedErrorSubstring: "failed to access source path",
 		},
 		{
-			name:    "Fail upload file case",
+			name:    "Fail uploading file case",
 			setupFS: createTempDir,
-			getArgs: func(sourcePath string) UploadDirectoryArgs {
-				return UploadDirectoryArgs{
+			getArgs: func(sourcePath string) UploadSourceArgs {
+				return UploadSourceArgs{
+					ProjectID:      projectID,
 					BucketName:     bucketName,
 					DestinationDir: destinationDir,
 					SourcePath:     sourcePath,
 				}
 			},
 			setupMocks: func(t *testing.T, csMock *csmocks.MockCloudStorageClient) {
+				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
+					return nil
+				}
 				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
 					return errors.New("upload error")
 				}
@@ -295,61 +249,10 @@ func TestAddUploadDirectoryTool(t *testing.T) {
 			expectErr:              true,
 			expectedErrorSubstring: "failed to upload file: upload error",
 		},
-		{
-			name: "Success with nested directory",
-			setupFS: func(t *testing.T) (string, func()) {
-				tmpDir, err := os.MkdirTemp("", "test-dir-*")
-				if err != nil {
-					t.Fatalf("Failed to create temp dir: %v", err)
-				}
-
-				// Create root file
-				_, err = os.Create(filepath.Join(tmpDir, "root-file.txt"))
-				if err != nil {
-					t.Fatalf("Failed to create root file: %v", err)
-				}
-
-				// Create nested directory and file
-				nestedDir := filepath.Join(tmpDir, "nested")
-				if err := os.Mkdir(nestedDir, 0755); err != nil {
-					t.Fatalf("Failed to create nested dir: %v", err)
-				}
-				_, err = os.Create(filepath.Join(nestedDir, "nested-file.txt"))
-				if err != nil {
-					t.Fatalf("Failed to create nested file: %v", err)
-				}
-
-				return tmpDir, func() { os.RemoveAll(tmpDir) }
-			},
-			getArgs: func(sourcePath string) UploadDirectoryArgs {
-				return UploadDirectoryArgs{
-					BucketName:     bucketName,
-					DestinationDir: destinationDir,
-					SourcePath:     sourcePath,
-				}
-			},
-			setupMocks: func(t *testing.T, csMock *csmocks.MockCloudStorageClient) {
-				// We expect two uploads with specific object names
-				expectedObjects := map[string]bool{
-					"test-dest-dir/root-file.txt":     false,
-					"test-dest-dir/nested/nested-file.txt": false,
-				}
-
-				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
-					if _, ok := expectedObjects[o]; !ok {
-						t.Errorf("Uploaded unexpected object: %s", o)
-					}
-					expectedObjects[o] = true // Mark as seen
-					return nil // Success
-				}
-			},
-			expectErr: false,
-		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// 1. Setup Filesystem
 			sourcePath := ""
 			if tc.setupFS != nil {
 				var cleanup func()
@@ -362,18 +265,18 @@ func TestAddUploadDirectoryTool(t *testing.T) {
 			tc.setupMocks(t, csMock)
 
 			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-			addUploadDirectoryTool(server, csMock)
-			_, _, err := uploadDirectoryToolFunc(ctx, nil, args)
+			addUploadSourceTool(server, csMock)
+			_, _, err := uploadSourceToolFunc(ctx, nil, args)
 
 			if (err != nil) != tc.expectErr {
-				t.Errorf("uploadDirectoryToolFunc() error = %v, expectErr %v", err, tc.expectErr)
+				t.Errorf("uploadSourceToolFunc() error = %v, expectErr %v", err, tc.expectErr)
 			}
 
 			if tc.expectErr {
 				if err == nil {
 					t.Errorf("Expected error containing %q, but got nil", tc.expectedErrorSubstring)
 				} else if !strings.Contains(err.Error(), tc.expectedErrorSubstring) {
-					t.Errorf("uploadDirectoryToolFunc() error = %q, expectedErrorSubstring %q", err.Error(), tc.expectedErrorSubstring)
+					t.Errorf("uploadSourceToolFunc() error = %q, expectedErrorSubstring %q", err.Error(), tc.expectedErrorSubstring)
 				}
 			}
 		})

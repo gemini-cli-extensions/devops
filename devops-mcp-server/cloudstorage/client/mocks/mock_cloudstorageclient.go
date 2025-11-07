@@ -21,12 +21,18 @@ import (
 
 // MockCloudStorageClient is a mock of CloudStorageClient interface.
 type MockCloudStorageClient struct {
+	ListBucketsFunc       func(ctx context.Context, projectID string) ([]string, error)
 	CheckBucketExistsFunc func(ctx context.Context, bucketName string) error
-	CreateBucketFunc func(ctx context.Context, projectID, bucketName string) error
-	UploadFileFunc func(ctx context.Context, bucketName, objectName string, file *os.File) error
+	CreateBucketFunc      func(ctx context.Context, projectID, bucketName string) error
+	UploadFileFunc        func(ctx context.Context, bucketName, objectName string, file *os.File) error
 	CheckObjectExistsFunc func(ctx context.Context, bucketName, objectName string) error
-	DeleteBucketFunc func(ctx context.Context, bucketName string) error
-	DeleteObjectFunc func(ctx context.Context, bucketName, objectName string) error
+	DeleteBucketFunc      func(ctx context.Context, bucketName string) error
+	DeleteObjectFunc      func(ctx context.Context, bucketName, objectName string) error
+}
+
+// ListBuckets mocks the ListBuckets method.
+func (m *MockCloudStorageClient) ListBuckets(ctx context.Context, projectID string) ([]string, error) {
+	return m.ListBucketsFunc(ctx, projectID)
 }
 
 // CheckObjectExists mocks the CheckObjectExists method.

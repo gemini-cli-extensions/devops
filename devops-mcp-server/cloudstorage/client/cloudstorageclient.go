@@ -21,6 +21,8 @@ import (
 	"os"
 	"time"
 
+	"google.golang.org/api/iterator"
+
 	cloudstorage "cloud.google.com/go/storage"
 )
 
@@ -44,6 +46,8 @@ func ContextWithClient(ctx context.Context, client CloudStorageClient) context.C
 
 // CloudStorageClient is an interface for interacting with the Cloud Storage API.
 type CloudStorageClient interface {
+	// ListBuckets lists the GCS buckets in a specified project.
+	ListBuckets(ctx context.Context, projectID string) ([]string, error)
 	// CheckBucketExists checks if a GCS bucket exists.
 	CheckBucketExists(ctx context.Context, bucketName string) error
 	// CreateBucket creates a new GCS bucket.
@@ -72,6 +76,24 @@ type CloudStorageClientImpl struct {
 	v1client *cloudstorage.Client
 }
 
+// ListBuckets lists the GCS buckets in a specified project.
+func (c *CloudStorageClientImpl) ListBuckets(ctx context.Context, projectID string) ([]string, error) {
+	var buckets []string
+	it := c.v1client.Buckets(ctx, projectID)
+	for {
+		bucketAttrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		buckets = append(buckets, bucketAttrs.Name)
+	}
+	return buckets, nil
+}
+
+// CheckBucketExists checks if a GCS bucket exists.
 func (c *CloudStorageClientImpl) CheckBucketExists(ctx context.Context, bucketName string) error {
 	// Check if the bucket already exists
 	_, err := c.v1client.Bucket(bucketName).Attrs(ctx)
@@ -111,7 +133,11 @@ func (c *CloudStorageClientImpl) UploadFile(ctx context.Context, bucketName, obj
 
 // CheckObjectExists checks if an object exists in a GCS bucket.
 func (c *CloudStorageClientImpl) CheckObjectExists(ctx context.Context, bucketName, objectName string) error {
-	return nil
+	_, err := c.v1client.Bucket(bucketName).Object(objectName).Attrs(ctx)
+	if err == nil {
+		return nil
+	}
+	return err
 }
 
 // DeleteBucket deletes a GCS bucket.

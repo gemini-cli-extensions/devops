@@ -15,9 +15,8 @@ This workflow is for static applications.
 Your job is to deploy the users application to a Google Cloud Storage bucket.
 
 1.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Storage(e.g., `project_ID: "my-project"`).
-2.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Storage, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
-3.  **Create Google Cloud Storage Bucket**: Create a new Google Cloud Storage bucket using the `cloudstorage.create_bucket` tool. If the user had provided a bucket name, use that, otherwise ask the user for the bucket name before creating the bucket.
-4.  **Deploy**: Deploy the users application to the created Google Cloud Storage bucket using the `cloudstorage.upload_directory` tool and return the URL of the deployed application.
+2.  **Clarify if Needed**: If any mandatory parameters are missing to create a bucket and upload to Google Cloud Storage, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
+3.  **Create Bucket and Deploy**: Deploy the users application to the using the `cloudstorage.upload_source` tool, if the user has provided a bucket name, use that, otherwise ask the user for the bucket name before running the tool. Return the URL of the deployed application.
 
 
 ## Workflow B: Google Cloud Run

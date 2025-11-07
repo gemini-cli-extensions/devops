@@ -47,9 +47,8 @@ func main() {
 	// Artifact Registry Tests
 	testSetupRepository(ctx, arClient)
 	// Cloud Storage Tests
-	testCreateBucket(ctx, csClient)
-	testUploadFile(ctx, csClient)
-	testUploadDirectory(ctx, csClient)
+	testListBuckets(ctx, csClient)
+	testUploadSource(ctx, csClient)
 	// Cloud Run Tests
 	testCreateService(ctx, crClient)
 	testCreateRevision(ctx, crClient)
@@ -167,8 +166,8 @@ func testSetupRepository(ctx context.Context, arClient artifactregistryclient.Ar
 	log.Println("Repository verification successful.")
 }
 
-func testCreateBucket(ctx context.Context, csClient cloudstorageclient.CloudStorageClient) {
-	log.Println("--- Running test: CreateBucket ---")
+func testListBuckets(ctx context.Context, csClient cloudstorageclient.CloudStorageClient) {
+	log.Println("--- Running test: ListBuckets ---")
 	const serverURL = "http://localhost:8080"
 
 	mcpClient, err := mcpclient.NewStreamableHttpClient(serverURL, nil)
@@ -197,18 +196,39 @@ func testCreateBucket(ctx context.Context, csClient cloudstorageclient.CloudStor
 		log.Fatal("GCP_PROJECT_ID environment variable not set")
 	}
 
-	bucketName := fmt.Sprintf("%s-integration-test-bucket", projectID)
+	bucketNames := []string{
+		fmt.Sprintf("%s-integration-test-bucket-1", projectID),
+		fmt.Sprintf("%s-integration-test-bucket-2", projectID),
+	}
+
+	// Create buckets for the test
+	for _, bucket := range bucketNames {
+		err = csClient.CreateBucket(ctx, projectID, bucket)
+		if err != nil {
+			log.Fatalf("Failed to create bucket: %v", err)
+		}
+	}
+
+	// Clean up buckets
+	defer func() {
+		log.Println("Cleaning up buckets...")
+		for _, bucket := range bucketNames {
+			err = csClient.DeleteBucket(ctx, bucket)
+			if err != nil {
+				log.Printf("Failed to delete bucket: %v", err)
+			}
+		}
+	}()
 
 	args := map[string]any{
-		"project_id":  projectID,
-		"bucket_name": bucketName,
+		"project_id": projectID,
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudstorage.create_bucket"
+	req.Params.Name = "cloudstorage.list_buckets"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudstorage.create_bucket'...")
+	log.Println("Calling tool 'cloudstorage.list_buckets'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -221,27 +241,28 @@ func testCreateBucket(ctx context.Context, csClient cloudstorageclient.CloudStor
 
 	log.Println("Tool call successful.")
 
-	// Clean up the bucket
-	defer func() {
-		log.Println("Cleaning up bucket...")
-		err := csClient.DeleteBucket(ctx, bucketName)
-		if err != nil {
-			log.Printf("Failed to delete bucket: %v", err)
+	// Extract output from resp and verify buckets were listed
+	interfaceList, _ := resp.StructuredContent.([]interface{})
+	gotBucketList := make(map[string]string)
+	for _, item := range interfaceList {
+		bucketName, ok := item.(string)
+		if !ok {
+			log.Fatalf("An item in the StructuredContent list was not a string. Got: %T", item)
 		}
-	}()
-
-	// Verify that the bucket was created
-	log.Println("Verifying bucket creation...")
-	err = csClient.CheckBucketExists(ctx, bucketName)
-	if err != nil {
-		log.Fatalf("Failed to get bucket after creation: %v", err)
+		gotBucketList[bucketName] = ""
 	}
 
-	log.Println("Bucket verification successful.")
+	for _, bucket := range bucketNames {
+		if _, ok := gotBucketList[bucket]; !ok {
+			log.Fatalf("Expected bucket %q was not found in the response.", bucket)
+		}
+	}
+
+	log.Println("Buckets verification successful.")
 }
 
-func testUploadFile(ctx context.Context, csClient cloudstorageclient.CloudStorageClient) {
-	log.Println("--- Running test: UploadFile ---")
+func testUploadSource(ctx context.Context, csClient cloudstorageclient.CloudStorageClient) {
+	log.Println("--- Running test: UploadSource ---")
 	const serverURL = "http://localhost:8080"
 
 	mcpClient, err := mcpclient.NewStreamableHttpClient(serverURL, nil)
@@ -270,124 +291,8 @@ func testUploadFile(ctx context.Context, csClient cloudstorageclient.CloudStorag
 		log.Fatal("GCP_PROJECT_ID environment variable not set")
 	}
 
-	bucketName := fmt.Sprintf("%s-integration-test-bucket-upload-file", projectID)
-	objectName := "test-object"
-
-	// Create a bucket for the test
-	err = csClient.CreateBucket(ctx, projectID, bucketName)
-	if err != nil {
-		log.Fatalf("Failed to create bucket: %v", err)
-	}
-
-	// Clean up the bucket
-	defer func() {
-		log.Println("Cleaning up bucket...")
-		err = csClient.DeleteBucket(ctx, bucketName)
-		if err != nil {
-			log.Printf("Failed to delete bucket: %v", err)
-		}
-	}()
-
-	tmpFile, err := os.CreateTemp("", "test-file-*.txt")
-	if err != nil {
-		log.Fatalf("Failed to create temporary file: %v", err)
-	}
-	defer os.Remove(tmpFile.Name())
-
-	if _, err := tmpFile.Write([]byte("hello world")); err != nil {
-		log.Fatalf("Failed to write to temporary file: %v", err)
-	}
-	tmpFile.Close()
-
-	args := map[string]any{
-		"bucket_name": bucketName,
-		"object_name": objectName,
-		"file_path":   tmpFile.Name(),
-	}
-
-	var req mcp.CallToolRequest
-	req.Params.Name = "cloudstorage.upload_file"
-	req.Params.Arguments = args
-
-	log.Println("Calling tool 'cloudstorage.upload_file'...")
-
-	resp, err := mcpClient.CallTool(ctx, req)
-	if err != nil {
-		log.Fatalf("Tool call failed: %v", err)
-	}
-
-	if resp.IsError {
-		log.Fatalf("Tool returned an error: %v", resp.Content)
-	}
-
-	log.Println("Tool call successful.")
-
-	// Clean up the file
-	defer func() {
-		log.Println("Cleaning up file...")
-		err := csClient.DeleteObject(ctx, bucketName, objectName)
-		if err != nil {
-			log.Printf("Failed to delete object: %v", err)
-		}
-	}()
-
-	// Verify that the file was uploaded
-	log.Println("Verifying file upload...")
-	err = csClient.CheckObjectExists(ctx, bucketName, objectName)
-	if err != nil {
-		log.Fatalf("Failed to get object after upload: %v", err)
-	}
-
-	log.Println("File upload verification successful.")
-}
-
-func testUploadDirectory(ctx context.Context, csClient cloudstorageclient.CloudStorageClient) {
-	log.Println("--- Running test: UploadDirectory ---")
-	const serverURL = "http://localhost:8080"
-
-	mcpClient, err := mcpclient.NewStreamableHttpClient(serverURL, nil)
-	if err != nil {
-		log.Fatalf("Failed to create mcp-go HTTP client: %v", err)
-	}
-
-	if err := mcpClient.Start(ctx); err != nil {
-		log.Fatalf("Failed to start mcp-go client: %v", err)
-	}
-	defer mcpClient.Close()
-
-	var initReq mcp.InitializeRequest
-	initReq.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
-	initReq.Params.ClientInfo = mcp.Implementation{
-		Name:    "integration-test-client",
-		Version: "1.0.0",
-	}
-
-	if _, err := mcpClient.Initialize(ctx, initReq); err != nil {
-		log.Fatalf("Failed to initialize client: %v", err)
-	}
-
-	projectID := os.Getenv("GCP_PROJECT_ID")
-	if projectID == "" {
-		log.Fatal("GCP_PROJECT_ID environment variable not set")
-	}
-
-	bucketName := fmt.Sprintf("%s-integration-test-bucket-upload-dir", projectID)
+	bucketName := fmt.Sprintf("%s-integration-test-bucket-upload-source", projectID)
 	destinationDir := "test-dir"
-
-	// Create a bucket for the test
-	err = csClient.CreateBucket(ctx, projectID, bucketName)
-	if err != nil {
-		log.Fatalf("Failed to create bucket: %v", err)
-	}
-
-	// Clean up the bucket
-	defer func() {
-		log.Println("Cleaning up bucket...")
-		err = csClient.DeleteBucket(ctx, bucketName)
-		if err != nil {
-			log.Printf("Failed to delete bucket: %v", err)
-		}
-	}()
 
 	tmpDir, err := os.MkdirTemp("", "test-dir-*")
 	if err != nil {
@@ -410,16 +315,17 @@ func testUploadDirectory(ctx context.Context, csClient cloudstorageclient.CloudS
 	tmpFile.Close()
 
 	args := map[string]any{
+		"project_id":      projectID,
 		"bucket_name":     bucketName,
 		"destination_dir": destinationDir,
 		"source_path":     tmpDir,
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudstorage.upload_directory"
+	req.Params.Name = "cloudstorage.upload_source"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudstorage.upload_directory'...")
+	log.Println("Calling tool 'cloudstorage.upload_source'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -432,13 +338,18 @@ func testUploadDirectory(ctx context.Context, csClient cloudstorageclient.CloudS
 
 	log.Println("Tool call successful.")
 
-	// Clean up the bucket and directory
+	// Clean up the object and bucket
 	defer func() {
 		log.Println("Cleaning up directory...")
 		objectName := fmt.Sprintf("%s/subdir/test-file.txt", destinationDir)
 		err := csClient.DeleteObject(ctx, bucketName, objectName)
 		if err != nil {
 			log.Printf("Failed to delete object: %v", err)
+		}
+		log.Println("Cleaning up bucket...")
+		err = csClient.DeleteBucket(ctx, bucketName)
+		if err != nil {
+			log.Printf("Failed to delete bucket: %v", err)
 		}
 	}()
 
@@ -484,11 +395,11 @@ func testCreateService(ctx context.Context, crClient cloudrunclient.CloudRunClie
 	}
 
 	args := map[string]any{
-		"project_id":    projectID,
-		"location":      "us-central1",
-		"service_name":  "integration-test-service",
-		"image_url":     "us-docker.pkg.dev/cloudrun/container/hello",
-		"port":          8080,
+		"project_id":   projectID,
+		"location":     "us-central1",
+		"service_name": "integration-test-service",
+		"image_url":    "us-docker.pkg.dev/cloudrun/container/hello",
+		"port":         8080,
 	}
 
 	var req mcp.CallToolRequest
@@ -688,11 +599,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	args := map[string]any{
-		"project_id":    projectID,
-		"location":      "us-central1",
-		"service_name":  "integration-test-service-from-source",
-		"source":        tmpDir,
-		"port":          8080,
+		"project_id":   projectID,
+		"location":     "us-central1",
+		"service_name": "integration-test-service-from-source",
+		"source":       tmpDir,
+		"port":         8080,
 	}
 
 	var req mcp.CallToolRequest
@@ -730,4 +641,3 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Service verification successful.")
 }
-
