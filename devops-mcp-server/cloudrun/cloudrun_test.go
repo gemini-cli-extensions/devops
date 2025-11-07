@@ -30,6 +30,112 @@ import (
 	cloudrunpb "cloud.google.com/go/run/apiv2/runpb"
 )
 
+func TestListServicesTool(t *testing.T) {
+	ctx := context.Background()
+	projectID := "test-project"
+	location := "us-central1"
+
+	tests := []struct {
+		name                   string
+		args                   ListServicesArgs
+		setupMocks             func(*mocks.MockCloudRunClient)
+		expectErr              bool
+		expectedErrorSubstring string
+		expectedServices       []*cloudrunpb.Service
+	}{
+		{
+			name: "Success with no services",
+			args: ListServicesArgs{
+				ProjectID: projectID,
+				Location:  location,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.ListServicesFunc = func(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error) {
+					return []*cloudrunpb.Service{}, nil
+				}
+			},
+			expectErr:        false,
+			expectedServices: []*cloudrunpb.Service{},
+		},
+		{
+			name: "Success with one service",
+			args: ListServicesArgs{
+				ProjectID: projectID,
+				Location:  location,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.ListServicesFunc = func(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error) {
+					return []*cloudrunpb.Service{{Name: "service-1"}}, nil
+				}
+			},
+			expectErr:        false,
+			expectedServices: []*cloudrunpb.Service{{Name: "service-1"}},
+		},
+		{
+			name: "Success with multiple services",
+			args: ListServicesArgs{
+				ProjectID: projectID,
+				Location:  location,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.ListServicesFunc = func(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error) {
+					return []*cloudrunpb.Service{{Name: "service-1"}, {Name: "service-2"}}, nil
+				}
+			},
+			expectErr:        false,
+			expectedServices: []*cloudrunpb.Service{{Name: "service-1"}, {Name: "service-2"}},
+		},
+		{
+			name: "Failure",
+			args: ListServicesArgs{
+				ProjectID: projectID,
+				Location:  location,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.ListServicesFunc = func(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error) {
+					return nil, errors.New("error listing services")
+				}
+			},
+			expectErr:              true,
+			expectedErrorSubstring: "failed to list services: error listing services",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockClient := &mocks.MockCloudRunClient{}
+			tc.setupMocks(mockClient)
+
+			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
+			addListServicesTool(server, mockClient)
+
+			_, result, err := listServicesToolFunc(ctx, nil, tc.args)
+
+			if (err != nil) != tc.expectErr {
+				t.Errorf("listServicesToolFunc() error = %v, expectErr %v", err, tc.expectErr)
+			}
+
+			if tc.expectErr {
+				if err == nil {
+					t.Errorf("Expected error containing %q, but got nil", tc.expectedErrorSubstring)
+				} else if !strings.Contains(err.Error(), tc.expectedErrorSubstring) {
+					t.Errorf("listServicesToolFunc() error = %q, expectedErrorSubstring %q", err.Error(), tc.expectedErrorSubstring)
+				}
+			}
+
+			if !tc.expectErr {
+				services, ok := result.([]*cloudrunpb.Service)
+				if !ok {
+					t.Errorf("listServicesToolFunc() result = %T, want %T", result, []*cloudrunpb.Service{})
+				}
+				if len(services) != len(tc.expectedServices) {
+					t.Errorf("listServicesToolFunc() len(services) = %d, want %d", len(services), len(tc.expectedServices))
+				}
+			}
+		})
+	}
+}
+
 func TestCreateServiceTool(t *testing.T) {
 	ctx := context.Background()
 	projectID := "test-project"
@@ -58,9 +164,6 @@ func TestCreateServiceTool(t *testing.T) {
 				mockClient.CreateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error) {
 					return &cloudrunpb.Service{}, nil
 				}
-				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, nil
-				}
 			},
 			expectErr: false,
 		},
@@ -83,6 +186,9 @@ func TestCreateServiceTool(t *testing.T) {
 				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
 					return &cloudrunpb.Service{}, nil
 				}
+				mockClient.GetRevisionFunc = func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {
+					return &cloudrunpb.Revision{}, nil
+				}
 			},
 			expectErr: false,
 		},
@@ -98,12 +204,6 @@ func TestCreateServiceTool(t *testing.T) {
 			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
 				mockClient.CreateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error) {
 					return nil, errors.New("error creating service")
-				}
-				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, nil
-				}
-				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, nil
 				}
 			},
 			expectErr:              true,
@@ -152,6 +252,32 @@ func TestCreateServiceTool(t *testing.T) {
 			expectErr:              true,
 			expectedErrorSubstring: "failed to update service with new revision: error updating service",
 		},
+		{
+			name: "Fail to get revision after updating service",
+			args: CreateServiceArgs{
+				ProjectID:   projectID,
+				Location:    location,
+				ServiceName: serviceName,
+				ImageURL:    imageURL,
+				Port:        port,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.CreateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error) {
+					return nil, status.Errorf(codes.AlreadyExists, "error service already exists")
+				}
+				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
+					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
+					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.GetRevisionFunc = func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {
+					return &cloudrunpb.Revision{}, errors.New("error getting revision")
+				}
+			},
+			expectErr:              true,
+			expectedErrorSubstring: "failed to get revision: error getting revision",
+		},
 	}
 
 	for _, tc := range tests {
@@ -173,143 +299,6 @@ func TestCreateServiceTool(t *testing.T) {
 					t.Errorf("Expected error containing %q, but got nil", tc.expectedErrorSubstring)
 				} else if !strings.Contains(err.Error(), tc.expectedErrorSubstring) {
 					t.Errorf("createServiceToolFunc() error = %q, expectedErrorSubstring %q", err.Error(), tc.expectedErrorSubstring)
-				}
-			}
-		})
-	}
-}
-
-func TestCreateRevisionTool(t *testing.T) {
-	ctx := context.Background()
-	projectID := "test-project"
-	location := "us-central1"
-	serviceName := "test-service"
-	revisionName := "test-revision"
-	imageURL := "gcr.io/test-project/test-image"
-	port := int32(8080)
-
-	tests := []struct {
-		name                   string
-		args                   CreateRevisionArgs
-		setupMocks             func(*mocks.MockCloudRunClient)
-		expectErr              bool
-		expectedErrorSubstring string
-	}{
-		{
-			name: "Success",
-			args: CreateRevisionArgs{
-				ProjectID:    projectID,
-				Location:     location,
-				ServiceName:  serviceName,
-				ImageURL:     imageURL,
-				RevisionName: revisionName,
-				Port:         port,
-			},
-			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
-				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, nil
-				}
-				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, nil
-				}
-				mockClient.GetRevisionFunc = func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {
-					return &cloudrunpb.Revision{}, nil
-				}
-			},
-			expectErr: false,
-		},
-		{
-			name: "Fail to get service",
-			args: CreateRevisionArgs{
-				ProjectID:    projectID,
-				Location:     location,
-				ServiceName:  serviceName,
-				ImageURL:     imageURL,
-				RevisionName: revisionName,
-				Port:         port,
-			},
-			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
-				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, errors.New("error getting service")
-				}
-				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, nil
-				}
-				mockClient.GetRevisionFunc = func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {
-					return &cloudrunpb.Revision{}, nil
-				}
-			},
-			expectErr:              true,
-			expectedErrorSubstring: "failed to get service: error getting service",
-		},
-		{
-			name: "Fail to update service",
-			args: CreateRevisionArgs{
-				ProjectID:    projectID,
-				Location:     location,
-				ServiceName:  serviceName,
-				ImageURL:     imageURL,
-				RevisionName: revisionName,
-				Port:         port,
-			},
-			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
-				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, nil
-				}
-				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, errors.New("error updating service")
-				}
-				mockClient.GetRevisionFunc = func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {
-					return &cloudrunpb.Revision{}, nil
-				}
-			},
-			expectErr:              true,
-			expectedErrorSubstring: "failed to update service with new revision: error updating service",
-		},
-		{
-			name: "Fail to get revision",
-			args: CreateRevisionArgs{
-				ProjectID:    projectID,
-				Location:     location,
-				ServiceName:  serviceName,
-				ImageURL:     imageURL,
-				RevisionName: revisionName,
-				Port:         port,
-			},
-			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
-				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, nil
-				}
-				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
-					return &cloudrunpb.Service{}, nil
-				}
-				mockClient.GetRevisionFunc = func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {
-					return &cloudrunpb.Revision{}, errors.New("error getting revision")
-				}
-			},
-			expectErr:              true,
-			expectedErrorSubstring: "failed to get revision: error getting revision",
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			mockClient := &mocks.MockCloudRunClient{}
-			tc.setupMocks(mockClient)
-
-			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-			addCreateRevisionTool(server, mockClient)
-
-			_, _, err := createRevisionToolFunc(ctx, nil, tc.args)
-
-			if (err != nil) != tc.expectErr {
-				t.Errorf("createRevisionToolFunc() error = %v, expectErr %v", err, tc.expectErr)
-			}
-
-			if tc.expectErr {
-				if err == nil {
-					t.Errorf("Expected error containing %q, but got nil", tc.expectedErrorSubstring)
-				} else if !strings.Contains(err.Error(), tc.expectedErrorSubstring) {
-					t.Errorf("createRevisionToolFunc() error = %q, expectedErrorSubstring %q", err.Error(), tc.expectedErrorSubstring)
 				}
 			}
 		})

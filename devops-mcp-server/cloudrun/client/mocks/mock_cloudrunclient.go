@@ -23,6 +23,7 @@ import (
 // MockCloudRunClient is a mock of CloudRunClient interface.
 type MockCloudRunClient struct {
 	GetServiceFunc       func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error)
+	ListServicesFunc 	 func(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error)
 	CreateServiceFunc    func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error)
 	UpdateServiceFunc    func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error)
 	GetRevisionFunc      func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error)
@@ -38,6 +39,11 @@ func (m *MockCloudRunClient) DeleteService(ctx context.Context, projectID, locat
 // GetService mocks the GetService method.
 func (m *MockCloudRunClient) GetService(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
 	return m.GetServiceFunc(ctx, projectID, location, serviceName)
+}
+
+// ListServices mocks the ListServices method.
+func (m *MockCloudRunClient) ListServices(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error) {
+	return m.ListServicesFunc(ctx, projectID, location)
 }
 
 // CreateService mocks the CreateService method.

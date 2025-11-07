@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"devops-mcp-server/artifactregistry"
@@ -50,8 +51,9 @@ func main() {
 	testListBuckets(ctx, csClient)
 	testUploadSource(ctx, csClient)
 	// Cloud Run Tests
-	testCreateService(ctx, crClient)
-	testCreateRevision(ctx, crClient)
+	testListServices(ctx, crClient)
+	testCreateService(ctx, crClient)         // Tests the cloudrun.create_service tool with a new service.
+	testCreateServiceRevision(ctx, crClient) // Tests the cloudrun.create_service tool with a preexisting service.
 	testCreateServiceFromSource(ctx, crClient)
 }
 
@@ -364,6 +366,112 @@ func testUploadSource(ctx context.Context, csClient cloudstorageclient.CloudStor
 	log.Println("Directory upload verification successful.")
 }
 
+func testListServices(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
+	log.Println("--- Running test: ListServices ---")
+	const serverURL = "http://localhost:8080"
+
+	mcpClient, err := mcpclient.NewStreamableHttpClient(serverURL, nil)
+	if err != nil {
+		log.Fatalf("Failed to create mcp-go HTTP client: %v", err)
+	}
+
+	if err := mcpClient.Start(ctx); err != nil {
+		log.Fatalf("Failed to start mcp-go client: %v", err)
+	}
+	defer mcpClient.Close()
+
+	var initReq mcp.InitializeRequest
+	initReq.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
+	initReq.Params.ClientInfo = mcp.Implementation{
+		Name:    "integration-test-client",
+		Version: "1.0.0",
+	}
+
+	if _, err := mcpClient.Initialize(ctx, initReq); err != nil {
+		log.Fatalf("Failed to initialize client: %v", err)
+	}
+
+	projectID := os.Getenv("GCP_PROJECT_ID")
+	if projectID == "" {
+		log.Fatal("GCP_PROJECT_ID environment variable not set")
+	}
+
+	serviceNames := []string{
+		"integration-test-service-1",
+		"integration-test-service-2",
+	}
+
+	// Create services for the test
+	for _, serviceName := range serviceNames {
+		_, err = crClient.CreateService(ctx, projectID, "us-central1", serviceName, "us-docker.pkg.dev/cloudrun/container/hello", 8080)
+		if err != nil {
+			log.Fatalf("Failed to create service: %v", err)
+		}
+	}
+
+	// Clean up the services
+	defer func() {
+		log.Println("Cleaning up services...")
+		for _, serviceName := range serviceNames {
+			err := crClient.DeleteService(ctx, projectID, "us-central1", serviceName)
+			if err != nil {
+				log.Printf("Failed to delete service: %v", err)
+			}
+		}
+	}()
+
+	args := map[string]any{
+		"project_id": projectID,
+		"location":   "us-central1",
+	}
+
+	var req mcp.CallToolRequest
+	req.Params.Name = "cloudrun.list_services"
+	req.Params.Arguments = args
+
+	log.Println("Calling tool 'cloudrun.list_services'...")
+
+	resp, err := mcpClient.CallTool(ctx, req)
+	if err != nil {
+		log.Fatalf("Tool call failed: %v", err)
+	}
+
+	if resp.IsError {
+		log.Fatalf("Tool returned an error: %v", resp.Content)
+	}
+
+	log.Println("Tool call successful.")
+
+	// Extract output from resp and verify services were listed
+	interfaceList, _ := resp.StructuredContent.([]interface{})
+	gotServiceList := make(map[string]string)
+	for _, item := range interfaceList {
+		serviceMap, ok := item.(map[string]interface{})
+		if !ok {
+			log.Fatalf("An item in the StructuredContent list was not a map. Got: %T", item)
+		}
+
+		name, ok := serviceMap["name"].(string)
+		if !ok {
+			log.Fatalf("Service name is not a string. Got: %T", serviceMap["name"])
+		}
+
+		parts := strings.Split(name, "/")
+		serviceName := parts[len(parts)-1]
+		gotServiceList[serviceName] = ""
+	}
+
+	for _, serviceName := range serviceNames {
+		if _, ok := gotServiceList[serviceName]; !ok {
+			log.Fatalf("Expected service %q was not found in the response.", serviceName)
+		}
+
+	}
+
+	log.Println("Services verification successful.")
+}
+
+// Tests the cloudrun.create_service tool with a new service.
 func testCreateService(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
 	log.Println("--- Running test: CreateService ---")
 	const serverURL = "http://localhost:8080"
@@ -395,11 +503,12 @@ func testCreateService(ctx context.Context, crClient cloudrunclient.CloudRunClie
 	}
 
 	args := map[string]any{
-		"project_id":   projectID,
-		"location":     "us-central1",
-		"service_name": "integration-test-service",
-		"image_url":    "us-docker.pkg.dev/cloudrun/container/hello",
-		"port":         8080,
+		"project_id":    projectID,
+		"location":      "us-central1",
+		"service_name":  "integration-test-service",
+		"revision_name": "integration-test-service-revision-v1",
+		"image_url":     "us-docker.pkg.dev/cloudrun/container/hello",
+		"port":          8080,
 	}
 
 	var req mcp.CallToolRequest
@@ -438,8 +547,9 @@ func testCreateService(ctx context.Context, crClient cloudrunclient.CloudRunClie
 	log.Println("Service verification successful.")
 }
 
-func testCreateRevision(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
-	log.Println("--- Running test: CreateRevision ---")
+// Tests the cloudrun.create_service tool with a preexisting service.
+func testCreateServiceRevision(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
+	log.Println("--- Running test: CreateServiceRevision ---")
 	const serverURL = "http://localhost:8080"
 
 	mcpClient, err := mcpclient.NewStreamableHttpClient(serverURL, nil)
@@ -470,7 +580,7 @@ func testCreateRevision(ctx context.Context, crClient cloudrunclient.CloudRunCli
 
 	serviceName := "integration-test-service-revision"
 
-	// Create a service for the test
+	// Create a preexisting service for the test
 	_, err = crClient.CreateService(ctx, projectID, "us-central1", serviceName, "us-docker.pkg.dev/cloudrun/container/hello", 8080)
 	if err != nil {
 		log.Fatalf("Failed to create service: %v", err)
@@ -495,10 +605,10 @@ func testCreateRevision(ctx context.Context, crClient cloudrunclient.CloudRunCli
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudrun.create_revision"
+	req.Params.Name = "cloudrun.create_service"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudrun.create_revision'...")
+	log.Println("Calling tool 'cloudrun.create_service'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {

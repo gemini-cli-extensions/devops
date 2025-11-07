@@ -33,18 +33,38 @@ func AddTools(ctx context.Context, server *mcp.Server) error {
 		return fmt.Errorf("cloud run client not found in context")
 	}
 
+	addListServicesTool(server, c)
 	addCreateServiceTool(server, c)
-	addCreateRevisionTool(server, c)
 	addCreateServiceFromSourceTool(server, c)
 	return nil
 }
 
+type ListServicesArgs struct {
+	ProjectID    string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location     string `json:"location" jsonschema:"The Google Cloud location."`
+}
+
+var listServicesToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args ListServicesArgs) (*mcp.CallToolResult, any, error)
+
+func addListServicesTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
+	listServicesToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args ListServicesArgs) (*mcp.CallToolResult, any, error) {
+		services, err := crClient.ListServices(ctx, args.ProjectID, args.Location)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to list services: %w", err)
+		}
+		return &mcp.CallToolResult{}, services, nil
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.list_services", Description: "Lists the Cloud Run service in a specified GCP project and location."}, listServicesToolFunc)
+
+}
+
 type CreateServiceArgs struct {
-	ProjectID   string `json:"project_id" jsonschema:"The Google Cloud project ID."`
-	Location    string `json:"location" jsonschema:"The Google Cloud location."`
-	ServiceName string `json:"service_name" jsonschema:"The name of the Cloud Run service."`
-	ImageURL    string `json:"image_url" jsonschema:"The URL of the container image to deploy."`
-	Port        int32  `json:"port,omitempty" jsonschema:"The port the container listens on."`
+	ProjectID    string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location     string `json:"location" jsonschema:"The Google Cloud location."`
+	ServiceName  string `json:"service_name" jsonschema:"The name of the Cloud Run service."`
+	RevisionName string `json:"revision_name" jsonschema:"The name of the Cloud run revision."`
+	ImageURL     string `json:"image_url" jsonschema:"The URL of the container image to deploy."`
+	Port         int32  `json:"port,omitempty" jsonschema:"The port the container listens on."`
 }
 
 var createServiceToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args CreateServiceArgs) (*mcp.CallToolResult, any, error)
@@ -69,34 +89,6 @@ func addCreateServiceTool(server *mcp.Server, crClient cloudrunclient.CloudRunCl
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to get service: %w", err)
 		}
-		service, err = crClient.UpdateService(ctx, args.ProjectID, args.Location, args.ServiceName, args.ImageURL, "", args.Port, service)
-		if err != nil {
-			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to update service with new revision: %w", err)
-		}
-		return &mcp.CallToolResult{}, service, nil
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_service", Description: "Creates a new Cloud Run service from a container image."}, createServiceToolFunc)
-}
-
-type CreateRevisionArgs struct {
-	ProjectID    string `json:"project_id" jsonschema:"The Google Cloud project ID."`
-	Location     string `json:"location" jsonschema:"The Google Cloud location."`
-	ServiceName  string `json:"service_name" jsonschema:"The name of the Cloud Run service."`
-	ImageURL     string `json:"image_url" jsonschema:"The URL of the container image to deploy."`
-	RevisionName string `json:"revision_name" jsonschema:"The name of the Cloud run revision."`
-	Port         int32  `json:"port,omitempty" jsonschema:"The port the container listens on."`
-}
-
-var createRevisionToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args CreateRevisionArgs) (*mcp.CallToolResult, any, error)
-
-func addCreateRevisionTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
-	createRevisionToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateRevisionArgs) (*mcp.CallToolResult, any, error) {
-		// Get the current service to get its template
-		service, err := crClient.GetService(ctx, args.ProjectID, args.Location, args.ServiceName)
-		if err != nil {
-			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to get service: %w", err)
-		}
-		// Update service with new revision.
 		service, err = crClient.UpdateService(ctx, args.ProjectID, args.Location, args.ServiceName, args.ImageURL, args.RevisionName, args.Port, service)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to update service with new revision: %w", err)
@@ -105,9 +97,9 @@ func addCreateRevisionTool(server *mcp.Server, crClient cloudrunclient.CloudRunC
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to get revision: %w", err)
 		}
-		return &mcp.CallToolResult{}, revision, err
+		return &mcp.CallToolResult{}, revision, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_revision", Description: "Creates a new Cloud Run revision for a service with a new Docker image."}, createRevisionToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_service", Description: "Creates a new Cloud Run service from a container image."}, createServiceToolFunc)
 }
 
 type CreateServiceFromSourceArgs struct {

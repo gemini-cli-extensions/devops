@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"os/exec"
 
+	"google.golang.org/api/iterator"
+
 	cloudrun "cloud.google.com/go/run/apiv2"
 	cloudrunpb "cloud.google.com/go/run/apiv2/runpb"
 )
@@ -44,6 +46,7 @@ func ContextWithClient(ctx context.Context, client CloudRunClient) context.Conte
 // CloudRunClient is an interface for interacting with the Cloud Run API.
 type CloudRunClient interface {
 	GetService(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error)
+	ListServices(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error)
 	CreateService(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error)
 	UpdateService(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error)
 	GetRevision(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error)
@@ -109,6 +112,24 @@ func (c *CloudRunClientImpl) CreateService(ctx context.Context, projectID, locat
 		return nil, fmt.Errorf("failed to create service: %w", err)
 	}
 	return op.Wait(ctx)
+}
+
+func (c *CloudRunClientImpl) ListServices(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error) {
+	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
+
+	var services []*cloudrunpb.Service
+	it := c.servicesClient.ListServices(ctx, &cloudrunpb.ListServicesRequest{Parent: parent})
+	for {
+		resp, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to get services: %w", err)
+		}
+		services = append(services, resp)
+	}
+	return services, nil
 }
 
 func (c *CloudRunClientImpl) GetService(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
