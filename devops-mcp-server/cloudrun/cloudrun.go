@@ -99,7 +99,7 @@ func addCreateServiceTool(server *mcp.Server, crClient cloudrunclient.CloudRunCl
 		}
 		return &mcp.CallToolResult{}, revision, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_service", Description: "Creates a new Cloud Run service from a container image."}, createServiceToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_service", Description: "Creates a new Cloud Run service from a container image. This tool may take a couple minutes to finish running."}, createServiceToolFunc)
 }
 
 type CreateServiceFromSourceArgs struct {
@@ -124,5 +124,5 @@ func addCreateServiceFromSourceTool(server *mcp.Server, crClient cloudrunclient.
 		}
 		return &mcp.CallToolResult{}, service, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_service_from_source", Description: "Creates a new Cloud Run service or updates an existing one from source."}, createServiceFromSourceToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_service_from_source", Description: "Creates a new Cloud Run service or updates an existing one from source. This tool may take a couple minutes to finish running."}, createServiceFromSourceToolFunc)
 }

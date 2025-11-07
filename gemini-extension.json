@@ -5,7 +5,7 @@
   "mcpServers": {
     "devops-mcp": {
       "command": "${extensionPath}${/}bin${/}devops-mcp-server",
-      "timeout": 30000
+      "timeout": 300000
     }
   }
 }
