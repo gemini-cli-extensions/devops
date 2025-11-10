@@ -83,8 +83,18 @@ func TestAddScanSecretsTool(t *testing.T) {
 				t.Errorf("scanSecretsToolFunc() error = %q, expectedError %q", err.Error(), tt.expectedError)
 			}
 			
-			if !tt.expectErr && res.(string) != tt.expectedResult {
-				t.Errorf("scanSecretsToolFunc() result = %q, expectedResult %q", res.(string), tt.expectedResult)
+			if !tt.expectErr {
+				resultMap, ok := res.(map[string]any)
+				if !ok {
+					t.Fatalf("Unexpected result type: %T", res)
+				}
+				report, ok := resultMap["report"].(string)
+				if !ok {
+					t.Fatalf("Unexpected report type: %T", resultMap["report"])
+				}
+				if report != tt.expectedResult {
+					t.Errorf("scanSecretsToolFunc() result = %q, expectedResult %q", report, tt.expectedResult)
+				}
 			}
 		})
 	}

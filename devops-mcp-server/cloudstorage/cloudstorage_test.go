@@ -78,9 +78,13 @@ func TestAddListBucketsTool(t *testing.T) {
 			}
 
 			if !tc.expectErr {
-				buckets, ok := res.([]string)
+				resultMap, ok := res.(map[string]any)
 				if !ok {
-					t.Errorf("Unexpected result type: %T", res)
+					t.Fatalf("Unexpected result type: %T", res)
+				}
+				buckets, ok := resultMap["buckets"].([]string)
+				if !ok {
+					t.Fatalf("Unexpected buckets type: %T", resultMap["buckets"])
 				}
 				if len(buckets) != len(tc.expectedResult) {
 					t.Errorf("Expected result length %d, got %d", len(tc.expectedResult), len(buckets))
