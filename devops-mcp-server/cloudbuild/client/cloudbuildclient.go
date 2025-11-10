@@ -49,7 +49,7 @@ type CloudBuildClient interface {
 	CreateBuildTrigger(ctx context.Context, projectID, location, triggerID, repoLink, branch, tag, serviceAccount string) (*build.BuildTrigger, error)
 	GetLatestBuildForTrigger(ctx context.Context, projectID, location, triggerID string) (*cloudbuildpb.Build, error)
 	ListBuildTriggers(ctx context.Context, projectID, location string) ([]*cloudbuildpb.BuildTrigger, error)
-	RunBuildTrigger(ctx context.Context, projectID, location, triggerID string) (*cloudbuild.RunBuildTriggerOperation, error)
+	RunBuildTrigger(ctx context.Context, projectID, location, triggerID, branch, tag, commitSha string) (*cloudbuild.RunBuildTriggerOperation, error)
 }
 
 // NewCloudBuildClient creates a new Cloud Build client.
@@ -149,9 +149,25 @@ func (c *CloudBuildClientImpl) ListBuildTriggers(ctx context.Context, projectID,
 }
 
 // RunBuildTrigger runs a build trigger.
-func (c *CloudBuildClientImpl) RunBuildTrigger(ctx context.Context, projectID, location, triggerID string) (*cloudbuild.RunBuildTriggerOperation, error) {
+func (c *CloudBuildClientImpl) RunBuildTrigger(ctx context.Context, projectID, location, triggerID, branch, tag, commitSha string) (*cloudbuild.RunBuildTriggerOperation, error) {
+	if (branch == "") == (tag == "") == (commitSha == "") {
+		return nil, fmt.Errorf("exactly one of 'branch' or 'tag' or 'commitSha' must be provided")
+	}
 	req := &cloudbuildpb.RunBuildTriggerRequest{
 		Name: fmt.Sprintf("projects/%s/locations/%s/triggers/%s", projectID, location, triggerID),
+	}
+	if branch != "" {
+		req.Source = &cloudbuildpb.RepoSource{
+			Revision: &cloudbuildpb.RepoSource_BranchName{BranchName: branch},
+		}
+	} else if tag != "" {
+		req.Source = &cloudbuildpb.RepoSource{
+			Revision: &cloudbuildpb.RepoSource_TagName{TagName: tag},
+		}
+	} else {
+		req.Source = &cloudbuildpb.RepoSource{
+			Revision: &cloudbuildpb.RepoSource_CommitSha{CommitSha: commitSha},
+		}
 	}
 	op, err := c.v1client.RunBuildTrigger(ctx, req)
 	if err != nil {

@@ -50,13 +50,16 @@ type RunTriggerArgs struct {
 	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
 	Location  string `json:"location" jsonschema:"The Google Cloud location for the trigger."`
 	TriggerID string `json:"trigger_id" jsonschema:"The ID of the trigger."`
+	Branch    string `json:"branch,omitempty" jsonschema:"The branch to to run the trigger at. Should be regex e.g. '^main$'"`
+	Tag       string `json:"tag,omitempty" jsonschema:"The tag to to run the trigger at. Should be regex e.g. '^nightly$'"`
+	CommitSha string `json:"commit_sha,omitempty" jsonschema:"The commit sha to run the trigger at. Exact commit sha e.g. 12ede13"`
 }
 
 var runTriggerToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args RunTriggerArgs) (*mcp.CallToolResult, any, error)
 
 func addRunTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
 	runTriggerToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args RunTriggerArgs) (*mcp.CallToolResult, any, error) {
-		res, err := cbClient.RunBuildTrigger(ctx, args.ProjectID, args.Location, args.TriggerID)
+		res, err := cbClient.RunBuildTrigger(ctx, args.ProjectID, args.Location, args.TriggerID, args.Branch, args.Tag, args.CommitSha)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to run trigger: %w", err)
 		}
@@ -78,7 +81,7 @@ func addListTriggersTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuil
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to list triggers: %w", err)
 		}
-		return &mcp.CallToolResult{}, res, nil
+		return &mcp.CallToolResult{}, map[string]any{"triggers": res}, nil
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.list_triggers", Description: "Lists all Cloud Build triggers in a given location."}, listTriggersToolFunc)
 }
@@ -89,8 +92,8 @@ type CreateTriggerArgs struct {
 	TriggerID      string `json:"trigger_id" jsonschema:"The ID of the trigger."`
 	RepoLink       string `json:"repo_link" jsonschema:"The Developer Connect repository link."`
 	ServiceAccount string `json:"service_account" jsonschema:"The service account to use for the build."`
-	Branch         string `json:"branch,omitempty" jsonschema:"The branch to filter on."`
-	Tag            string `json:"tag,omitempty" jsonschema:"The tag to filter on."`
+	Branch         string `json:"branch,omitempty" jsonschema:"Create builds on push to branch. Should be regex e.g. '^main$'"`
+	Tag            string `json:"tag,omitempty" jsonschema:"Create builds on new tag push. Should be regex e.g. '^nightly$'"`
 }
 
 var createTriggerToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args CreateTriggerArgs) (*mcp.CallToolResult, any, error)

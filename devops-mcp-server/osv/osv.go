@@ -47,7 +47,7 @@ func addScanSecretsTool(server *mcp.Server, oClient osvclient.OsvClient) {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to scan for secrets: %w", err)
 		}
 
-		return &mcp.CallToolResult{}, res, nil
+		return &mcp.CallToolResult{}, map[string]any{"report": res}, nil
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "osv.scan_secrets", Description: "Scans the specified root directory for secrets using OSV."}, scanSecretsToolFunc)
 }

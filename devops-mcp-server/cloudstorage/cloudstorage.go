@@ -54,7 +54,7 @@ func addListBucketsTool(server *mcp.Server, csClient cloudstorageclient.CloudSto
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to list buckets: %w", err)
 		}
-		return &mcp.CallToolResult{}, res, nil
+		return &mcp.CallToolResult{}, map[string]any{"buckets": res}, nil
 
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.list_buckets", Description: "Lists Cloud Storage buckets in a specified project."}, listBucketsToolFunc)

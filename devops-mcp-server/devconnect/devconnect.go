@@ -88,5 +88,5 @@ func addSetupDevConnectConnectionTool(server *mcp.Server, dcClient devconnectcli
 
 		return &mcp.CallToolResult{}, ResultWrapper{Message: "Created connection, authorize the connection by visiting the `installationUri`. After authorizing, call the AddDevConnectGitRepoLink fo finalize.", Result: newConnection}, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.setup_connection", Description: "Sets up a Developer Connect connection and git repository link."}, setupDevConnectConnectionToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.setup_connection", Description: "Sets up a Developer Connect connection."}, setupDevConnectConnectionToolFunc)
 }

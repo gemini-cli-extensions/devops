@@ -24,6 +24,7 @@ import (
 	"devops-mcp-server/cloudrun"
 	"devops-mcp-server/cloudstorage"
 	"devops-mcp-server/devconnect"
+	"devops-mcp-server/osv"
 	"devops-mcp-server/prompts"
 
 	artifactregistryclient "devops-mcp-server/artifactregistry/client"
@@ -32,6 +33,7 @@ import (
 	cloudstorageclient "devops-mcp-server/cloudstorage/client"
 	developerconnectclient "devops-mcp-server/devconnect/client"
 	iamclient "devops-mcp-server/iam/client"
+	osvclient "devops-mcp-server/osv/client"
 	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
 
 	_ "embed"
@@ -131,6 +133,16 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	ctxWithDeps = cloudbuildclient.ContextWithClient(ctxWithDeps, cbClient)
 
 	if err := cloudbuild.AddTools(ctxWithDeps, server); err != nil {
+		return err
+	}
+
+	osvClient, err := osvclient.NewClient(ctxWithDeps)
+	if err != nil {
+		return fmt.Errorf("failed to create OSV client: %w", err)
+	}
+	ctxWithDeps = osvclient.ContextWithClient(ctxWithDeps, osvClient)
+
+	if err := osv.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
 	return nil

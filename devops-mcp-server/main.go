@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	httpAddr  = flag.String("http", "", "if set, use streamable HTTP at this address, instead of stdin/stdout")
+	httpAddr  = flag.String("http", "", "if set, use streamable HTTP at this address, instead of stdin/stdout. e.g. localhost:8080")
 	pprofAddr = flag.String("pprof", "", "if set, host the pprof debugging server at this address")
 )
 

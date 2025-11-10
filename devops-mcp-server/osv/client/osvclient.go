@@ -21,7 +21,7 @@ import (
 	"log"
 
 	scalibr "github.com/google/osv-scalibr"
-	"github.com/google/osv-scalibr/extractor/filesystem/secrets"
+	scalibrsystem "github.com/google/osv-scalibr/extractor/filesystem/list"
 	"github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
 )
@@ -56,14 +56,22 @@ type OsvClientImpl struct {
 
 // NewClient creates a new Client.
 func NewClient(ctx context.Context) (OsvClient, error) {
+
 	capab := &plugin.Capabilities{OS: plugin.OSLinux}
 	return &OsvClientImpl{capab}, nil
 }
 
 func (o *OsvClientImpl) ScanSecrets(ctx context.Context, root string) (string, error) {
+	var allSecretPlugins []plugin.Plugin
+	for _, initFns := range scalibrsystem.Secrets {
+		for _, initFn := range initFns {
+			// initFn() creates the actual extractor instance
+			allSecretPlugins = append(allSecretPlugins, initFn())
+		}
+	}
 	// 1. Configure the scan
 	cfg := &scalibr.ScanConfig{
-		Plugins: []plugin.Plugin{&secrets.Extractor{}},
+		Plugins: allSecretPlugins,
 		// Define the scan target: the current directory ("./").
 		ScanRoots: fs.RealFSScanRoots(root),
 
