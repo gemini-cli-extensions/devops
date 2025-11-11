@@ -34,14 +34,14 @@ func AddTools(ctx context.Context, server *mcp.Server) error {
 	}
 
 	addListServicesTool(server, c)
-	addCreateServiceTool(server, c)
-	addCreateServiceFromSourceTool(server, c)
+	addDeployToCloudRunFromImageTool(server, c)
+	addDeployToCloudRunFromSourceTool(server, c)
 	return nil
 }
 
 type ListServicesArgs struct {
-	ProjectID    string `json:"project_id" jsonschema:"The Google Cloud project ID."`
-	Location     string `json:"location" jsonschema:"The Google Cloud location."`
+	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location  string `json:"location" jsonschema:"The Google Cloud location."`
 }
 
 var listServicesToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args ListServicesArgs) (*mcp.CallToolResult, any, error)
@@ -58,7 +58,7 @@ func addListServicesTool(server *mcp.Server, crClient cloudrunclient.CloudRunCli
 
 }
 
-type CreateServiceArgs struct {
+type DeployToCloudRunFromImageArgs struct {
 	ProjectID    string `json:"project_id" jsonschema:"The Google Cloud project ID."`
 	Location     string `json:"location" jsonschema:"The Google Cloud location."`
 	ServiceName  string `json:"service_name" jsonschema:"The name of the Cloud Run service."`
@@ -67,10 +67,10 @@ type CreateServiceArgs struct {
 	Port         int32  `json:"port,omitempty" jsonschema:"The port the container listens on."`
 }
 
-var createServiceToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args CreateServiceArgs) (*mcp.CallToolResult, any, error)
+var deployToCloudRunFromImageToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args DeployToCloudRunFromImageArgs) (*mcp.CallToolResult, any, error)
 
-func addCreateServiceTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
-	createServiceToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateServiceArgs) (*mcp.CallToolResult, any, error) {
+func addDeployToCloudRunFromImageTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
+	deployToCloudRunFromImageToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args DeployToCloudRunFromImageArgs) (*mcp.CallToolResult, any, error) {
 		// Attempt to create the service
 		service, err := crClient.CreateService(ctx, args.ProjectID, args.Location, args.ServiceName, args.ImageURL, args.Port)
 		if err == nil {
@@ -99,10 +99,10 @@ func addCreateServiceTool(server *mcp.Server, crClient cloudrunclient.CloudRunCl
 		}
 		return &mcp.CallToolResult{}, revision, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_service", Description: "Creates a new Cloud Run service from a container image. This tool may take a couple minutes to finish running."}, createServiceToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.deploy_to_cloud_run_from_image", Description: "Creates a new Cloud Run service or updates an existing one from a container image. This tool may take a couple minutes to finish running."}, deployToCloudRunFromImageToolFunc)
 }
 
-type CreateServiceFromSourceArgs struct {
+type DeployToCloudRunFromSourceArgs struct {
 	ProjectID   string `json:"project_id" jsonschema:"The Google Cloud project ID."`
 	Location    string `json:"location" jsonschema:"The Google Cloud location."`
 	ServiceName string `json:"service_name" jsonschema:"The name of the Cloud Run service."`
@@ -110,10 +110,10 @@ type CreateServiceFromSourceArgs struct {
 	Port        int32  `json:"port,omitempty" jsonschema:"The port the container listens on."`
 }
 
-var createServiceFromSourceToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args CreateServiceFromSourceArgs) (*mcp.CallToolResult, any, error)
+var deployToCloudRunFromSourceToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args DeployToCloudRunFromSourceArgs) (*mcp.CallToolResult, any, error)
 
-func addCreateServiceFromSourceTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
-	createServiceFromSourceToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateServiceFromSourceArgs) (*mcp.CallToolResult, any, error) {
+func addDeployToCloudRunFromSourceTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
+	deployToCloudRunFromSourceToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args DeployToCloudRunFromSourceArgs) (*mcp.CallToolResult, any, error) {
 		err := crClient.DeployFromSource(ctx, args.ProjectID, args.Location, args.ServiceName, args.Source, args.Port)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create service: %w", err)
@@ -124,5 +124,5 @@ func addCreateServiceFromSourceTool(server *mcp.Server, crClient cloudrunclient.
 		}
 		return &mcp.CallToolResult{}, service, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.create_service_from_source", Description: "Creates a new Cloud Run service or updates an existing one from source. This tool may take a couple minutes to finish running."}, createServiceFromSourceToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.deploy_to_cloud_run_from_source", Description: "Creates a new Cloud Run service or updates an existing one from source. This tool may take a couple minutes to finish running."}, deployToCloudRunFromSourceToolFunc)
 }

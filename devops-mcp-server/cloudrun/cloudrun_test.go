@@ -146,14 +146,14 @@ func TestCreateServiceTool(t *testing.T) {
 
 	tests := []struct {
 		name                   string
-		args                   CreateServiceArgs
+		args                   DeployToCloudRunFromImageArgs
 		setupMocks             func(*mocks.MockCloudRunClient)
 		expectErr              bool
 		expectedErrorSubstring string
 	}{
 		{
 			name: "Success",
-			args: CreateServiceArgs{
+			args: DeployToCloudRunFromImageArgs{
 				ProjectID:   projectID,
 				Location:    location,
 				ServiceName: serviceName,
@@ -169,7 +169,7 @@ func TestCreateServiceTool(t *testing.T) {
 		},
 		{
 			name: "Success with preexisting service",
-			args: CreateServiceArgs{
+			args: DeployToCloudRunFromImageArgs{
 				ProjectID:   projectID,
 				Location:    location,
 				ServiceName: serviceName,
@@ -194,7 +194,7 @@ func TestCreateServiceTool(t *testing.T) {
 		},
 		{
 			name: "Fail creating service",
-			args: CreateServiceArgs{
+			args: DeployToCloudRunFromImageArgs{
 				ProjectID:   projectID,
 				Location:    location,
 				ServiceName: serviceName,
@@ -211,7 +211,7 @@ func TestCreateServiceTool(t *testing.T) {
 		},
 		{
 			name: "Fail to get service",
-			args: CreateServiceArgs{
+			args: DeployToCloudRunFromImageArgs{
 				ProjectID:   projectID,
 				Location:    location,
 				ServiceName: serviceName,
@@ -231,7 +231,7 @@ func TestCreateServiceTool(t *testing.T) {
 		},
 		{
 			name: "Fail to get update prexisting service",
-			args: CreateServiceArgs{
+			args: DeployToCloudRunFromImageArgs{
 				ProjectID:   projectID,
 				Location:    location,
 				ServiceName: serviceName,
@@ -254,7 +254,7 @@ func TestCreateServiceTool(t *testing.T) {
 		},
 		{
 			name: "Fail to get revision after updating service",
-			args: CreateServiceArgs{
+			args: DeployToCloudRunFromImageArgs{
 				ProjectID:   projectID,
 				Location:    location,
 				ServiceName: serviceName,
@@ -286,9 +286,9 @@ func TestCreateServiceTool(t *testing.T) {
 			tc.setupMocks(mockClient)
 
 			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-			addCreateServiceTool(server, mockClient)
+			addDeployToCloudRunFromImageTool(server, mockClient)
 
-			_, _, err := createServiceToolFunc(ctx, nil, tc.args)
+			_, _, err := deployToCloudRunFromImageToolFunc(ctx, nil, tc.args)
 
 			if (err != nil) != tc.expectErr {
 				t.Errorf("createServiceToolFunc() error = %v, expectErr %v", err, tc.expectErr)
@@ -314,14 +314,14 @@ func TestCreateServiceFromSourceTool(t *testing.T) {
 
 	tests := []struct {
 		name                   string
-		args                   CreateServiceFromSourceArgs
+		args                   DeployToCloudRunFromSourceArgs
 		setupMocks             func(*mocks.MockCloudRunClient)
 		expectErr              bool
 		expectedErrorSubstring string
 	}{
 		{
 			name: "Success",
-			args: CreateServiceFromSourceArgs{
+			args: DeployToCloudRunFromSourceArgs{
 				ProjectID:   projectID,
 				Location:    location,
 				ServiceName: serviceName,
@@ -339,7 +339,7 @@ func TestCreateServiceFromSourceTool(t *testing.T) {
 		},
 		{
 			name: "Failed to deploy from source",
-			args: CreateServiceFromSourceArgs{
+			args: DeployToCloudRunFromSourceArgs{
 				ProjectID:   projectID,
 				Location:    location,
 				ServiceName: serviceName,
@@ -358,7 +358,7 @@ func TestCreateServiceFromSourceTool(t *testing.T) {
 		},
 		{
 			name: "Failed to get deployed service",
-			args: CreateServiceFromSourceArgs{
+			args: DeployToCloudRunFromSourceArgs{
 				ProjectID:   projectID,
 				Location:    location,
 				ServiceName: serviceName,
@@ -383,9 +383,9 @@ func TestCreateServiceFromSourceTool(t *testing.T) {
 			tc.setupMocks(mockClient)
 
 			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-			addCreateServiceFromSourceTool(server, mockClient)
+			addDeployToCloudRunFromSourceTool(server, mockClient)
 
-			_, _, err := createServiceFromSourceToolFunc(ctx, nil, tc.args)
+			_, _, err := deployToCloudRunFromSourceToolFunc(ctx, nil, tc.args)
 
 			if (err != nil) != tc.expectErr {
 				t.Errorf("createServiceFromSourceToolFunc() error = %v, expectErr %v", err, tc.expectErr)

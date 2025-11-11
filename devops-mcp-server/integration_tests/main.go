@@ -52,9 +52,9 @@ func main() {
 	testUploadSource(ctx, csClient)
 	// Cloud Run Tests
 	testListServices(ctx, crClient)
-	testCreateService(ctx, crClient)         // Tests the cloudrun.create_service tool with a new service.
-	testCreateServiceRevision(ctx, crClient) // Tests the cloudrun.create_service tool with a preexisting service.
-	testCreateServiceFromSource(ctx, crClient)
+	testDeployToCloudRunFromImage(ctx, crClient)         // Tests the cloudrun.deploy_to_cloud_run_from_image tool with a new service.
+	testDeployToCloudRunFromImageNewRevision(ctx, crClient) // Tests the cloudrun.deploy_to_cloud_run_from_image tool with a preexisting service.
+	testDeployToCloudRunFromSource(ctx, crClient)
 }
 
 func createMCPServer(ctx context.Context) (*mcpserver.Server, artifactregistryclient.ArtifactRegistryClient, cloudstorageclient.CloudStorageClient, cloudrunclient.CloudRunClient) {
@@ -471,8 +471,8 @@ func testListServices(ctx context.Context, crClient cloudrunclient.CloudRunClien
 	log.Println("Services verification successful.")
 }
 
-// Tests the cloudrun.create_service tool with a new service.
-func testCreateService(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
+// Tests the cloudrun.deploy_to_cloud_run_from_image tool with a new service.
+func testDeployToCloudRunFromImage(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
 	log.Println("--- Running test: CreateService ---")
 	const serverURL = "http://localhost:8080"
 
@@ -512,10 +512,10 @@ func testCreateService(ctx context.Context, crClient cloudrunclient.CloudRunClie
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudrun.create_service"
+	req.Params.Name = "cloudrun.deploy_to_cloud_run_from_image"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudrun.create_service'...")
+	log.Println("Calling tool 'cloudrun.deploy_to_cloud_run_from_image'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -547,8 +547,8 @@ func testCreateService(ctx context.Context, crClient cloudrunclient.CloudRunClie
 	log.Println("Service verification successful.")
 }
 
-// Tests the cloudrun.create_service tool with a preexisting service.
-func testCreateServiceRevision(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
+// Tests the cloudrun.deploy_to_cloud_run_from_image tool with a preexisting service.
+func testDeployToCloudRunFromImageNewRevision(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
 	log.Println("--- Running test: CreateServiceRevision ---")
 	const serverURL = "http://localhost:8080"
 
@@ -605,10 +605,10 @@ func testCreateServiceRevision(ctx context.Context, crClient cloudrunclient.Clou
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudrun.create_service"
+	req.Params.Name = "cloudrun.deploy_to_cloud_run_from_image"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudrun.create_service'...")
+	log.Println("Calling tool 'cloudrun.deploy_to_cloud_run_from_image'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -639,8 +639,8 @@ func testCreateServiceRevision(ctx context.Context, crClient cloudrunclient.Clou
 	log.Println("Revision verification successful.")
 }
 
-func testCreateServiceFromSource(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
-	log.Println("--- Running test: CreateServiceFromSource ---")
+func testDeployToCloudRunFromSource(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
+	log.Println("--- Running test: DeployToCloudRunFromSource ---")
 	const serverURL = "http://localhost:8080"
 
 	mcpClient, err := mcpclient.NewStreamableHttpClient(serverURL, nil)
@@ -717,10 +717,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudrun.create_service_from_source"
+	req.Params.Name = "cloudrun.deploy_to_cloud_run_from_source"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudrun.create_service_from_source'...")
+	log.Println("Calling tool 'cloudrun.deploy_to_cloud_run_from_source'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
