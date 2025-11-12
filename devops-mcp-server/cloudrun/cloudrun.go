@@ -52,7 +52,7 @@ func addListServicesTool(server *mcp.Server, crClient cloudrunclient.CloudRunCli
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to list services: %w", err)
 		}
-		return &mcp.CallToolResult{}, services, nil
+		return &mcp.CallToolResult{}, map[string]any{"services": services}, nil
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.list_services", Description: "Lists the Cloud Run service in a specified GCP project and location."}, listServicesToolFunc)
 

@@ -124,9 +124,13 @@ func TestListServicesTool(t *testing.T) {
 			}
 
 			if !tc.expectErr {
-				services, ok := result.([]*cloudrunpb.Service)
+				resultMap, ok := result.(map[string]any)
 				if !ok {
-					t.Errorf("listServicesToolFunc() result = %T, want %T", result, []*cloudrunpb.Service{})
+					t.Fatalf("Unexpected result type: %T", result)
+				}
+				services, ok := resultMap["services"].([]*cloudrunpb.Service)
+				if !ok {
+					t.Fatalf("Unexpected services type: %T", resultMap["services"])
 				}
 				if len(services) != len(tc.expectedServices) {
 					t.Errorf("listServicesToolFunc() len(services) = %d, want %d", len(services), len(tc.expectedServices))

@@ -258,12 +258,20 @@ func testListBuckets(ctx context.Context, csClient cloudstorageclient.CloudStora
 	log.Println("Tool call successful.")
 
 	// Extract output from resp and verify buckets were listed
-	interfaceList, _ := resp.StructuredContent.([]interface{})
+	contentMap, ok := resp.StructuredContent.(map[string]interface{})
+	if !ok {
+		log.Fatalf("StructuredContent was not a map. Got: %T", resp.StructuredContent)
+	}
+	buckets, ok := contentMap["buckets"].([]interface{})
+	if !ok {
+		log.Fatalf("Content map did not contain a 'buckets' key with a list of buckets. Got: %T", contentMap["buckets"])
+	}
+
 	gotBucketList := make(map[string]string)
-	for _, item := range interfaceList {
+	for _, item := range buckets {
 		bucketName, ok := item.(string)
 		if !ok {
-			log.Fatalf("An item in the StructuredContent list was not a string. Got: %T", item)
+			log.Fatalf("An item in the buckets list was not a string. Got: %T", item)
 		}
 		gotBucketList[bucketName] = ""
 	}
@@ -457,12 +465,20 @@ func testListServices(ctx context.Context, crClient cloudrunclient.CloudRunClien
 	log.Println("Tool call successful.")
 
 	// Extract output from resp and verify services were listed
-	interfaceList, _ := resp.StructuredContent.([]interface{})
+	contentMap, ok := resp.StructuredContent.(map[string]interface{})
+	if !ok {
+		log.Fatalf("StructuredContent was not a map. Got: %T", resp.StructuredContent)
+	}
+	services, ok := contentMap["services"].([]interface{})
+	if !ok {
+		log.Fatalf("Content map did not contain a 'services' key with a list of services. Got: %T", contentMap["services"])
+	}
+
 	gotServiceList := make(map[string]string)
-	for _, item := range interfaceList {
+	for _, item := range services {
 		serviceMap, ok := item.(map[string]interface{})
 		if !ok {
-			log.Fatalf("An item in the StructuredContent list was not a map. Got: %T", item)
+			log.Fatalf("An item in the services list was not a map. Got: %T", item)
 		}
 
 		name, ok := serviceMap["name"].(string)
