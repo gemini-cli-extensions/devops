@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/artifactregistry v1.17.2
 	cloud.google.com/go/auth v0.17.0
 	cloud.google.com/go/cloudbuild v1.23.1
-	cloud.google.com/go/developerconnect v0.4.1
 	cloud.google.com/go/resourcemanager v1.10.7
 	cloud.google.com/go/run v1.12.1
 	cloud.google.com/go/storage v1.57.0
@@ -55,7 +54,7 @@ require (
 	github.com/cncf/xds/go v0.0.0-20251014123835-2ee22ca58382 // indirect
 	github.com/compose-spec/compose-go/v2 v2.8.1 // indirect
 	github.com/containerd/cgroups/v3 v3.0.5 // indirect
-	github.com/containerd/containerd v1.7.23 // indirect
+	github.com/containerd/containerd v1.7.29 // indirect
 	github.com/containerd/containerd/api v1.9.0 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
