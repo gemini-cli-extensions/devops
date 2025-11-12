@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/artifactregistry v1.17.2
 	cloud.google.com/go/auth v0.17.0
 	cloud.google.com/go/cloudbuild v1.23.1
-	cloud.google.com/go/developerconnect v0.4.1
 	cloud.google.com/go/resourcemanager v1.10.7
 	cloud.google.com/go/run v1.12.1
 	cloud.google.com/go/storage v1.57.0
@@ -96,7 +95,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-restruct/restruct v1.2.0-alpha // indirect
-	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
