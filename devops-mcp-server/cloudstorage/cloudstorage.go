@@ -82,6 +82,11 @@ func addUploadSourceTool(server *mcp.Server, csClient cloudstorageclient.CloudSt
 			if err != nil {
 				return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create bucket: %w", err)
 			}
+		} else {
+			// Delete all existing objects in bucket
+			if err := csClient.DeleteObjects(ctx, args.BucketName); err != nil {
+				return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to delete objects in bucket: %w", err)
+			}
 		}
 
 		// Upload all files in source path to destination directory in bucket.

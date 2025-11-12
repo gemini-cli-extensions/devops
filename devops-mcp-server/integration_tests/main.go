@@ -357,10 +357,9 @@ func testUploadSource(ctx context.Context, csClient cloudstorageclient.CloudStor
 	// Clean up the object and bucket
 	defer func() {
 		log.Println("Cleaning up directory...")
-		objectName := fmt.Sprintf("%s/subdir/test-file.txt", destinationDir)
-		err := csClient.DeleteObject(ctx, bucketName, objectName)
+		err := csClient.DeleteObjects(ctx, bucketName)
 		if err != nil {
-			log.Printf("Failed to delete object: %v", err)
+			log.Printf("Failed to delete objects: %v", err)
 		}
 		log.Println("Cleaning up bucket...")
 		err = csClient.DeleteBucket(ctx, bucketName)

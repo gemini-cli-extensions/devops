@@ -27,7 +27,7 @@ type MockCloudStorageClient struct {
 	UploadFileFunc        func(ctx context.Context, bucketName, objectName string, file *os.File) error
 	CheckObjectExistsFunc func(ctx context.Context, bucketName, objectName string) error
 	DeleteBucketFunc      func(ctx context.Context, bucketName string) error
-	DeleteObjectFunc      func(ctx context.Context, bucketName, objectName string) error
+	DeleteObjectsFunc      func(ctx context.Context, bucketName string) error
 }
 
 // ListBuckets mocks the ListBuckets method.
@@ -45,9 +45,9 @@ func (m *MockCloudStorageClient) DeleteBucket(ctx context.Context, bucketName st
 	return m.DeleteBucketFunc(ctx, bucketName)
 }
 
-// DeleteObject mocks the DeleteObject method.
-func (m *MockCloudStorageClient) DeleteObject(ctx context.Context, bucketName, objectName string) error {
-	return m.DeleteObjectFunc(ctx, bucketName, objectName)
+// DeleteObjects mocks the DeleteObjects method.
+func (m *MockCloudStorageClient) DeleteObjects(ctx context.Context, bucketName string) error {
+	return m.DeleteObjectsFunc(ctx, bucketName)
 }
 
 // CheckBucketExists mocks the CheckBucketExists method.

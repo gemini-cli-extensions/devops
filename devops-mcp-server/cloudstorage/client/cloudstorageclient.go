@@ -58,8 +58,8 @@ type CloudStorageClient interface {
 	CheckObjectExists(ctx context.Context, bucketName, objectName string) error
 	// DeleteBucket deletes a GCS bucket.
 	DeleteBucket(ctx context.Context, bucketName string) error
-	// DeleteObject deletes an object from a GCS bucket.
-	DeleteObject(ctx context.Context, bucketName, objectName string) error
+	// DeleteObjects deletes all objects from a GCS bucket.
+	DeleteObjects(ctx context.Context, bucketName string) error
 }
 
 func NewCloudStorageClient(ctx context.Context) (CloudStorageClient, error) {
@@ -151,13 +151,28 @@ func (c *CloudStorageClientImpl) DeleteBucket(ctx context.Context, bucketName st
 	return nil
 }
 
-// DeleteObject deletes an object from a GCS bucket.
-func (c *CloudStorageClientImpl) DeleteObject(ctx context.Context, bucketName, objectName string) error {
+// DeleteObjects deletes all objects from a GCS bucket.
+func (c *CloudStorageClientImpl) DeleteObjects(ctx context.Context, bucketName string) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	if err := c.v1client.Bucket(bucketName).Object(objectName).Delete(ctx); err != nil {
-		return fmt.Errorf("failed to delete object: %w", err)
+	it := c.v1client.Bucket(bucketName).Objects(ctx, nil)
+	var objectNames []string
+	for {
+		object, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		objectNames = append(objectNames, object.Name)
+	}
+
+	for _, name := range objectNames {
+		if err := c.v1client.Bucket(bucketName).Object(name).Delete(ctx); err != nil {
+			return fmt.Errorf("failed to delete object %s: %w", name, err)
+		}
 	}
 	return nil
 }
