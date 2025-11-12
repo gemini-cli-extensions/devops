@@ -20,15 +20,15 @@ import (
 
 	"devops-mcp-server/devconnect/client/mocks"
 
-	devconnectpb "cloud.google.com/go/developerconnect/apiv1/developerconnectpb"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"google.golang.org/api/developerconnect/v1"
 )
 
 func TestSetupDevConnectConnection_ExistingLink(t *testing.T) {
 	mockClient := &mocks.MockDevConnectClient{
-		FindGitRepositoryLinksForGitRepoFunc: func(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error) {
-			return []*devconnectpb.GitRepositoryLink{
-				&devconnectpb.GitRepositoryLink{Name: "existing-link"},
+		FindGitRepositoryLinksForGitRepoFunc: func(ctx context.Context, projectID, location, repoURI string) ([]*developerconnect.GitRepositoryLink, error) {
+			return []*developerconnect.GitRepositoryLink{
+				{Name: "existing-link"},
 			}, nil
 		},
 	}
@@ -52,7 +52,7 @@ func TestSetupDevConnectConnection_ExistingLink(t *testing.T) {
 		t.Fatalf("result is not of the expected type")
 	}
 
-	link, ok := resultWrapper.Result.(*devconnectpb.GitRepositoryLink)
+	link, ok := resultWrapper.Result.(*developerconnect.GitRepositoryLink)
 	if !ok {
 		t.Fatalf("result is not of the expected type for links")
 	}
@@ -64,11 +64,11 @@ func TestSetupDevConnectConnection_ExistingLink(t *testing.T) {
 
 func TestSetupDevConnectConnection_NoExistingLink_NoExistingConnection(t *testing.T) {
 	mockClient := &mocks.MockDevConnectClient{
-		FindGitRepositoryLinksForGitRepoFunc: func(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error) {
-			return []*devconnectpb.GitRepositoryLink{}, nil
+		FindGitRepositoryLinksForGitRepoFunc: func(ctx context.Context, projectID, location, repoURI string) ([]*developerconnect.GitRepositoryLink, error) {
+			return []*developerconnect.GitRepositoryLink{}, nil
 		},
-		CreateConnectionFunc: func(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error) {
-			return &devconnectpb.Connection{Name: "projects/test-project/locations/us-central1/connections/mcp-connection"}, nil
+		CreateConnectionFunc: func(ctx context.Context, projectID, location, connectionID string) (*developerconnect.Connection, error) {
+			return &developerconnect.Connection{Name: "projects/test-project/locations/us-central1/connections/mcp-connection"}, nil
 		},
 	}
 
@@ -91,7 +91,7 @@ func TestSetupDevConnectConnection_NoExistingLink_NoExistingConnection(t *testin
 		t.Fatalf("result is not of the expected type")
 	}
 
-	connection, ok := resultWrapper.Result.(*devconnectpb.Connection)
+	connection, ok := resultWrapper.Result.(*developerconnect.Connection)
 	if !ok {
 		t.Fatalf("result is not of the expected type for connections")
 	}
@@ -103,8 +103,8 @@ func TestSetupDevConnectConnection_NoExistingLink_NoExistingConnection(t *testin
 
 func TestAddDevConnectGitRepoLink(t *testing.T) {
 	mockClient := &mocks.MockDevConnectClient{
-		CreateGitRepositoryLinkFunc: func(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectpb.GitRepositoryLink, error) {
-			return &devconnectpb.GitRepositoryLink{Name: "new-link"}, nil
+		CreateGitRepositoryLinkFunc: func(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*developerconnect.GitRepositoryLink, error) {
+			return &developerconnect.GitRepositoryLink{Name: "new-link"}, nil
 		},
 	}
 
@@ -123,7 +123,7 @@ func TestAddDevConnectGitRepoLink(t *testing.T) {
 		t.Fatalf("tool function returned an error: %v", err)
 	}
 
-	link, ok := result.(*devconnectpb.GitRepositoryLink)
+	link, ok := result.(*developerconnect.GitRepositoryLink)
 	if !ok {
 		t.Fatalf("tool function returned incorrect type")
 	}

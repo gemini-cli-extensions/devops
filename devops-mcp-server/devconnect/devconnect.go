@@ -17,6 +17,7 @@ package devconnect
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -47,7 +48,7 @@ var addDevConnectGitRepoLinkToolFunc func(ctx context.Context, req *mcp.CallTool
 func addAddDevConnectGitRepoLinkTool(server *mcp.Server, dcClient devconnectclient.DeveloperConnectClient) {
 	addDevConnectGitRepoLinkToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args AddDevConnectGitRepoLinkArgs) (*mcp.CallToolResult, any, error) {
 		// We need a repoLinkID. We can derive it from the URI.
-		repoLinkID := "link-" + args.GitRepoURI
+		repoLinkID := strings.TrimSuffix(strings.ReplaceAll(strings.TrimPrefix(args.GitRepoURI, "https://github.com/"), "/", "-"), ".git")
 		newLink, err := dcClient.CreateGitRepositoryLink(ctx, args.ProjectID, args.Location, args.ConnectionID, repoLinkID, args.GitRepoURI)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create git repository link: %w", err)
@@ -86,7 +87,7 @@ func addSetupDevConnectConnectionTool(server *mcp.Server, dcClient devconnectcli
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create new connection: %w", err)
 		}
 
-		return &mcp.CallToolResult{}, ResultWrapper{Message: "Created connection, authorize the connection by visiting the `installationUri`. After authorizing, call the AddDevConnectGitRepoLink fo finalize.", Result: newConnection}, nil
+		return &mcp.CallToolResult{}, ResultWrapper{Message: "Created connection, authorize the connection by visiting the `installationUri`. After authorizing, call the AddDevConnectGitRepoLink to finalize.", Result: newConnection}, nil
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.setup_connection", Description: "Sets up a Developer Connect connection."}, setupDevConnectConnectionToolFunc)
 }

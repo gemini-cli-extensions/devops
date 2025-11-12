@@ -17,11 +17,11 @@ package developerconnectclient
 import (
 	"context"
 	"fmt"
+	"time"
 
-	devconnect "cloud.google.com/go/developerconnect/apiv1"
-	devconnectpb "cloud.google.com/go/developerconnect/apiv1/developerconnectpb"
 	"github.com/google/uuid"
-	"google.golang.org/api/iterator"
+	"google.golang.org/api/developerconnect/v1"
+	"encoding/json"
 )
 
 // contextKey is a private type to use as a key for context values.
@@ -45,22 +45,22 @@ func ContextWithClient(ctx context.Context, client DeveloperConnectClient) conte
 
 // DevConnectClient is an interface for interacting with the Developer Connect API.
 type DeveloperConnectClient interface {
-	GetConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error)
-	CreateConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error)
-	ListConnections(ctx context.Context, projectID, location string) ([]*devconnectpb.Connection, error)
-	CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectpb.GitRepositoryLink, error)
-	FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error)
+	GetConnection(ctx context.Context, projectID, location, connectionID string) (*developerconnect.Connection, error)
+	CreateConnection(ctx context.Context, projectID, location, connectionID string) (*developerconnect.Connection, error)
+	ListConnections(ctx context.Context, projectID, location string) ([]*developerconnect.Connection, error)
+	CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*developerconnect.GitRepositoryLink, error)
+	FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) ([]*developerconnect.GitRepositoryLink, error)
 	GenerateUUID() string
 }
 
 // DeveloperConnectClientImpl is the concrete implementation.
 type DeveloperConnectClientImpl struct {
-	v1client *devconnect.Client
+	v1client *developerconnect.Service
 }
 
 // NewDeveloperConnectClient creates a new Developer Connect client.
 func NewDeveloperConnectClient(ctx context.Context) (DeveloperConnectClient, error) {
-	c, err := devconnect.NewClient(ctx)
+	c, err := developerconnect.NewService(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create developer connect client: %v", err)
 	}
@@ -72,111 +72,83 @@ func (c *DeveloperConnectClientImpl) GenerateUUID() string {
 }
 
 // CreateConnection creates a new Developer Connect connection.
-func (c *DeveloperConnectClientImpl) CreateConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error) {
-	req := &devconnectpb.CreateConnectionRequest{
-		Parent:       fmt.Sprintf("projects/%s/locations/%s", projectID, location),
-		ConnectionId: connectionID,
-		Connection: &devconnectpb.Connection{
-			ConnectionConfig: &devconnectpb.Connection_GithubConfig{
-				GithubConfig: &devconnectpb.GitHubConfig{
-					GithubApp: devconnectpb.GitHubConfig_DEVELOPER_CONNECT,
-				},
-			},
+func (c *DeveloperConnectClientImpl) CreateConnection(ctx context.Context, projectID, location, connectionID string) (*developerconnect.Connection, error) {
+	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
+	conn := &developerconnect.Connection{
+		GithubConfig: &developerconnect.GitHubConfig{
+			GithubApp: "DEVELOPER_CONNECT",
 		},
 	}
 
-	// This returns a CreateConnectionOperation object (the LRO wrapper)
-	op, err := c.v1client.CreateConnection(ctx, req)
+	op, err := c.v1client.Projects.Locations.Connections.Create(parent, conn).ConnectionId(connectionID).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("failed to start connection creation: %v", err)
+		return nil, err
 	}
-
-	conn, err := op.Wait(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create connection after waiting: %v", err)
-	}
-
-	return conn, nil
+	var newConn developerconnect.Connection
+	err = c.waitForOperation(ctx, op, &newConn)
+	return &newConn, err
 }
 
 // CreateGitRepositoryLink creates a new Developer Connect Git Repository Link.
-func (c *DeveloperConnectClientImpl) CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*devconnectpb.GitRepositoryLink, error) {
-	req := &devconnectpb.CreateGitRepositoryLinkRequest{
-		Parent:              fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID),
-		GitRepositoryLinkId: repoLinkID,
-		GitRepositoryLink: &devconnectpb.GitRepositoryLink{
-			CloneUri: repoURI,
-		},
+func (c *DeveloperConnectClientImpl) CreateGitRepositoryLink(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*developerconnect.GitRepositoryLink, error) {
+	parent := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
+	link := &developerconnect.GitRepositoryLink{
+		CloneUri: repoURI,
 	}
-
-	// This returns a CreateGitRepositoryLinkOperation object (the LRO wrapper)
-	op, err := c.v1client.CreateGitRepositoryLink(ctx, req)
+	op, err := c.v1client.Projects.Locations.Connections.GitRepositoryLinks.Create(parent, link).GitRepositoryLinkId(repoLinkID).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("failed to start Git Repository Link creation: %v", err)
+		return nil, err
 	}
-
-	// Use the built-in .Wait() method for polling
-	link, err := op.Wait(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Git Repository Link after waiting: %v", err)
-	}
-
-	return link, nil
+	var newLink developerconnect.GitRepositoryLink
+	err = c.waitForOperation(ctx, op, &newLink)
+	return &newLink, err
 }
 
 // GetConnection gets a Developer Connect connection.
-func (c *DeveloperConnectClientImpl) GetConnection(ctx context.Context, projectID, location, connectionID string) (*devconnectpb.Connection, error) {
+func (c *DeveloperConnectClientImpl) GetConnection(ctx context.Context, projectID, location, connectionID string) (*developerconnect.Connection, error) {
 	name := fmt.Sprintf("projects/%s/locations/%s/connections/%s", projectID, location, connectionID)
-	req := &devconnectpb.GetConnectionRequest{
-		Name: name,
-	}
-	return c.v1client.GetConnection(ctx, req)
+	return c.v1client.Projects.Locations.Connections.Get(name).Context(ctx).Do()
 }
 
 // ListConnections lists Developer Connect connections.
-func (c *DeveloperConnectClientImpl) ListConnections(ctx context.Context, projectID, location string) ([]*devconnectpb.Connection, error) {
+func (c *DeveloperConnectClientImpl) ListConnections(ctx context.Context, projectID, location string) ([]*developerconnect.Connection, error) {
 	parent := fmt.Sprintf("projects/%s/locations/%s", projectID, location)
-	req := &devconnectpb.ListConnectionsRequest{
-		Parent: parent,
+	resp, err := c.v1client.Projects.Locations.Connections.List(parent).Context(ctx).Do()
+	if err != nil {
+		return nil, err
 	}
-
-	// Using an iterator from the modern Go client library
-	it := c.v1client.ListConnections(ctx, req)
-	var connections []*devconnectpb.Connection
-	for {
-		conn, err := it.Next()
-		if err == iterator.Done { // Assuming you use the iterator package
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("failed to iterate connections: %v", err)
-		}
-		connections = append(connections, conn)
-	}
-
-	return connections, nil
+	return resp.Connections, nil
 }
 
 // FindGitRepositoryLinksForGitRepo finds already configured Developer Connect Git Repository Links for a particular git repository.
-func (c *DeveloperConnectClientImpl) FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) ([]*devconnectpb.GitRepositoryLink, error) {
+func (c *DeveloperConnectClientImpl) FindGitRepositoryLinksForGitRepo(ctx context.Context, projectID, location, repoURI string) ([]*developerconnect.GitRepositoryLink, error) {
 	parent := fmt.Sprintf("projects/%s/locations/%s/connections/-", projectID, location)
 	filter := fmt.Sprintf("clone_uri=\"%s\"", repoURI)
-	req := &devconnectpb.ListGitRepositoryLinksRequest{
-		Parent: parent,
-		Filter: filter,
+	resp, err := c.v1client.Projects.Locations.Connections.GitRepositoryLinks.List(parent).Filter(filter).Context(ctx).Do()
+	if err != nil {
+		return nil, err
+	}
+	return resp.GitRepositoryLinks, nil
+}
+
+func (c *DeveloperConnectClientImpl) waitForOperation(ctx context.Context, op *developerconnect.Operation, out any) error {
+	for !op.Done {
+		time.Sleep(5 * time.Second)
+		var err error
+		op, err = c.v1client.Projects.Locations.Operations.Get(op.Name).Context(ctx).Do()
+		if err != nil {
+			return fmt.Errorf("failed to poll operation: %w", err)
+		}
 	}
 
-	it := c.v1client.ListGitRepositoryLinks(ctx, req)
-	var links []*devconnectpb.GitRepositoryLink
-	for {
-		link, err := it.Next()
-		if err == iterator.Done { // Assuming you use the iterator package
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("failed to iterate git repository links: %v", err)
-		}
-		links = append(links, link)
+	if op.Error != nil {
+		return fmt.Errorf("operation failed: %s", op.Error.Message)
 	}
-	return links, nil
+
+	b, err := json.Marshal(op.Response)
+	if err != nil {
+		return fmt.Errorf("failed to marshal operation response: %w", err)
+	}
+
+	return json.Unmarshal(b, out)
 }
