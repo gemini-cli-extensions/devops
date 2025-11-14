@@ -385,6 +385,25 @@ func testUploadSource(ctx context.Context, csClient cloudstorageclient.CloudStor
 	}
 
 	log.Println("Directory upload verification successful.")
+
+	// Verify that the bucket is public
+	log.Println("Verifying bucket is public...")
+	policy, err := csClient.GetBucketIamPolicy(ctx, bucketName)
+	if err != nil {
+		log.Fatalf("Failed to get bucket IAM policy: %v", err)
+	}
+
+	found := false
+	for _, member := range policy.Members("roles/storage.objectViewer") {
+		if member == "allUsers" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		log.Fatalf("Bucket is not public")
+	}
+	log.Println("Bucket is public verification successful.")
 }
 
 func testListServices(ctx context.Context, crClient cloudrunclient.CloudRunClient) {

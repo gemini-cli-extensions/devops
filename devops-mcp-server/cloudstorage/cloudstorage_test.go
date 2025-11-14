@@ -139,6 +139,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 		setupMocks             func(t *testing.T, csMock *csmocks.MockCloudStorageClient)
 		expectErr              bool
 		expectedErrorSubstring string
+		expectedResult string
 	}{
 		{
 			name:    "Success case - bucket exists",
@@ -163,6 +164,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 				}
 			},
 			expectErr: false,
+			expectedResult: bucketName,
 		},
 		{
 			name:    "Success case - bucket does not exist",
@@ -187,6 +189,34 @@ func TestAddUploadSourceTool(t *testing.T) {
 				}
 			},
 			expectErr: false,
+			expectedResult: bucketName,
+		},
+				{
+			name:    "Success case - bucket name not provided",
+			setupFS: createTempDir,
+			getArgs: func(sourcePath string) UploadSourceArgs {
+				return UploadSourceArgs{
+					ProjectID:      projectID,
+					DestinationDir: destinationDir,
+					SourcePath:     sourcePath,
+				}
+			},
+			setupMocks: func(t *testing.T, csMock *csmocks.MockCloudStorageClient) {
+				csMock.GenerateUUIDFunc = func() string {
+					return "1"
+				}
+				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
+					return storage.ErrBucketNotExist
+				}
+				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
+					return nil
+				}
+				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
+					return nil
+				}
+			},
+			expectErr: false,
+			expectedResult: projectID + "-1",
 		},
 		{
 			name:    "Fail checking bucket exists case",
@@ -315,7 +345,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 
 			server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
 			addUploadSourceTool(server, csMock)
-			_, _, err := uploadSourceToolFunc(ctx, nil, args)
+			_, res, err := uploadSourceToolFunc(ctx, nil, args)
 
 			if (err != nil) != tc.expectErr {
 				t.Errorf("uploadSourceToolFunc() error = %v, expectErr %v", err, tc.expectErr)
@@ -326,6 +356,20 @@ func TestAddUploadSourceTool(t *testing.T) {
 					t.Errorf("Expected error containing %q, but got nil", tc.expectedErrorSubstring)
 				} else if !strings.Contains(err.Error(), tc.expectedErrorSubstring) {
 					t.Errorf("uploadSourceToolFunc() error = %q, expectedErrorSubstring %q", err.Error(), tc.expectedErrorSubstring)
+				}
+			}
+
+			if !tc.expectErr {
+				resultMap, ok := res.(map[string]any)
+				if !ok {
+					t.Fatalf("Unexpected result type: %T", res)
+				}
+				bucketName, ok := resultMap["bucketName"].(string)
+				if !ok {
+					t.Fatalf("Unexpected type: %T", resultMap["bucketName"])
+				}
+				if bucketName != tc.expectedResult {
+					t.Errorf("Expected result %s, got %s", tc.expectedResult, bucketName)
 				}
 			}
 		})

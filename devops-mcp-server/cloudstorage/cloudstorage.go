@@ -62,7 +62,7 @@ func addListBucketsTool(server *mcp.Server, csClient cloudstorageclient.CloudSto
 
 type UploadSourceArgs struct {
 	ProjectID      string `json:"project_id" jsonschema:"The Google Cloud project ID."`
-	BucketName     string `json:"bucket_name" jsonschema:"The name of the bucket."`
+	BucketName     string `json:"bucket_name,omitempty" jsonschema:"The name of the bucket. Optional."`
 	DestinationDir string `json:"destination_dir" jsonschema:"The name of the destination directory."`
 	SourcePath     string `json:"source_path" jsonschema:"The path to the source directory."`
 }
@@ -71,6 +71,10 @@ var uploadSourceToolFunc func(ctx context.Context, req *mcp.CallToolRequest, arg
 
 func addUploadSourceTool(server *mcp.Server, csClient cloudstorageclient.CloudStorageClient) {
 	uploadSourceToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args UploadSourceArgs) (*mcp.CallToolResult, any, error) {
+		if args.BucketName == "" {
+			args.BucketName = fmt.Sprintf("%s-%s", args.ProjectID, csClient.GenerateUUID())
+		}
+
 		// Check if bucket exists, and create bucket if it does not.
 		err := csClient.CheckBucketExists(ctx, args.BucketName)
 		if err != nil {
@@ -90,7 +94,7 @@ func addUploadSourceTool(server *mcp.Server, csClient cloudstorageclient.CloudSt
 		}
 
 		// Upload all files in source path to destination directory in bucket.
-		return &mcp.CallToolResult{}, nil, filepath.Walk(args.SourcePath, func(path string, info os.FileInfo, err error) error {
+		return &mcp.CallToolResult{}, map[string]any{"bucketName": args.BucketName}, filepath.Walk(args.SourcePath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return fmt.Errorf("failed to access source path: %w", err)
 			}

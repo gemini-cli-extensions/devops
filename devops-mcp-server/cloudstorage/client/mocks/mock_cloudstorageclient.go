@@ -17,17 +17,25 @@ package mocks
 import (
 	"context"
 	"os"
+
+	"cloud.google.com/go/iam"
 )
 
 // MockCloudStorageClient is a mock of CloudStorageClient interface.
 type MockCloudStorageClient struct {
-	ListBucketsFunc       func(ctx context.Context, projectID string) ([]string, error)
-	CheckBucketExistsFunc func(ctx context.Context, bucketName string) error
-	CreateBucketFunc      func(ctx context.Context, projectID, bucketName string) error
-	UploadFileFunc        func(ctx context.Context, bucketName, objectName string, file *os.File) error
-	CheckObjectExistsFunc func(ctx context.Context, bucketName, objectName string) error
-	DeleteBucketFunc      func(ctx context.Context, bucketName string) error
+	GenerateUUIDFunc       func() string
+	ListBucketsFunc        func(ctx context.Context, projectID string) ([]string, error)
+	CheckBucketExistsFunc  func(ctx context.Context, bucketName string) error
+	CreateBucketFunc       func(ctx context.Context, projectID, bucketName string) error
+	UploadFileFunc         func(ctx context.Context, bucketName, objectName string, file *os.File) error
+	CheckObjectExistsFunc  func(ctx context.Context, bucketName, objectName string) error
+	GetBucketIamPolicyFunc func(ctx context.Context, bucketName string) (*iam.Policy, error)
+	DeleteBucketFunc       func(ctx context.Context, bucketName string) error
 	DeleteObjectsFunc      func(ctx context.Context, bucketName string) error
+}
+
+func (m *MockCloudStorageClient) GenerateUUID() string {
+	return m.GenerateUUIDFunc()
 }
 
 // ListBuckets mocks the ListBuckets method.
@@ -38,6 +46,11 @@ func (m *MockCloudStorageClient) ListBuckets(ctx context.Context, projectID stri
 // CheckObjectExists mocks the CheckObjectExists method.
 func (m *MockCloudStorageClient) CheckObjectExists(ctx context.Context, bucketName, objectName string) error {
 	return m.CheckObjectExistsFunc(ctx, bucketName, objectName)
+}
+
+// GetBucketIamPolicy mocks the GetBucketIamPolicy method.
+func (m *MockCloudStorageClient) GetBucketIamPolicy(ctx context.Context, bucketName string) (*iam.Policy, error) {
+	return m.GetBucketIamPolicyFunc(ctx, bucketName)
 }
 
 // DeleteBucket mocks the DeleteBucket method.

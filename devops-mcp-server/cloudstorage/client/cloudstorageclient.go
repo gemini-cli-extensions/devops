@@ -21,8 +21,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/api/iterator"
 
+	"cloud.google.com/go/iam"
 	cloudstorage "cloud.google.com/go/storage"
 )
 
@@ -46,6 +48,7 @@ func ContextWithClient(ctx context.Context, client CloudStorageClient) context.C
 
 // CloudStorageClient is an interface for interacting with the Cloud Storage API.
 type CloudStorageClient interface {
+	GenerateUUID() string
 	// ListBuckets lists the GCS buckets in a specified project.
 	ListBuckets(ctx context.Context, projectID string) ([]string, error)
 	// CheckBucketExists checks if a GCS bucket exists.
@@ -56,6 +59,8 @@ type CloudStorageClient interface {
 	UploadFile(ctx context.Context, bucketName, objectName string, file *os.File) error
 	// CheckObjectExists checks if an object exists in a GCS bucket.
 	CheckObjectExists(ctx context.Context, bucketName, objectName string) error
+	// GetBucketIamPolicy gets the IAM policy for a GCS bucket.
+	GetBucketIamPolicy(ctx context.Context, bucketName string) (*iam.Policy, error)
 	// DeleteBucket deletes a GCS bucket.
 	DeleteBucket(ctx context.Context, bucketName string) error
 	// DeleteObjects deletes all objects from a GCS bucket.
@@ -74,6 +79,10 @@ func NewCloudStorageClient(ctx context.Context) (CloudStorageClient, error) {
 // CloudStorageClientImpl is a client for interacting with the Cloud Storage API.
 type CloudStorageClientImpl struct {
 	v1client *cloudstorage.Client
+}
+
+func (c *CloudStorageClientImpl) GenerateUUID() string {
+	return uuid.New().String()
 }
 
 // ListBuckets lists the GCS buckets in a specified project.
@@ -109,15 +118,26 @@ func (c *CloudStorageClientImpl) CreateBucket(ctx context.Context, projectID, bu
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	err := c.v1client.Bucket(bucketName).Create(ctx, projectID, nil)
-	if err != nil {
+	bucket := c.v1client.Bucket(bucketName)
+	if err := bucket.Create(ctx, projectID, nil); err != nil {
 		return err
 	}
+
+	// Make the bucket public by default
+	policy, err := bucket.IAM().Policy(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get bucket IAM policy: %w", err)
+	}
+	policy.Add("allUsers", "roles/storage.objectViewer")
+	if err := bucket.IAM().SetPolicy(ctx, policy); err != nil {
+		return fmt.Errorf("failed to set bucket IAM policy: %w", err)
+	}
+
 	return nil
 }
 
 // UploadFile uploads a file to a GCS bucket.
-func (c *CloudStorageClientImpl) UploadFile(ctx context.Context, bucketName, objectName string, file *os.File)error {
+func (c *CloudStorageClientImpl) UploadFile(ctx context.Context, bucketName, objectName string, file *os.File) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 
@@ -138,6 +158,15 @@ func (c *CloudStorageClientImpl) CheckObjectExists(ctx context.Context, bucketNa
 		return nil
 	}
 	return err
+}
+
+// GetBucketIamPolicy gets the IAM policy for a GCS bucket.
+func (c *CloudStorageClientImpl) GetBucketIamPolicy(ctx context.Context, bucketName string) (*iam.Policy, error) {
+	policy, err := c.v1client.Bucket(bucketName).IAM().Policy(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bucket IAM policy: %w", err)
+	}
+	return policy, nil
 }
 
 // DeleteBucket deletes a GCS bucket.
