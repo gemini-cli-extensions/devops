@@ -124,12 +124,13 @@ var KNOWLEDGE_RAG_SOURCES = []Source{
 func processSource(source Source, tmpDir string) {
 	sourceType := source.Type
 
-	if sourceType == "webpage" {
+	switch sourceType {
+	case "webpage":
 		err := downloadWebsites(&source, tmpDir)
 		if err != nil {
 			log.Printf("Error downloading websites from source %s: %v", source.Name, err)
 		}
-	} else if sourceType == "git_repo" {
+	case "git_repo":
 		for _, url := range source.URLs {
 			repoDir := filepath.Join(tmpDir, source.Dir)
 			err := fetchRepository(url, repoDir)
@@ -137,7 +138,7 @@ func processSource(source Source, tmpDir string) {
 				log.Printf("Error downloading git repo %s: %v", url, err)
 			}
 		}
-	} else {
+	default:
 		log.Printf("RAG Source type [%s] is not supported", sourceType)
 	}
 }
