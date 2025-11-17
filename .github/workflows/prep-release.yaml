@@ -26,6 +26,10 @@ on:
         description: "The SHA that was tagged"
         value: ${{ jobs.prep-release.outputs.sha }}
 
+env:
+  RELEASE: dev
+  GH_TOKEN: ${{ github.token }}
+
 jobs:
   prep-release:
     runs-on: ubuntu-latest
