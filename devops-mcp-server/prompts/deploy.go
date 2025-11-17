@@ -22,7 +22,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-//go:embed deploy_prompt.txt
+//go:embed deploy_prompt.md
 var promptDeployText string
 
 // Helps deploy applications to GCP.

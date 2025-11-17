@@ -22,7 +22,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-//go:embed cicd_design_prompt.txt
+//go:embed cicd_design_prompt.md
 var promptCICDText string
 
 // Helps design and implement GCP CI/CD pipelines.
