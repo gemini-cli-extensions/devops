@@ -72,4 +72,16 @@ func main() {
 			log.Printf("Server failed: %v", err)
 		}
 	}
+
+	setupLogging()
+}
+
+func setupLogging() {
+	f, err := os.OpenFile("/tmp/mcp-server.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		// Fallback if file fails
+		log.SetOutput(os.Stderr)
+		return
+	}
+	log.SetOutput(f)
 }
