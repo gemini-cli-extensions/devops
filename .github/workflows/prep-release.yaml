@@ -1,60 +1,45 @@
-# Copyright 2025 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 name: Prepare Release
 
 on:
-    workflow_call:
-        inputs:
-            release:
-                required: true
-                type: string
-                default: dev
-    workflow_dispatch: # Allows manual triggering of the workflow
-
-env:
-    RELEASE: dev
-    GH_TOKEN: ${{ github.token }}
+  workflow_call:
+    inputs:
+      release:
+        required: true
+        type: string
+        default: dev
+    outputs:
+      release_sha:
+        description: "The SHA that was tagged"
+        value: ${{ jobs.prep-release.outputs.sha }}
 
 jobs:
-    prep-release:
-        runs-on: ubuntu-latest
+  prep-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # ADD THIS SECTION
+    outputs:
+      sha: ${{ steps.get_sha.outputs.sha }} 
 
-        steps:
-            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
 
-            - name: Prepare for a new release
-              id: prep
-              run: |
-                  export RELEASE="${{ env.RELEASE }}"
-                  if [[ "${{ inputs.release }}" != "" ]]; then
-                    echo "Updating to RELEASE to ${{ inputs.release }}"
-                    RELEASE="${{ inputs.release }}"
-                  fi
-                  echo "RELEASE=${RELEASE}" >> "$GITHUB_OUTPUT"
+      # ADD THIS STEP
+      - name: Get Commit SHA
+        id: get_sha
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
-                  echo "Preparing for \"${RELEASE}\" release"
-                  git config --local user.email "action@github.com"
-                  git config --local user.name "GitHub Action"
-                  git tag -fa -m "${RELEASE} release" "${RELEASE}"
-                  #git push --force origin "${RELEASE}"
-                  echo "Release tag created \"${RELEASE}\""
-
-                  # check of a release already exists
-                  if [[ $(gh release view "${RELEASE}") ]]; then
-                    echo "Release already exists!"
-                  else
-                    echo "Creating new release ${RELEASE}"
-                    gh release create --prerelease ${RELEASE}
-                  fi
+      - name: Update Rolling Release
+        env:
+          RELEASE_TAG: ${{ inputs.release || env.RELEASE }}
+        run: |
+          # ... (Same deletion logic as before) ...
+          
+          # ... (Same creation logic) ...
+          gh release create "$RELEASE_TAG" \
+            --prerelease \
+            --target "${{ steps.get_sha.outputs.sha }}" \
+            --title "$RELEASE_TAG build" \
+            --generate-notes

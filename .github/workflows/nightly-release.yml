@@ -68,11 +68,12 @@ jobs:
                           archive_cmd: 'zip -j "${ARCHIVE_PATH}" "${RELEASE_DIR}"/*',
                       }
         steps:
-            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
-
+            - uses: actions/checkout@v4
+              with:
+                  # Do not checkout 'main'. Checkout the exact SHA prep-release used.
+                  ref: ${{ needs.prep-release.outputs.release_sha }}
             - name: prep-release
               env:
-                  RAG_DB_PATH: "${RELEASE_DIR}/devops-rag.db"
                   BIN_FILE: "${{ matrix.platform.bin_file }}"
               run: |
                   mkdir -p "${RELEASE_DIR}"
