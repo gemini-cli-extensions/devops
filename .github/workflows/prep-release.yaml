@@ -53,11 +53,23 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.release || env.RELEASE }}
         run: |
-          # ... (Same deletion logic as before) ...
-          
-          # ... (Same creation logic) ...
+          echo "Processing release for: $RELEASE_TAG"
+
+          # 1. CLEANUP: Check if the release/tag exists and nukes it.
+          # This ensures the 'dev' tag is free to move to the new commit.
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            echo "Existing release found. Deleting '$RELEASE_TAG' to update pointer..."
+            gh release delete "$RELEASE_TAG" --cleanup-tag -y
+          else
+            echo "No existing release for '$RELEASE_TAG'. Creating new one."
+          fi
+
+          # 2. CREATE: Create the release pointing to the latest commit (target main).
+          echo "Creating release..."
           gh release create "$RELEASE_TAG" \
             --prerelease \
-            --target "${{ steps.get_sha.outputs.sha }}" \
+            --target main \
             --title "$RELEASE_TAG build" \
             --generate-notes
+
+          echo "Success: $RELEASE_TAG updated to latest commit."
