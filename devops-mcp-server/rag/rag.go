@@ -33,8 +33,9 @@ var initOnce sync.Once
 var embeddedDB []byte
 
 type RagData struct {
-	DB      *chromem.DB
-	Pattern *chromem.Collection
+	DB        *chromem.DB
+	Pattern   *chromem.Collection
+	Knowledge *chromem.Collection
 }
 
 // Only expose what the LLM needs to read.
@@ -68,10 +69,13 @@ func loadRAG(ctx context.Context) error {
 		creds.Token,
 		creds.ProjectId,
 		chromem.EmbeddingModelVertexEnglishV4)
-
+	RagDB.Knowledge, err = RagDB.DB.GetOrCreateCollection("knowledge", nil, vertexEmbeddingFunc)
+	if err != nil {
+		return fmt.Errorf("Unable to get collection knowledge: %w", err)
+	}
+	log.Printf("LOADED collection knowledge: %v", RagDB.Pattern.Count())
 	RagDB.Pattern, err = RagDB.DB.GetOrCreateCollection("pattern", nil, vertexEmbeddingFunc)
 	if err != nil {
-		// RETURN AN ERROR
 		return fmt.Errorf("Unable to get collection pattern: %w", err)
 	}
 	log.Printf("LOADED collection pattern: %v", RagDB.Pattern.Count())
@@ -96,6 +100,28 @@ func (r *RagData) QueryPattern(ctx context.Context, query string) (string, error
 	results, err := r.Pattern.Query(ctx, query, 2, nil, nil)
 	if err != nil {
 		log.Fatalf("Unable to Query collection pattern: %v", err)
+	}
+	cleanResults := make([]Result, len(results))
+	for i, r := range results {
+		cleanResults[i] = Result{
+			Content:    r.Content,
+			Metadata:   r.Metadata,
+			Similarity: r.Similarity,
+		}
+	}
+
+	// Marshal to JSON
+	jsonData, err := json.Marshal(cleanResults)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal results: %w", err)
+	}
+	return string(jsonData), nil
+}
+
+func (r *RagData) Queryknowledge(ctx context.Context, query string) (string, error) {
+	results, err := r.Knowledge.Query(ctx, query, 2, nil, nil)
+	if err != nil {
+		log.Fatalf("Unable to Query collection knowledge: %v", err)
 	}
 	cleanResults := make([]Result, len(results))
 	for i, r := range results {
