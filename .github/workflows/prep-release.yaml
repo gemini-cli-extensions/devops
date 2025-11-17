@@ -35,7 +35,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    # ADD THIS SECTION
     outputs:
       sha: ${{ steps.get_sha.outputs.sha }} 
 
@@ -44,7 +43,6 @@ jobs:
         with:
           ref: main
 
-      # ADD THIS STEP
       - name: Get Commit SHA
         id: get_sha
         run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
@@ -68,7 +66,7 @@ jobs:
           echo "Creating release..."
           gh release create "$RELEASE_TAG" \
             --prerelease \
-            --target main \
+            --target "${{ steps.get_sha.outputs.sha }}" \
             --title "$RELEASE_TAG build" \
             --generate-notes
 
