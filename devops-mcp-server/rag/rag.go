@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,16 +24,15 @@ import (
 	ragclient "devops-mcp-server/rag/client"
 )
 
-// AddTools adds all rag related tools to the mcp server.
-// It expects the ragclient and mcp.Server to be in the context.
-func AddTools(ctx context.Context, server *mcp.Server) error {
-	r, ok := ragclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("rag client not found in context")
-	}
-	addQueryPatternTool(server, r)
-	addQueryKnowledgeTool(server, r)
-	return nil
+// Handler holds the clients for the rag service.
+type Handler struct {
+	RagClient ragclient.RagClient
+}
+
+// Register registers the rag tools with the MCP server.
+func (h *Handler) Register(server *mcp.Server) {
+	addQueryPatternTool(server, h.RagClient)
+	addQueryKnowledgeTool(server, h.RagClient)
 }
 
 type QueryArgs struct {
@@ -51,7 +50,7 @@ func addQueryPatternTool(server *mcp.Server, ragClient ragclient.RagClient) {
 		}
 		return &mcp.CallToolResult{}, res, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "rag.query_pattern", Description: "Queries the RAG pattern database."}, queryPatternToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "rag.search_common_cicd_patterns", Description: "Find common CICD patterns in the database."}, queryPatternToolFunc)
 }
 
 func addQueryKnowledgeTool(server *mcp.Server, ragClient ragclient.RagClient) {
@@ -62,5 +61,5 @@ func addQueryKnowledgeTool(server *mcp.Server, ragClient ragclient.RagClient) {
 		}
 		return &mcp.CallToolResult{}, res, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "rag.query_knowledge", Description: "Queries the RAG knowledge database."}, queryKnowledgeToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "rag.query_knowledge", Description: "Find knowledge snippets in the knowledge database."}, queryKnowledgeToolFunc)
 }

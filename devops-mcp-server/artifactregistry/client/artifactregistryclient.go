@@ -22,24 +22,6 @@ import (
 	artifactregistrypb "cloud.google.com/go/artifactregistry/apiv1/artifactregistrypb"
 )
 
-// contextKey is a private type to use as a key for context values.
-type contextKey string
-
-const (
-	artifactRegistryClientKey contextKey = "artifactRegistryClient"
-)
-
-// ClientFrom returns the ArtifactRegistryClient stored in the context, if any.
-func ClientFrom(ctx context.Context) (ArtifactRegistryClient, bool) {
-	client, ok := ctx.Value(artifactRegistryClientKey).(ArtifactRegistryClient)
-	return client, ok
-}
-
-// ContextWithClient returns a new context with the provided ArtifactRegistryClient.
-func ContextWithClient(ctx context.Context, client ArtifactRegistryClient) context.Context {
-	return context.WithValue(ctx, artifactRegistryClientKey, client)
-}
-
 // ArtifactRegistryClient is an interface for interacting with the Artifact Registry API.
 type ArtifactRegistryClient interface {
 	GetRepository(ctx context.Context, projectID, location, repositoryID string) (*artifactregistrypb.Repository, error)

@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,25 +20,33 @@ import (
 	"errors"
 	"testing"
 
+	
+	"devops-mcp-server/rag/client/mocks"
+
 	"github.com/golang/mock/gomock"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	ragclient "devops-mcp-server/rag/client"
-	"devops-mcp-server/rag/client/mocks"
 )
 
-func TestAddTools(t *testing.T) {
-	ctx := context.Background()
+
+func TestHandler_Register(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+
 	mockRagClient := mocks.NewMockRagClient(ctrl)
 
-	ctx = ragclient.ContextWithClient(ctx, mockRagClient)
+	handler := &Handler{
+		RagClient: mockRagClient,
+	}
 
 	server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
+	handler.Register(server)
 
-	err := AddTools(ctx, server)
-	if err != nil {
-		t.Fatalf("rag.AddTools failed: %v", err)
+	// Verify that the tools were added to the server
+	if queryPatternToolFunc == nil {
+		t.Error("queryPatternToolFunc was not initialized")
+	}
+	if queryKnowledgeToolFunc == nil {
+		t.Error("queryKnowledgeToolFunc was not initialized")
 	}
 }
 

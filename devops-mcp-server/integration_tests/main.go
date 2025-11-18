@@ -91,20 +91,21 @@ func createMCPServer(ctx context.Context) (*mcpserver.Server, artifactregistrycl
 		log.Fatalf("Failed to create Cloud Run client: %v", err)
 	}
 
-	ctxWithDeps := artifactregistryclient.ContextWithClient(ctx, arClient)
-	ctxWithDeps = iamclient.ContextWithClient(ctxWithDeps, iamClient)
-	ctxWithDeps = cloudstorageclient.ContextWithClient(ctxWithDeps, csClient)
-	ctxWithDeps = cloudrunclient.ContextWithClient(ctxWithDeps, crClient)
+	arHandler := &artifactregistry.Handler{
+		ArClient:  arClient,
+		IamClient: iamClient,
+	}
+	arHandler.Register(server)
 
-	if err := artifactregistry.AddTools(ctxWithDeps, server); err != nil {
-		log.Fatalf("Failed to add artifactregistry tools: %v", err)
+	csHandler := &cloudstorage.Handler{
+		CsClient: csClient,
 	}
-	if err := cloudstorage.AddTools(ctxWithDeps, server); err != nil {
-		log.Fatalf("Failed to add cloudstorage tools: %v", err)
+	csHandler.Register(server)
+
+	crHandler := &cloudrun.Handler{
+		CrClient: crClient,
 	}
-	if err := cloudrun.AddTools(ctxWithDeps, server); err != nil {
-		log.Fatalf("Failed to add cloudrun tools: %v", err)
-	}
+	crHandler.Register(server)
 
 	return server, arClient, csClient, crClient
 }

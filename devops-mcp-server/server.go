@@ -81,80 +81,46 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 		return fmt.Errorf("failed to create IAM client: %w", err)
 	}
 
-	ctxWithDeps := iamclient.ContextWithClient(ctx, i)
-
-	r, err := resourcemanagerclient.NewClient(ctxWithDeps)
+	r, err := resourcemanagerclient.NewClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create resource manager client: %w", err)
 	}
-
-	ctxWithDeps = resourcemanagerclient.ContextWithClient(ctxWithDeps, r)
-
-	arClient, err := artifactregistryclient.NewArtifactRegistryClient(ctxWithDeps)
+	arClient, err := artifactregistryclient.NewArtifactRegistryClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create ArtifactRegistry client: %w", err)
 	}
-	ctxWithDeps = artifactregistryclient.ContextWithClient(ctxWithDeps, arClient)
-
-	if err := artifactregistry.AddTools(ctxWithDeps, server); err != nil {
-		return err
-	}
-
-	crClient, err := cloudrunclient.NewCloudRunClient(ctxWithDeps)
+	crClient, err := cloudrunclient.NewCloudRunClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create CloudRun client: %w", err)
 	}
-	ctxWithDeps = cloudrunclient.ContextWithClient(ctxWithDeps, crClient)
-
-	if err := cloudrun.AddTools(ctxWithDeps, server); err != nil {
-		return err
-	}
-	devConnectClient, err := developerconnectclient.NewDeveloperConnectClient(ctxWithDeps)
-	if err != nil {
-		return fmt.Errorf("failed to create dev connect client: %w", err)
-	}
-	ctxWithDeps = developerconnectclient.ContextWithClient(ctxWithDeps, devConnectClient)
-
-	if err := devconnect.AddTools(ctxWithDeps, server); err != nil {
-		return err
-	}
-
-	csClient, err := cloudstorageclient.NewCloudStorageClient(ctxWithDeps)
+	csClient, err := cloudstorageclient.NewCloudStorageClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create CloudStorage client: %w", err)
 	}
-	ctxWithDeps = cloudstorageclient.ContextWithClient(ctxWithDeps, csClient)
-
-	if err := cloudstorage.AddTools(ctxWithDeps, server); err != nil {
-		return err
+	devConnectClient, err := developerconnectclient.NewDeveloperConnectClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create dev connect client: %w", err)
 	}
-	cbClient, err := cloudbuildclient.NewCloudBuildClient(ctxWithDeps)
+	cbClient, err := cloudbuildclient.NewCloudBuildClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create CloudBuild client: %w", err)
 	}
-	ctxWithDeps = cloudbuildclient.ContextWithClient(ctxWithDeps, cbClient)
-
-	if err := cloudbuild.AddTools(ctxWithDeps, server); err != nil {
-		return err
-	}
-
-	osvClient, err := osvclient.NewClient(ctxWithDeps)
+	osvClient, err := osvclient.NewClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create OSV client: %w", err)
 	}
-	ctxWithDeps = osvclient.ContextWithClient(ctxWithDeps, osvClient)
-
-	if err := osv.AddTools(ctxWithDeps, server); err != nil {
-		return err
-	}
-
-	ragClient, err := ragclient.NewClient(ctxWithDeps)
+	ragClient, err := ragclient.NewClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create rag client: %w", err)
 	}
-	ctxWithDeps = ragclient.ContextWithClient(ctxWithDeps, ragClient)
-	if err := rag.AddTools(ctxWithDeps, server); err != nil {
-		return err
-	}
+
+	(&artifactregistry.Handler{ArClient: arClient, IamClient: i}).Register(server)
+	(&cloudrun.Handler{CrClient: crClient}).Register(server)
+	(&devconnect.Handler{DcClient: devConnectClient}).Register(server)
+	(&cloudbuild.Handler{CbClient: cbClient, IClient: i, RClient: r}).Register(server)
+	(&cloudstorage.Handler{CsClient: csClient}).Register(server)
+	(&osv.Handler{OsvClient: osvClient}).Register(server)
+	(&rag.Handler{RagClient: ragClient}).Register(server)
+
 	return nil
 }
