@@ -22,7 +22,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	osvclient "devops-mcp-server/osv/client"
+	
 	osvmocks "devops-mcp-server/osv/client/mocks"
 )
 
@@ -100,30 +100,22 @@ func TestAddScanSecretsTool(t *testing.T) {
 	}
 }
 
-func TestAddTools(t *testing.T) {
-	t.Run("client not in context", func(t *testing.T) {
-		server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-		err := AddTools(context.Background(), server)
-		if err == nil {
-			t.Error("expected an error but got none")
-		}
-		expectedError := "osv client not found in context"
-		if err.Error() != expectedError {
-			t.Errorf("expected error %q, got %q", expectedError, err.Error())
-		}
-	})
 
-	t.Run("client in context", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+func TestHandler_Register(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-		osvMock := osvmocks.NewMockOsvClient(ctrl)
-		ctx := osvclient.ContextWithClient(context.Background(), osvMock)
+	osvMock := osvmocks.NewMockOsvClient(ctrl)
 
-		server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-		err := AddTools(ctx, server)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-	})
+	handler := &Handler{
+		OsvClient: osvMock,
+	}
+
+	server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
+	handler.Register(server)
+
+	// Verify that the tool was added to the server
+	if scanSecretsToolFunc == nil {
+		t.Error("scanSecretsToolFunc was not initialized")
+	}
 }

@@ -25,25 +25,18 @@ import (
 	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
 )
 
-// AddTools adds all cloud build related tools to the mcp server.
-// It expects the cloudbuildclient and mcp.Server to be in the context.
-func AddTools(ctx context.Context, server *mcp.Server) error {
-	c, ok := cloudbuildclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("cloud build client not found in context")
-	}
-	i, ok := iamclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("iam client not found in context")
-	}
-	r, ok := resourcemanagerclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("resource manager client not found in context")
-	}
-	addCreateTriggerTool(server, c, i, r)
-	addRunTriggerTool(server, c)
-	addListTriggersTool(server, c)
-	return nil
+// Handler holds the clients for the cloudbuild service.
+type Handler struct {
+	CbClient cloudbuildclient.CloudBuildClient
+	IClient  iamclient.IAMClient
+	RClient  resourcemanagerclient.ResourcemanagerClient
+}
+
+// Register registers the cloudbuild tools with the MCP server.
+func (h *Handler) Register(server *mcp.Server) {
+	addCreateTriggerTool(server, h.CbClient, h.IClient, h.RClient)
+	addRunTriggerTool(server, h.CbClient)
+	addListTriggersTool(server, h.CbClient)
 }
 
 type RunTriggerArgs struct {

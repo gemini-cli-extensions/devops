@@ -23,15 +23,14 @@ import (
 	osvclient "devops-mcp-server/osv/client"
 )
 
-// AddTools adds all OSV related tools to the mcp server.
-// It expects the osvclient to be in the context.
-func AddTools(ctx context.Context, server *mcp.Server) error {
-	o, ok := osvclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("osv client not found in context")
-	}
-	addScanSecretsTool(server, o)
-	return nil
+// Handler holds the clients for the osv service.
+type Handler struct {
+	OsvClient osvclient.OsvClient
+}
+
+// Register registers the osv tools with the MCP server.
+func (h *Handler) Register(server *mcp.Server) {
+	addScanSecretsTool(server, h.OsvClient)
 }
 
 type ScanSecretsArgs struct {

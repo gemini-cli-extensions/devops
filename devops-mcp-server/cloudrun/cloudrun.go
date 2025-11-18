@@ -26,17 +26,16 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// AddTools adds all cloud run related tools to the mcp server.
-func AddTools(ctx context.Context, server *mcp.Server) error {
-	c, ok := cloudrunclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("cloud run client not found in context")
-	}
+// Handler holds the clients for the cloudrun service.
+type Handler struct {
+	CrClient cloudrunclient.CloudRunClient
+}
 
-	addListServicesTool(server, c)
-	addDeployToCloudRunFromImageTool(server, c)
-	addDeployToCloudRunFromSourceTool(server, c)
-	return nil
+// Register registers the cloudrun tools with the MCP server.
+func (h *Handler) Register(server *mcp.Server) {
+	addListServicesTool(server, h.CrClient)
+	addDeployToCloudRunFromImageTool(server, h.CrClient)
+	addDeployToCloudRunFromSourceTool(server, h.CrClient)
 }
 
 type ListServicesArgs struct {

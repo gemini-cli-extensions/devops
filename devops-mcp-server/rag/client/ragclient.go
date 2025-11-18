@@ -107,7 +107,6 @@ func NewClient(ctx context.Context) (RagClient, error) {
 	return loadRAG(ctx)
 }
 
-
 func (r *RagClientImpl) QueryPatterns(ctx context.Context, query string) (string, error) {
 	results, err := r.Pattern.Query(ctx, query, 2, nil, nil)
 	if err != nil {

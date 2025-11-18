@@ -24,24 +24,6 @@ import (
 	resourcemanagerpb "cloud.google.com/go/resourcemanager/apiv3/resourcemanagerpb"
 )
 
-// contextKey is a private type to use as a key for context values.
-type contextKey string
-
-const (
-	resourcemanagerClientKey contextKey = "resourcemanagerClient"
-)
-
-// ClientFrom returns the resourcemanagerClient stored in the context, if any.
-func ClientFrom(ctx context.Context) (ResourcemanagerClient, bool) {
-	client, ok := ctx.Value(resourcemanagerClientKey).(ResourcemanagerClient)
-	return client, ok
-}
-
-// ContextWithClient returns a new context with the provided resourcemanagerClient.
-func ContextWithClient(ctx context.Context, client ResourcemanagerClient) context.Context {
-	return context.WithValue(ctx, resourcemanagerClientKey, client)
-}
-
 // Client is an interface for interacting with the resourcemanager API.
 type ResourcemanagerClient interface {
 	ToProjectNumber(ctx context.Context, projectID string) (int64, error)

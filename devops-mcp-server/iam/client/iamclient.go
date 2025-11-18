@@ -22,24 +22,6 @@ import (
 	iamv1 "google.golang.org/api/iam/v1"
 )
 
-// contextKey is a private type to use as a key for context values.
-type contextKey string
-
-const (
-	iamClientKey contextKey = "iamClient"
-)
-
-// ClientFrom returns the IAMClient stored in the context, if any.
-func ClientFrom(ctx context.Context) (IAMClient, bool) {
-	client, ok := ctx.Value(iamClientKey).(IAMClient)
-	return client, ok
-}
-
-// ContextWithClient returns a new context with the provided IAMClient.
-func ContextWithClient(ctx context.Context, client IAMClient) context.Context {
-	return context.WithValue(ctx, iamClientKey, client)
-}
-
 // ServiceAccountList defines a struct to wrap a list of service accounts.
 type ServiceAccountList struct {
 	Items []*iamv1.ServiceAccount `json:"items"`

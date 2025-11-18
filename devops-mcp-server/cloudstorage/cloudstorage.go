@@ -29,17 +29,15 @@ import (
 	cloudstorage "cloud.google.com/go/storage"
 )
 
-// AddTools adds all cloud storage related tools to the mcp server.
-// It expects the cloudstorageclient and mcp.Server to be in the context.
-func AddTools(ctx context.Context, server *mcp.Server) error {
-	c, ok := cloudstorageclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("cloud storage client not found in context")
-	}
+// Handler holds the clients for the cloudstorage service.
+type Handler struct {
+	CsClient cloudstorageclient.CloudStorageClient
+}
 
-	addListBucketsTool(server, c)
-	addUploadSourceTool(server, c)
-	return nil
+// Register registers the cloudstorage tools with the MCP server.
+func (h *Handler) Register(server *mcp.Server) {
+	addListBucketsTool(server, h.CsClient)
+	addUploadSourceTool(server, h.CsClient)
 }
 
 type ListBucketsArgs struct {
