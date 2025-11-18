@@ -26,6 +26,7 @@ import (
 	"devops-mcp-server/devconnect"
 	"devops-mcp-server/osv"
 	"devops-mcp-server/prompts"
+	"devops-mcp-server/rag"
 
 	artifactregistryclient "devops-mcp-server/artifactregistry/client"
 	cloudbuildclient "devops-mcp-server/cloudbuild/client"
@@ -34,6 +35,7 @@ import (
 	developerconnectclient "devops-mcp-server/devconnect/client"
 	iamclient "devops-mcp-server/iam/client"
 	osvclient "devops-mcp-server/osv/client"
+	ragclient "devops-mcp-server/rag/client"
 	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
 
 	_ "embed"
@@ -143,6 +145,15 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	ctxWithDeps = osvclient.ContextWithClient(ctxWithDeps, osvClient)
 
 	if err := osv.AddTools(ctxWithDeps, server); err != nil {
+		return err
+	}
+
+	ragClient, err := ragclient.NewClient(ctxWithDeps)
+	if err != nil {
+		return fmt.Errorf("failed to create rag client: %w", err)
+	}
+	ctxWithDeps = ragclient.ContextWithClient(ctxWithDeps, ragClient)
+	if err := rag.AddTools(ctxWithDeps, server); err != nil {
 		return err
 	}
 	return nil
