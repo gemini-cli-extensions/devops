@@ -28,10 +28,7 @@ import (
 func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir string) {
 	var docs []chromem.Document
 	log.Printf("Uploading directory %s to collection: %v", dir, collection.Name)
-	splitter := textsplitter.NewMarkdownTextSplitter(
-		textsplitter.WithChunkSize(750),
-		textsplitter.WithChunkOverlap(150),
-	)
+	splitter := textsplitter.NewMarkdownTextSplitter()
 
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -75,7 +72,7 @@ func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir 
 	})
 
 	if len(docs) > 0 {
-		threads := 1
+		threads := 5
 
 		batchSize := 100
 		for i := 0; i < len(docs); i += batchSize {
