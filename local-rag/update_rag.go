@@ -19,7 +19,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 
 	chromem "github.com/philippgille/chromem-go"
@@ -77,9 +76,6 @@ func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir 
 
 	if len(docs) > 0 {
 		threads := 1
-		if threads > runtime.NumCPU() {
-			threads = runtime.NumCPU()
-		}
 
 		batchSize := 100
 		for i := 0; i < len(docs); i += batchSize {
