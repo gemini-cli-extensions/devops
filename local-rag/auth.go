@@ -15,47 +15,47 @@
 package main
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
 
-    "cloud.google.com/go/auth/credentials"
+	"cloud.google.com/go/auth/credentials"
 )
 
 // getGCPToken retrieves the Google Cloud Platform access token and project ID
 // using Application Default Credentials.
 func getGCPToken(ctx context.Context) (tokenValue string, projectID string, err error) {
-    // Use Application Default Credentials to get a TokenSource
-    scopes := []string{"https://www.googleapis.com/auth/cloud-platform"}
-    creds, err := credentials.DetectDefault(&credentials.DetectOptions{
-        Scopes: scopes,
-    })
-    if err != nil {
-        return "", "", fmt.Errorf("failed to find default credentials: %w", err)
-    }
+	// Use Application Default Credentials to get a TokenSource
+	scopes := []string{"https://www.googleapis.com/auth/cloud-platform"}
+	creds, err := credentials.DetectDefault(&credentials.DetectOptions{
+		Scopes: scopes,
+	})
+	if err != nil {
+		return "", "", fmt.Errorf("failed to find default credentials: %w", err)
+	}
 
-    projectID, err = creds.ProjectID(ctx)
-    if err != nil {
-        return "", "", fmt.Errorf("failed to get project ID: %w", err)
-    }
+	projectID, err = creds.ProjectID(ctx)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get project ID: %w", err)
+	}
 
-    if projectID == "" {
-        // Try quota project
-        projectID, err = creds.QuotaProjectID(ctx)
-        if err != nil {
-            return "", "", fmt.Errorf("failed to get quota project ID: %w", err)
-        }
-        if projectID == "" {
-            return "", "", fmt.Errorf("no Project ID found in Application Default Credentials. " +
-                "This can happen if credentials are user-based or the project hasn't been explicitly set " +
-                "e.g., via gcloud auth application-default set-quota-project")
-        }
-    }
+	if projectID == "" {
+		// Try quota project
+		projectID, err = creds.QuotaProjectID(ctx)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to get quota project ID: %w", err)
+		}
+		if projectID == "" {
+			return "", "", fmt.Errorf("no Project ID found in Application Default Credentials. " +
+				"This can happen if credentials are user-based or the project hasn't been explicitly set " +
+				"e.g., via gcloud auth application-default set-quota-project")
+		}
+	}
 
-    // We need an access token
-    token, err := creds.TokenProvider.Token(ctx)
-    if err != nil {
-        return "", "", fmt.Errorf("failed to retrieve access token: %w", err)
-    }
+	// We need an access token
+	token, err := creds.TokenProvider.Token(ctx)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to retrieve access token: %w", err)
+	}
 
-    return token.Value, projectID, nil
+	return token.Value, projectID, nil
 }
