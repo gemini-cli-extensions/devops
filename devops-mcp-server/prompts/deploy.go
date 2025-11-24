@@ -22,7 +22,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-//go:embed deploy_prompt.txt
+//go:embed deploy_prompt.md
 var promptDeployText string
 
 // Helps deploy applications to GCP.
@@ -32,7 +32,7 @@ func DeployPrompt(ctx context.Context, server *mcp.Server) {
 			Description: "Helps deploy applications to GCP.",
 			Messages: []*mcp.PromptMessage{
 				{
-					Role:    "user",
+					Role: "user",
 					Content: &mcp.TextContent{
 						Text: fmt.Sprintf(promptDeployText, req.Params.Arguments["query"]),
 					},
@@ -43,7 +43,7 @@ func DeployPrompt(ctx context.Context, server *mcp.Server) {
 
 	// Create a server with a single prompt.
 	prompt := &mcp.Prompt{
-		Name: "devops:deploy",
+		Name:  "devops:deploy",
 		Title: "Deploy an application to GCP.",
 		Arguments: []*mcp.PromptArgument{
 			{
@@ -53,6 +53,5 @@ func DeployPrompt(ctx context.Context, server *mcp.Server) {
 			},
 		},
 	}
-	server.AddPrompt(prompt,promptHandler)
+	server.AddPrompt(prompt, promptHandler)
 }
-

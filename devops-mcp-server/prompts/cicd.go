@@ -22,7 +22,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-//go:embed cicd_design_prompt.txt
+//go:embed cicd_design_prompt.md
 var promptCICDText string
 
 // Helps design and implement GCP CI/CD pipelines.
@@ -32,7 +32,7 @@ func DesignPrompt(ctx context.Context, server *mcp.Server) {
 			Description: "Helps design and implement GCP CI/CD pipelines.",
 			Messages: []*mcp.PromptMessage{
 				{
-					Role:    "user",
+					Role: "user",
 					Content: &mcp.TextContent{
 						Text: fmt.Sprintf(promptCICDText, req.Params.Arguments["query"]),
 					},
@@ -43,16 +43,15 @@ func DesignPrompt(ctx context.Context, server *mcp.Server) {
 
 	// Create a server with a single prompt.
 	prompt := &mcp.Prompt{
-		Name: "devops:design",
+		Name:  "devops:design",
 		Title: "Design and implement a Google Cloud based CI/CD pipeline.",
 		Arguments: []*mcp.PromptArgument{
 			{
 				Name:        "query",
-				Description: "CICD pipeline description, as explained by te user",
+				Description: "CICD pipeline description",
 				Required:    true,
 			},
 		},
 	}
-	server.AddPrompt(prompt,promptHandler)
+	server.AddPrompt(prompt, promptHandler)
 }
-

@@ -27,18 +27,27 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-git/go-git/v5"
 )
 
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+}
+
 func downloadFile(url, targetDir string) (string, error) {
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("bad status: %s", resp.Status)
+	}
 
 	fileName := filepath.Base(url)
 	filePath := filepath.Join(targetDir, fileName)
@@ -240,7 +249,7 @@ func downloadWebsites(sources *Source, extractToDir string) error {
 
 		log.Printf("Fetching: %s", currentURLBase)
 
-		resp, err := http.Get(currentURLBase)
+		resp, err := httpClient.Get(currentURLBase)
 		if err != nil {
 			log.Printf("Error fetching %s: %v", currentURLBase, err)
 			continue

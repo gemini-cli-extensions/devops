@@ -1,4 +1,3 @@
-
 // Copyright 2024 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +21,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	osvclient "devops-mcp-server/osv/client"
 	osvmocks "devops-mcp-server/osv/client/mocks"
 )
 
@@ -31,11 +29,11 @@ func TestAddScanSecretsTool(t *testing.T) {
 	root := "/test/dir"
 
 	tests := []struct {
-		name          string
-		args          ScanSecretsArgs
-		setupMocks    func(*osvmocks.MockOsvClient)
-		expectErr     bool
-		expectedError string
+		name           string
+		args           ScanSecretsArgs
+		setupMocks     func(*osvmocks.MockOsvClient)
+		expectErr      bool
+		expectedError  string
 		expectedResult string
 	}{
 		{
@@ -44,9 +42,9 @@ func TestAddScanSecretsTool(t *testing.T) {
 				Root: root,
 			},
 			setupMocks: func(osvMock *osvmocks.MockOsvClient) {
-				osvMock.EXPECT().ScanSecrets(gomock.Any(), root).Return("scan results", nil)
+				osvMock.EXPECT().ScanSecrets(gomock.Any(), root, nil).Return("scan results", nil)
 			},
-			expectErr: false,
+			expectErr:      false,
 			expectedResult: "scan results",
 		},
 		{
@@ -55,7 +53,7 @@ func TestAddScanSecretsTool(t *testing.T) {
 				Root: root,
 			},
 			setupMocks: func(osvMock *osvmocks.MockOsvClient) {
-				osvMock.EXPECT().ScanSecrets(gomock.Any(), root).Return("", errors.New("scan failed"))
+				osvMock.EXPECT().ScanSecrets(gomock.Any(), root, nil).Return("", errors.New("scan failed"))
 			},
 			expectErr:     true,
 			expectedError: "failed to scan for secrets: scan failed",
@@ -82,7 +80,7 @@ func TestAddScanSecretsTool(t *testing.T) {
 			if tt.expectErr && err.Error() != tt.expectedError {
 				t.Errorf("scanSecretsToolFunc() error = %q, expectedError %q", err.Error(), tt.expectedError)
 			}
-			
+
 			if !tt.expectErr {
 				resultMap, ok := res.(map[string]any)
 				if !ok {
@@ -100,30 +98,21 @@ func TestAddScanSecretsTool(t *testing.T) {
 	}
 }
 
-func TestAddTools(t *testing.T) {
-	t.Run("client not in context", func(t *testing.T) {
-		server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-		err := AddTools(context.Background(), server)
-		if err == nil {
-			t.Error("expected an error but got none")
-		}
-		expectedError := "osv client not found in context"
-		if err.Error() != expectedError {
-			t.Errorf("expected error %q, got %q", expectedError, err.Error())
-		}
-	})
+func TestHandler_Register(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	t.Run("client in context", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+	osvMock := osvmocks.NewMockOsvClient(ctrl)
 
-		osvMock := osvmocks.NewMockOsvClient(ctrl)
-		ctx := osvclient.ContextWithClient(context.Background(), osvMock)
+	handler := &Handler{
+		OsvClient: osvMock,
+	}
 
-		server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
-		err := AddTools(ctx, server)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-	})
+	server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
+	handler.Register(server)
+
+	// Verify that the tool was added to the server
+	if scanSecretsToolFunc == nil {
+		t.Error("scanSecretsToolFunc was not initialized")
+	}
 }

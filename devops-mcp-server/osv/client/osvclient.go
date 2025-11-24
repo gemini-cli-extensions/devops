@@ -26,27 +26,9 @@ import (
 	"github.com/google/osv-scalibr/plugin"
 )
 
-// contextKey is a private type to use as a key for context values.
-type contextKey string
-
-const (
-	osvClientKey contextKey = "osvClient"
-)
-
-// ClientFrom returns the osvClient stored in the context, if any.
-func ClientFrom(ctx context.Context) (OsvClient, bool) {
-	client, ok := ctx.Value(osvClientKey).(OsvClient)
-	return client, ok
-}
-
-// ContextWithClient returns a new context with the provided osvClient.
-func ContextWithClient(ctx context.Context, client OsvClient) context.Context {
-	return context.WithValue(ctx, osvClientKey, client)
-}
-
 // Client is an interface for interacting with the osv API.
 type OsvClient interface {
-	ScanSecrets(ctx context.Context, root string) (string, error)
+	ScanSecrets(ctx context.Context, root string, ignoreDirectories []string) (string, error)
 }
 
 // clientImpl is a client for interacting with the osv API.
@@ -61,7 +43,7 @@ func NewClient(ctx context.Context) (OsvClient, error) {
 	return &OsvClientImpl{capab}, nil
 }
 
-func (o *OsvClientImpl) ScanSecrets(ctx context.Context, root string) (string, error) {
+func (o *OsvClientImpl) ScanSecrets(ctx context.Context, root string, ignoreDirectories []string) (string, error) {
 	var allSecretPlugins []plugin.Plugin
 	for _, initFns := range scalibrsystem.Secrets {
 		for _, initFn := range initFns {
@@ -77,6 +59,7 @@ func (o *OsvClientImpl) ScanSecrets(ctx context.Context, root string) (string, e
 
 		// Pass the environment capabilities.
 		Capabilities: o.osCapabilities,
+		DirsToSkip:   ignoreDirectories,
 	}
 
 	// 2. Execute the scan

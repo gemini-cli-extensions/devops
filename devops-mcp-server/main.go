@@ -30,6 +30,7 @@ import (
 var (
 	httpAddr  = flag.String("http", "", "if set, use streamable HTTP at this address, instead of stdin/stdout. e.g. localhost:8080")
 	pprofAddr = flag.String("pprof", "", "if set, host the pprof debugging server at this address")
+	logFile   = "/tmp/devops-mcp-server.log"
 )
 
 func main() {
@@ -72,4 +73,16 @@ func main() {
 			log.Printf("Server failed: %v", err)
 		}
 	}
+
+	setupLogging()
+}
+
+func setupLogging() {
+	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		// Fallback if file fails
+		log.SetOutput(os.Stderr)
+		return
+	}
+	log.SetOutput(f)
 }

@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"cloud.google.com/go/auth/credentials"
 	chromem "github.com/philippgille/chromem-go"
 )
 
@@ -35,7 +34,7 @@ type Source struct {
 	URLPattern     string   `json:"url_pattern,omitempty"`
 }
 
-var KNOWLEDGE_RAG_SOURCES = []Source{
+var knowledgeRAGSources = []Source{
 	{
 		Name:           "GCP_DOCS",
 		Extract:        "devsite-content",
@@ -43,14 +42,7 @@ var KNOWLEDGE_RAG_SOURCES = []Source{
 		ExcludePattern: ".*\\?hl=.+$",
 		Dir:            "GCP_DOCS",
 		URLs: []string{
-			"https://cloud.google.com/developer-connect/docs/api/reference/rest",
-			"https://cloud.google.com/developer-connect/docs/authentication",
-			"https://cloud.google.com/build/docs/api/reference/rest",
-			"https://cloud.google.com/deploy/docs/api/reference/rest",
-			"https://cloud.google.com/artifact-analysis/docs/reference/rest",
-			"https://cloud.google.com/artifact-registry/docs/reference/rest",
-			"https://cloud.google.com/infrastructure-manager/docs/reference/rest",
-			"https://cloud.google.com/docs/buildpacks/stacks",
+			//"https://cloud.google.com/docs/buildpacks/stacks", // Package list is too large for a single chunck
 			"https://cloud.google.com/docs/buildpacks/base-images",
 			"https://cloud.google.com/docs/buildpacks/build-application",
 			"https://cloud.google.com/docs/buildpacks/python",
@@ -60,19 +52,6 @@ var KNOWLEDGE_RAG_SOURCES = []Source{
 			"https://cloud.google.com/docs/buildpacks/ruby",
 			"https://cloud.google.com/docs/buildpacks/php",
 			"https://cloud.google.com/build/docs/build-config-file-schema",
-			"https://cloud.google.com/build/docs/private-pools/use-in-private-network",
-			"https://cloud.google.com/deploy/docs/config-files",
-			"https://cloud.google.com/deploy/docs/deploy-app-gke",
-			"https://cloud.google.com/deploy/docs/deploy-app-run",
-			"https://cloud.google.com/deploy/docs/overview",
-			"https://cloud.google.com/build/docs/build-push-docker-image",
-			"https://cloud.google.com/build/docs/deploy-containerized-application-cloud-run",
-			"https://cloud.google.com/build/docs/automate-builds",
-			"https://cloud.google.com/build/docs/configuring-builds/create-basic-configuration",
-			"https://cloud.google.com/build/docs/automating-builds/create-manage-triggers",
-			"https://cloud.google.com/build/docs/building/build-containers",
-			"https://cloud.google.com/build/docs/building/build-nodejs",
-			"https://cloud.google.com/build/docs/building/build-java",
 			"https://cloud.google.com/build/docs/deploying-builds/deploy-cloud-run",
 			"https://cloud.google.com/build/docs/deploying-builds/deploy-gke",
 		},
@@ -98,38 +77,18 @@ var KNOWLEDGE_RAG_SOURCES = []Source{
 			"https://switowski.com/blog/ci-101/",
 		},
 	},
-	{
-		Name:           "cloud_builder_docs",
-		Extract:        "section",
-		Type:           "git_repo",
-		URLPattern:     "\\.md$",
-		ExcludePattern: ".*(vendor|third_party|.github).*$",
-		URLs: []string{
-			"https://github.com/GoogleCloudPlatform/cloud-builders/archive/refs/heads/master.zip",
-			"https://github.com/GoogleCloudPlatform/cloud-builders-community/archive/refs/heads/master.zip",
-		},
-	},
-	{
-		Name:           "GCP_Terraform_Docs",
-		Extract:        "section",
-		Type:           "git_repo",
-		URLPattern:     "website/docs/.*\\.markdown$",
-		ExcludePattern: ".*(vendor|third_party|.github).*$",
-		URLs: []string{
-			"https://github.com/hashicorp/terraform-provider-google/archive/refs/heads/main.zip",
-		},
-	},
 }
 
 func processSource(source Source, tmpDir string) {
 	sourceType := source.Type
 
-	if sourceType == "webpage" {
+	switch sourceType {
+	case "webpage":
 		err := downloadWebsites(&source, tmpDir)
 		if err != nil {
 			log.Printf("Error downloading websites from source %s: %v", source.Name, err)
 		}
-	} else if sourceType == "git_repo" {
+	case "git_repo":
 		for _, url := range source.URLs {
 			repoDir := filepath.Join(tmpDir, source.Dir)
 			err := fetchRepository(url, repoDir)
@@ -137,74 +96,74 @@ func processSource(source Source, tmpDir string) {
 				log.Printf("Error downloading git repo %s: %v", url, err)
 			}
 		}
-	} else {
+	default:
 		log.Printf("RAG Source type [%s] is not supported", sourceType)
 	}
 }
 
-func main() {
-	// Initialize the chromem database
-	ctx := context.Background()
-
-	// Use Application Default Credentials to get a TokenSource
-	scopes := []string{"https://www.googleapis.com/auth/cloud-platform"}
-	creds, err := credentials.DetectDefault(&credentials.DetectOptions{
-		Scopes: scopes,
-	})
-	if err != nil {
-		log.Fatalf("Failed to find default credentials: %v", err)
-	}
-
-	projectID, err := creds.ProjectID(ctx)
-	if err != nil {
-		log.Fatalf("Failed to get project ID: %v", err)
-	}
-	if projectID == "" {
-		//Try quota project
-		projectID, err = creds.QuotaProjectID(ctx)
+func dbFile() string {
+	dbFile := os.Getenv("RAG_DB_PATH")
+	if len(dbFile) == 0 {
+		pwd, err := os.Getwd()
 		if err != nil {
-			log.Fatalf("Failed to get project ID: %v", err)
+			log.Fatal(err)
 		}
-		if projectID == "" {
-			log.Fatalf(`
-			No Project ID found in Application Default Credentials. 
-			This can happen if credentials are user-based or the project hasn't been explicitly set 
-			e.g., via gcloud auth application-default set-quota-project.
-			Error:%v`, err)
-		}
+		dbFile = filepath.Join(pwd, "devops-rag.db")
 	}
-
-	// We need an access token
-	token, err := creds.TokenProvider.Token(ctx)
-	if err != nil {
-		log.Fatalf("Failed to retrieve access token: %v", err)
-	}
-
+	return dbFile
+}
+func setupRAGDB(ctx context.Context, token, projectID string) (*chromem.DB, chromem.EmbeddingFunc, error) {
 	vertexEmbeddingFunc := chromem.NewEmbeddingFuncVertex(
-		token.Value,
+		token,
 		projectID,
 		chromem.EmbeddingModelVertexEnglishV4)
 	db := chromem.NewDB()
-	dbFile := os.Getenv("RAG_DB_PATH")
+	dbFile := dbFile()
 	if len(dbFile) > 0 {
-		//check if file exists, only import if it does
 		if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 			log.Printf("RAG_DB_PATH file does not exist, skipping import: %v", dbFile)
 		} else {
 			err := db.ImportFromFile(dbFile, "")
 			log.Printf("Imported RAG with collections:%d", len(db.ListCollections()))
 			if err != nil {
-				log.Fatalf("Unable to import from the RAG DB file:%s - %v", dbFile, err)
+				return nil, nil, err
 			}
 		}
 	}
-	collectionKnowledge, err := db.GetOrCreateCollection("knowledge", nil, vertexEmbeddingFunc)
+	_, err := db.GetOrCreateCollection("knowledge", nil, vertexEmbeddingFunc)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, err
 	}
-	collectionPattern, err := db.GetOrCreateCollection("pattern", nil, vertexEmbeddingFunc)
+	_, err = db.GetOrCreateCollection("pattern", nil, vertexEmbeddingFunc)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, err
+	}
+	return db, vertexEmbeddingFunc, nil
+}
+
+func processAllSources(ragSourceDir string) {
+	entries, err := os.ReadDir(ragSourceDir)
+	if err != nil {
+		log.Fatalf("Unable to read directory: %v", err)
+	}
+	if len(entries) == 0 {
+		for _, source := range knowledgeRAGSources {
+			processSource(source, ragSourceDir)
+		}
+	}
+}
+
+func main() {
+	ctx := context.Background()
+
+	token, projectID, err := getGCPToken(ctx)
+	if err != nil {
+		log.Fatalf("GCP Auth failed: %v", err)
+	}
+
+	db, embeddingFunc, err := setupRAGDB(ctx, token, projectID)
+	if err != nil {
+		log.Fatalf("Failed to setup RAG DB: %v", err)
 	}
 
 	// Upload local directories
@@ -213,46 +172,31 @@ func main() {
 		log.Fatal(err)
 	}
 
+	collectionPattern := db.GetCollection("pattern", embeddingFunc)
 	patternsDir := filepath.Join(pwd, "patterns")
 	addDirectoryToRag(ctx, collectionPattern, patternsDir)
 
+	collectionKnowledge := db.GetCollection("knowledge", embeddingFunc)
 	knowledgeDir := filepath.Join(pwd, "knowledge")
 	addDirectoryToRag(ctx, collectionKnowledge, knowledgeDir)
 
-	// Create a temporary directory for downloads
-	//tmpDir, err := os.MkdirTemp("", "rag-data-")
-	ragSourceDir, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Unable to get working directory: %v", err)
-	}
-	ragSourceDir = ragSourceDir + "/.rag-sources"
-	//Create dir if it does not exist
-	if fileStat, err := os.Stat(dbFile); os.IsNotExist(err) {
+	ragSourceDir := filepath.Join(pwd, ".rag-sources")
+	if _, err := os.Stat(ragSourceDir); os.IsNotExist(err) {
+		log.Printf("Dir does not exist: %v", ragSourceDir)
 		err = os.MkdirAll(ragSourceDir, 0755)
-		log.Printf("Dir created: %v", fileStat)
 		if err != nil {
 			log.Fatal(err)
 		}
-	}
-	//defer os.RemoveAll(tmpDir)
-
-	// Process data sources if destination is empty
-	// otherwise we assume last run was successful in
-	// fetching sources
-	entries, err := os.ReadDir(ragSourceDir)
-	if err != nil {
-		log.Fatalf("Unable to read directory: %v", err)
-	}
-	if len(entries) == 0 {
-		for _, source := range KNOWLEDGE_RAG_SOURCES {
-			processSource(source, ragSourceDir)
-		}
+		log.Printf("Dir created: %v", ragSourceDir)
 	}
 
-	// Upload all files in the temporary directory to RAG
+	processAllSources(ragSourceDir)
+
+	// Upload all files in the source directory to RAG
 	addDirectoryToRag(ctx, collectionKnowledge, ragSourceDir)
 
 	// Export the database to a file
+	dbFile := dbFile()
 	if len(dbFile) > 0 {
 		log.Printf("Exporting database Knowledge base docs:%d, Pattern docs:%d",
 			collectionKnowledge.Count(),

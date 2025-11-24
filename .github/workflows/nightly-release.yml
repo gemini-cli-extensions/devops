@@ -44,20 +44,43 @@ jobs:
             ACTIONS_STEP_DEBUG: true
         strategy:
             matrix:
-                goos: [linux, windows, darwin]
-                goarch: [amd64, arm64]
+                platform:
+                    - {
+                          goos: "linux",
+                          goarch: "amd64",
+                          bin_file: "devops-mcp-server",
+                          archive: "linux.x64.devops.tar.gz",
+                          archive_cmd: 'tar -czvf "${ARCHIVE_PATH}" -C "${RELEASE_DIR}" .',
+                      }
+                    - {
+                          goos: "darwin",
+                          goarch: "arm64",
+                          bin_file: "devops-mcp-server",
+                          archive: "darwin.arm64.devops.tar.gz",
+                          archive_cmd: 'tar -czvf "${ARCHIVE_PATH}" -C "${RELEASE_DIR}" .',
+                      }
 
+                    - {
+                          goos: "windows",
+                          goarch: "amd64",
+                          bin_file: "devops-mcp-server.exe",
+                          archive: "win32.x64.devops.zip",
+                          archive_cmd: 'zip -j "${ARCHIVE_PATH}" "${RELEASE_DIR}"/*',
+                      }
         steps:
-            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
-
+            - uses: actions/checkout@v4
+              with:
+                  # Do not checkout 'main'. Checkout the exact SHA prep-release used.
+                  ref: ${{ needs.prep-release.outputs.release_sha }}
             - name: prep-release
               env:
-                  RAG_DB_PATH: "${RELEASE_DIR}/devops-rag.db"
+                  BIN_FILE: "${{ matrix.platform.bin_file }}"
               run: |
                   mkdir -p "${RELEASE_DIR}"
-                  cp ../gemini-extension.json "${RELEASE_DIR}/"
+                  command_exp='.mcpServers."devops-mcp".command = "${extensionPath}${/}'
+                  command_exp="${command_exp}${BIN_FILE}\""
+                  jq "${command_exp}" < ../gemini-extension.json >"${RELEASE_DIR}/gemini-extension.json"
                   cp ../README.md "${RELEASE_DIR}/"
-                  cp ../local-rag/devops-rag.db "${RELEASE_DIR}/"
 
             - name: Set up Go
               uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
@@ -69,32 +92,21 @@ jobs:
 
             - name: Build
               run: |
-                  export GOOS=${{ matrix.goos }}
-                  export GOARCH=${{ matrix.goarch }}
+                  export GOOS=${{ matrix.platform.goos }}
+                  export GOARCH=${{ matrix.platform.goarch }}
 
-                  bin_name="${RELEASE_DIR}/devops-mcp-server-${GOOS}-${GOARCH}"
-                  if [[ "${GOOS}" == "windows" ]];then
-                    bin_name="${bin_name}.exe"
-                  fi
-                  go build -o "${bin_name}"
+                  output_path="${RELEASE_DIR}/${{ matrix.platform.bin_file }}"
+                  go build -o "${output_path}"
 
             - name: Create release assets
               id: archive
               run: |
-                  echo "Running for OS ${{ matrix.goos }}  and ARCH ${{ matrix.goarch }}"
                   mkdir -p "${DIST_DIR}"
-                  archive_name="devops-mcp-server-${{ matrix.goos }}-${{ matrix.goarch }}"
-                  if [[ "${{ matrix.goos }}" == "windows" ]];then
-                    archive_name="${archive_name}.zip"
-                    archive=""${DIST_DIR}"/${archive_name}"
-                    zip -j "${archive}" "${RELEASE_DIR}"/*
-                  else
-                    archive_name="${archive_name}.tar.gz"
-                    archive="${DIST_DIR}/${archive_name}"
-                    tar -czvf "${archive}" -C "${RELEASE_DIR}" .
-                  fi
-                  echo "Created ${archive}"
-                  echo "ARCHIVE_NAME=${archive_name}" >> "$GITHUB_OUTPUT"
+                  echo "Creating ${{ matrix.platform.archive }}"
+                  export ARCHIVE_PATH="${DIST_DIR}/${{ matrix.platform.archive }}"
+                  sh -c "${{ matrix.platform.archive_cmd }}"
+                  echo "Created ${ARCHIVE_PATH}"
+                  echo "ARCHIVE_NAME=${{ matrix.platform.archive }}" >> "$GITHUB_OUTPUT"
 
             - name: Upload archive as artifact
               uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

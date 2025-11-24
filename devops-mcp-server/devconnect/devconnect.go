@@ -24,16 +24,15 @@ import (
 	devconnectclient "devops-mcp-server/devconnect/client"
 )
 
-// AddTools adds all devconnect related tools to the mcp server.
-// It expects the devconnectclient and mcp.Server to be in the context.
-func AddTools(ctx context.Context, server *mcp.Server) error {
-	d, ok := devconnectclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("devconnect client not found in context")
-	}
-	addSetupDevConnectConnectionTool(server, d)
-	addAddDevConnectGitRepoLinkTool(server, d)
-	return nil
+// Handler holds the clients for the devconnect service.
+type Handler struct {
+	DcClient devconnectclient.DeveloperConnectClient
+}
+
+// Register registers the devconnect tools with the MCP server.
+func (h *Handler) Register(server *mcp.Server) {
+	addSetupDevConnectConnectionTool(server, h.DcClient)
+	addAddDevConnectGitRepoLinkTool(server, h.DcClient)
 }
 
 type AddDevConnectGitRepoLinkArgs struct {

@@ -25,19 +25,15 @@ import (
 	iamclient "devops-mcp-server/iam/client"
 )
 
-// AddTools adds all artifact registry related tools to the mcp server.
-// It expects the artifactregistryclient and mcp.Server to be in the context.
-func AddTools(ctx context.Context, server *mcp.Server) error {
-	a, ok := artifactregistryclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("artifact registry client not found in context")
-	}
-	i, ok := iamclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("artifact registry client not found in context")
-	}
-	addSetupRepositoryTool(server, a, i)
-	return nil
+type Handler struct {
+	ArClient  artifactregistryclient.ArtifactRegistryClient
+	IamClient iamclient.IAMClient
+}
+
+// Register attaches this handler's logic to the server.
+func (h *Handler) Register(server *mcp.Server) {
+	// No error checking needed here; dependencies are guaranteed by the struct.
+	addSetupRepositoryTool(server, h.ArClient, h.IamClient)
 }
 
 type SetupRepoArgs struct {

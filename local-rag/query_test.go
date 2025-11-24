@@ -20,52 +20,15 @@ import (
 	"os"
 	"testing"
 
-	"cloud.google.com/go/auth"
-	"cloud.google.com/go/auth/credentials"
 	chromem "github.com/philippgille/chromem-go"
 )
 
-func gcpAuthHelper(ctx context.Context, t *testing.T) (tokenValue, projectID string) {
-	// Use Application Default Credentials to get a TokenSource
-	scopes := []string{"https://www.googleapis.com/auth/cloud-platform"}
-	creds, err := credentials.DetectDefault(&credentials.DetectOptions{
-		Scopes: scopes,
-	})
-	if err != nil {
-		log.Fatalf("Failed to find default credentials: %v", err)
-	}
-
-	projectID, err = creds.ProjectID(ctx)
-	if err != nil {
-		log.Fatalf("Failed to get project ID: %v", err)
-	}
-	if projectID == "" {
-		//Try quota project
-		projectID, err = creds.QuotaProjectID(ctx)
-		if err != nil {
-			log.Fatalf("Failed to get project ID: %v", err)
-		}
-		if projectID == "" {
-			log.Fatalf(`
-			No Project ID found in Application Default Credentials. 
-			This can happen if credentials are user-based or the project hasn't been explicitly set 
-			e.g., via gcloud auth application-default set-quota-project.
-			Error:%v`, err)
-		}
-	}
-	// We need an access token
-	var token *auth.Token
-	token, err = creds.TokenProvider.Token(ctx)
-	if err != nil {
-		log.Fatalf("Failed to retrieve access token: %v", err)
-	}
-
-	return token.Value, projectID
-}
-
 func TestRAGQuery(t *testing.T) {
 	ctx := context.Background()
-	token, projectID := gcpAuthHelper(ctx, t)
+	token, projectID, err := getGCPToken(ctx)
+	if err != nil {
+		t.Skipf("Skipping test due to missing GCP credentials: %v", err)
+	}
 
 	vertexEmbeddingFunc := chromem.NewEmbeddingFuncVertex(
 		token,
@@ -74,43 +37,48 @@ func TestRAGQuery(t *testing.T) {
 
 	db := chromem.NewDB()
 	dbFile := os.Getenv("RAG_DB_PATH")
-	if len(dbFile) > 0 {
-
+	if len(dbFile) == 0 {
+		t.Skip("Skipping test: RAG_DB_PATH environment variable not set")
 	}
+
 	//check if file exists, we expect an existing DB
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
-		log.Fatalf("RAG_DB_PATH file does not exist, skipping import: %v", dbFile)
+		t.Skipf("Skipping test: RAG_DB_PATH file does not exist: %v", dbFile)
 	} else {
 		err := db.ImportFromFile(dbFile, "")
 		log.Printf("Imported RAG with collections:%d", len(db.ListCollections()))
 		if err != nil {
-			log.Fatalf("Unable to import from the RAG DB file:%s - %v", dbFile, err)
+			t.Fatalf("Unable to import from the RAG DB file:%s - %v", dbFile, err)
 		}
 	}
 
 	collectionPattern, err := db.GetOrCreateCollection("pattern", nil, vertexEmbeddingFunc)
 	if err != nil {
-		log.Fatalf("Unable to get collection pattern: %v", err)
+		t.Fatalf("Unable to get collection pattern: %v", err)
 	}
 
 	patternResult, err := collectionPattern.Query(ctx, "Simple pipeline that deploys to Cloud Run", 1, nil, nil)
 	if err != nil {
-		log.Fatalf("Unable to Query collection pattern: %v", err)
+		t.Fatalf("Unable to Query collection pattern: %v", err)
 	}
 	if len(patternResult) < 1 || patternResult[0].Content == "" {
-		log.Fatalf("Failed to find pattern: %v", len(patternResult))
+		t.Fatalf("Failed to find pattern: %v", len(patternResult))
 	}
 
 	collectionKnowledge, err := db.GetOrCreateCollection("knowledge", nil, vertexEmbeddingFunc)
 	if err != nil {
-		log.Fatalf("Unable to get collection knowledge: %v", err)
+		t.Fatalf("Unable to get collection knowledge: %v", err)
 	}
 
 	knowledgeResult, err := collectionKnowledge.Query(ctx, "Package a Python application", 3, nil, nil)
 	if err != nil {
-		log.Fatalf("Unable to Query collection knowledge: %v", err)
+		t.Fatalf("Unable to Query collection knowledge: %v", err)
 	}
 	if len(knowledgeResult) < 3 || knowledgeResult[0].Content == "" {
-		log.Fatalf("Failed to find pattern: %v", len(knowledgeResult))
+		log.Printf("Knowledge result count: %d", len(knowledgeResult))
+		// Only fail if we really expected 3 and got 0 or empty content.
+		// The original test checked < 3 but maybe we should be lenient if the DB is small?
+		// I'll keep the original logic but add logging.
+		t.Fatalf("Failed to find pattern: %v", len(knowledgeResult))
 	}
 }

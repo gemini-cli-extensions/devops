@@ -15,46 +15,59 @@
 name: Prepare Release
 
 on:
-    workflow_call:
-        inputs:
-            release:
-                required: true
-                type: string
-                default: dev
-    workflow_dispatch: # Allows manual triggering of the workflow
+  workflow_call:
+    inputs:
+      release:
+        required: true
+        type: string
+        default: dev
+    outputs:
+      release_sha:
+        description: "The SHA that was tagged"
+        value: ${{ jobs.prep-release.outputs.sha }}
 
 env:
-    RELEASE: dev
-    GH_TOKEN: ${{ github.token }}
+  RELEASE: dev
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
-    prep-release:
-        runs-on: ubuntu-latest
+  prep-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.get_sha.outputs.sha }} 
 
-        steps:
-            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
 
-            - name: Prepare for a new release
-              id: prep
-              run: |
-                  export RELEASE="${{ env.RELEASE }}"
-                  if [[ "${{ inputs.release }}" != "" ]]; then
-                    echo "Updating to RELEASE to ${{ inputs.release }}"
-                    RELEASE="${{ inputs.release }}"
-                  fi
-                  echo "RELEASE=${RELEASE}" >> "$GITHUB_OUTPUT"
+      - name: Get Commit SHA
+        id: get_sha
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
-                  echo "Preparing for \"${RELEASE}\" release"
-                  git config --local user.email "action@github.com"
-                  git config --local user.name "GitHub Action"
-                  git tag -fa -m "${RELEASE} release" "${RELEASE}"
-                  #git push --force origin "${RELEASE}"
-                  echo "Release tag created \"${RELEASE}\""
+      - name: Update Rolling Release
+        env:
+          RELEASE_TAG: ${{ inputs.release || env.RELEASE }}
+        run: |
+          echo "Processing release for: $RELEASE_TAG"
 
-                  # check of a release already exists
-                  if [[ $(gh release view "${RELEASE}") ]]; then
-                    echo "Release already exists!"
-                  else
-                    echo "Creating new release ${RELEASE}"
-                    gh release create --prerelease ${RELEASE}
-                  fi
+          # 1. CLEANUP: Check if the release/tag exists and nukes it.
+          # This ensures the 'dev' tag is free to move to the new commit.
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            echo "Existing release found. Deleting '$RELEASE_TAG' to update pointer..."
+            gh release delete "$RELEASE_TAG" --cleanup-tag -y
+          else
+            echo "No existing release for '$RELEASE_TAG'. Creating new one."
+          fi
+
+          # 2. CREATE: Create the release pointing to the latest commit (target main).
+          echo "Creating release..."
+          gh release create "$RELEASE_TAG" \
+            --prerelease \
+            --target "${{ steps.get_sha.outputs.sha }}" \
+            --title "$RELEASE_TAG build" \
+            --generate-notes
+
+          echo "Success: $RELEASE_TAG updated to latest commit."

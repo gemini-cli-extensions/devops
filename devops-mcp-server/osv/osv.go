@@ -23,26 +23,26 @@ import (
 	osvclient "devops-mcp-server/osv/client"
 )
 
-// AddTools adds all OSV related tools to the mcp server.
-// It expects the osvclient to be in the context.
-func AddTools(ctx context.Context, server *mcp.Server) error {
-	o, ok := osvclient.ClientFrom(ctx)
-	if !ok {
-		return fmt.Errorf("osv client not found in context")
-	}
-	addScanSecretsTool(server, o)
-	return nil
+// Handler holds the clients for the osv service.
+type Handler struct {
+	OsvClient osvclient.OsvClient
+}
+
+// Register registers the osv tools with the MCP server.
+func (h *Handler) Register(server *mcp.Server) {
+	addScanSecretsTool(server, h.OsvClient)
 }
 
 type ScanSecretsArgs struct {
-	Root string `json:"root" jsonschema:"The root directory to scan for secrets. Give the absolute directory path."`
+	Root                 string   `json:"root" jsonschema:"The root directory to scan for secrets. Give the absolute directory path."`
+	IgnoreDirectoryPaths []string `json:"ignore_directories" jsonschema:"The directory paths to ignore. Give the absolute directory path."`
 }
 
 var scanSecretsToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args ScanSecretsArgs) (*mcp.CallToolResult, any, error)
 
 func addScanSecretsTool(server *mcp.Server, oClient osvclient.OsvClient) {
 	scanSecretsToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args ScanSecretsArgs) (*mcp.CallToolResult, any, error) {
-		res, err := oClient.ScanSecrets(ctx, args.Root)
+		res, err := oClient.ScanSecrets(ctx, args.Root, args.IgnoreDirectoryPaths)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to scan for secrets: %w", err)
 		}
