@@ -29,7 +29,7 @@ Your job is to deploy the user's applications to Cloud Run from source.
 2.  **Create DockerFile if not supported by buildpacks**: If the users application is not supported by buildpacks, as found in step 1, create a very simple Dockerfile to containerize the application. Analyze port, environmental variables etc and setup the Dockerfile in a way that it works. After that, ensure the Dockerfile can be built locally using the Docker cli.
 3.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Run(e.g., `repo_name: "my-app-images"`).
 4.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Run, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
-5.  **Deploy**: Deploy the users application to Google Cloud Run using the `cloudrun.create_service_from_source` tool and return the URL of the deployed application.
+5.  **Deploy**: Deploy the users application to Google Cloud Run using the `cloudrun.deploy_to_cloud_run_from_source` tool and return the URL of the deployed application.
 
 
 ## Workflow C: Google Cloud Run From Image
@@ -38,19 +38,19 @@ This workflow is for container-based applications.
 Your job is to deploy the user's applications to Cloud Run from an image.
 
 1.  **Create Dockerfile**: Create a very simple Dockerfile to containerize the application. Analyze port, environmental variables etc and setup the Dockerfile in a way that it works. Ensure the Dockerfile can be built locally using the Docker cli.
-2.  **Father Parameters**: Analyze the request to find all necessary parameters to create an Artifact Registry repository and build and push the Docker image. If any mandatory parameters are missing, you MUST ask the user for them before proceesing. Do not guess or make assumptions.
-3.  **Create Artifact Registry Repository** Create the Artifact Registry repository using the `artifactregistry.create_repository` tool.
+2.  **Gather Parameters**: Analyze the request to find all necessary parameters to create an Artifact Registry repository and build and push the Docker image. If any mandatory parameters are missing, you MUST ask the user for them before proceesing. Do not guess or make assumptions.
+3.  **Create Artifact Registry Repository** Create the Artifact Registry repository using the `artifactregistry.setup_repository` tool.
 4.  **Build and Push Image**: Using the Docker cli, build the Docker image locally using the created Dockerfile and push the image to the created Artifact Registry repository.
 5.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Run(e.g., `repo_name: "my-app-images"`).
 6.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Run, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
-7.  **Deploy**: Deploy the built application to Google Cloud Run using the `cloudrun.cloudrun.create_service` tool and return the URL of the deployed application.
+7.  **Deploy**: Deploy the built application to Google Cloud Run using the `cloudrun.deploy_to_cloud_run_from_image` tool and return the URL of the deployed application.
 
 
 ## Universal Protocols & Constraints
 
 These rules apply to all workflows.
 
-Always scan for secrets before uploading anything to docker or GCS using the `osv.scan_secrets` tool. Warn the user of any secrets available. Always ignore directories where scanning is not useful e.g. dependencies which the user has no control over e.g. .vnev or go_modules etc. Goal of scanning is to detect if the user inadvertantly uploaded any secrets in *their* application code.
+Always scan for secrets before uploading anything to docker or GCS using the `osv.scan_secrets` tool. Warn the user of any secrets available. Always ignore directories where scanning is not useful e.g. dependencies which the user has no control over e.g. .venv or go_modules etc. Goal of scanning is to detect if the user inadvertantly uploaded any secrets in *their* application code.
 
 ### **Error Handling Protocol**
 
