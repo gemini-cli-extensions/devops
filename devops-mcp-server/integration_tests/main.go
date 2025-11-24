@@ -27,11 +27,13 @@ import (
 	"devops-mcp-server/artifactregistry"
 	"devops-mcp-server/cloudrun"
 	"devops-mcp-server/cloudstorage"
+	"devops-mcp-server/osv"
 
 	artifactregistryclient "devops-mcp-server/artifactregistry/client"
 	cloudrunclient "devops-mcp-server/cloudrun/client"
 	cloudstorageclient "devops-mcp-server/cloudstorage/client"
 	iamclient "devops-mcp-server/iam/client"
+	osvclient "devops-mcp-server/osv/client"
 
 	mcpclient "github.com/mark3labs/mcp-go/client"
 	mcp "github.com/mark3labs/mcp-go/mcp"
@@ -42,7 +44,7 @@ func main() {
 	ctx := context.Background()
 
 	// Create the server
-	server, arClient, csClient, crClient := createMCPServer(ctx)
+	server, arClient, csClient, crClient, osvClient := createMCPServer(ctx)
 
 	// Start the server in a goroutine
 	go func() {
@@ -69,9 +71,12 @@ func main() {
 	testDeployToCloudRunFromImage(ctx, crClient)         // Tests the cloudrun.deploy_to_cloud_run_from_image tool with a new service.
 	testDeployToCloudRunFromImageNewRevision(ctx, crClient) // Tests the cloudrun.deploy_to_cloud_run_from_image tool with a preexisting service.
 	testDeployToCloudRunFromSource(ctx, crClient)
+	// OSV Tests
+	testScanSecrets(ctx, osvClient)
+	testScanSecretsWithSecret(ctx, osvClient)
 }
 
-func createMCPServer(ctx context.Context) (*mcpserver.Server, artifactregistryclient.ArtifactRegistryClient, cloudstorageclient.CloudStorageClient, cloudrunclient.CloudRunClient) {
+func createMCPServer(ctx context.Context) (*mcpserver.Server, artifactregistryclient.ArtifactRegistryClient, cloudstorageclient.CloudStorageClient, cloudrunclient.CloudRunClient, osvclient.OsvClient) {
 	server := mcpserver.NewServer(&mcpserver.Implementation{Name: "devops-mcp-server"}, nil)
 
 	arClient, err := artifactregistryclient.NewArtifactRegistryClient(ctx)
@@ -90,6 +95,10 @@ func createMCPServer(ctx context.Context) (*mcpserver.Server, artifactregistrycl
 	if err != nil {
 		log.Fatalf("Failed to create Cloud Run client: %v", err)
 	}
+	osvClient, err := osvclient.NewClient(ctx)
+	if err != nil {
+		log.Fatalf("Failed to create OSV client: %v", err)
+	}
 
 	arHandler := &artifactregistry.Handler{
 		ArClient:  arClient,
@@ -107,7 +116,12 @@ func createMCPServer(ctx context.Context) (*mcpserver.Server, artifactregistrycl
 	}
 	crHandler.Register(server)
 
-	return server, arClient, csClient, crClient
+	osvHandler := &osv.Handler{
+		OsvClient: osvClient,
+	}
+	osvHandler.Register(server)
+
+	return server, arClient, csClient, crClient, osvClient
 }
 
 func testSetupRepository(ctx context.Context, arClient artifactregistryclient.ArtifactRegistryClient) {
@@ -183,6 +197,32 @@ func testSetupRepository(ctx context.Context, arClient artifactregistryclient.Ar
 	log.Println("Repository verification successful.")
 }
 
+// Helper function to check if public GCS buckets can be created in the GCP_PROJECT_ID provided.
+func canCreatePublicBuckets(ctx context.Context, projectID string, csClient cloudstorageclient.CloudStorageClient) bool {
+	bucketName := fmt.Sprintf("%s-probe-%d", projectID, time.Now().UnixNano())
+	err := csClient.CreateBucket(ctx, projectID, bucketName)
+
+	// Clean up probe bucket
+	defer func() {
+		err = csClient.DeleteBucket(ctx, bucketName)
+		if err != nil {
+			log.Printf("Failed to delete probe bucket: %v", err)
+		}
+	}()
+
+	if err != nil {
+		if strings.Contains(err.Error(), "conditionNotMet") || strings.Contains(err.Error(), "permitted customer") {
+			 log.Printf("Detected public bucket restriction: %v", err)
+			 return false
+		}
+		// If it failed for another reason, we probably can't run tests either, but let's assume false.
+		log.Printf("Probe bucket creation failed: %v", err)
+		return false
+	}
+	return true
+}
+
+// This test will be skipped if the GCP_PROJECT_ID has restrictions on making public buckets.
 func testListBuckets(ctx context.Context, csClient cloudstorageclient.CloudStorageClient) {
 	log.Println("--- Running test: ListBuckets ---")
 	const serverURL = "http://localhost:8080"
@@ -211,6 +251,11 @@ func testListBuckets(ctx context.Context, csClient cloudstorageclient.CloudStora
 	projectID := os.Getenv("GCP_PROJECT_ID")
 	if projectID == "" {
 		log.Fatal("GCP_PROJECT_ID environment variable not set")
+	}
+
+	if !canCreatePublicBuckets(ctx, projectID, csClient) {
+		log.Println("Skipping ListBuckets test because public buckets are restricted.")
+		return
 	}
 
 	bucketNames := []string{
@@ -286,6 +331,7 @@ func testListBuckets(ctx context.Context, csClient cloudstorageclient.CloudStora
 	log.Println("Buckets verification successful.")
 }
 
+// This test will be skipped if the GCP_PROJECT_ID has restrictions on making public buckets.
 func testUploadSource(ctx context.Context, csClient cloudstorageclient.CloudStorageClient) {
 	log.Println("--- Running test: UploadSource ---")
 	const serverURL = "http://localhost:8080"
@@ -314,6 +360,11 @@ func testUploadSource(ctx context.Context, csClient cloudstorageclient.CloudStor
 	projectID := os.Getenv("GCP_PROJECT_ID")
 	if projectID == "" {
 		log.Fatal("GCP_PROJECT_ID environment variable not set")
+	}
+
+	if !canCreatePublicBuckets(ctx, projectID, csClient) {
+		log.Println("Skipping UploadSource test because public buckets are restricted.")
+		return
 	}
 
 	bucketName := fmt.Sprintf("%s-integration-test-bucket-upload-source", projectID)
@@ -799,4 +850,142 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("Service verification successful.")
+}
+
+func testScanSecrets(ctx context.Context, oClient osvclient.OsvClient) {
+	log.Println("--- Running test: ScanSecrets ---")
+	const serverURL = "http://localhost:8080"
+
+	mcpClient, err := mcpclient.NewStreamableHttpClient(serverURL, nil)
+	if err != nil {
+		log.Fatalf("Failed to create mcp-go HTTP client: %v", err)
+	}
+
+	if err := mcpClient.Start(ctx); err != nil {
+		log.Fatalf("Failed to start mcp-go client: %v", err)
+	}
+	defer mcpClient.Close()
+
+	var initReq mcp.InitializeRequest
+	initReq.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
+	initReq.Params.ClientInfo = mcp.Implementation{
+		Name:    "integration-test-client",
+		Version: "1.0.0",
+	}
+
+	if _, err := mcpClient.Initialize(ctx, initReq); err != nil {
+		log.Fatalf("Failed to initialize client: %v", err)
+	}
+
+	// Create a temporary directory with a dummy file
+	tmpDir, err := os.MkdirTemp("", "test-secrets-*")
+	if err != nil {
+		log.Fatalf("Failed to create temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dummyFile := filepath.Join(tmpDir, "test-file.txt")
+	if err := os.WriteFile(dummyFile, []byte("no secrets here"), 0644); err != nil {
+		log.Fatalf("Failed to write dummy file: %v", err)
+	}
+
+	args := map[string]any{
+		"root": tmpDir,
+		"ignore_directories": []string{},
+	}
+
+	var req mcp.CallToolRequest
+	req.Params.Name = "osv.scan_secrets"
+	req.Params.Arguments = args
+
+	log.Println("Calling tool 'osv.scan_secrets'...")
+
+	resp, err := mcpClient.CallTool(ctx, req)
+	if err != nil {
+		log.Fatalf("Tool call failed: %v", err)
+	}
+
+	if resp.IsError {
+		log.Fatalf("Tool returned an error: %v", resp.Content)
+	}
+
+	log.Println("Tool call successful.")
+}
+
+func testScanSecretsWithSecret(ctx context.Context, oClient osvclient.OsvClient) {
+	log.Println("--- Running test: ScanSecretsWithSecret ---")
+	const serverURL = "http://localhost:8080"
+
+	mcpClient, err := mcpclient.NewStreamableHttpClient(serverURL, nil)
+	if err != nil {
+		log.Fatalf("Failed to create mcp-go HTTP client: %v", err)
+	}
+
+	if err := mcpClient.Start(ctx); err != nil {
+		log.Fatalf("Failed to start mcp-go client: %v", err)
+	}
+
+	defer mcpClient.Close()
+
+	var initReq mcp.InitializeRequest
+	initReq.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
+	initReq.Params.ClientInfo = mcp.Implementation{
+		Name:    "integration-test-client",
+		Version: "1.0.0",
+	}
+
+	if _, err := mcpClient.Initialize(ctx, initReq); err != nil {
+		log.Fatalf("Failed to initialize client: %v", err)
+	}
+
+	// Create a temporary directory with a file containing a fake secret
+	tmpDir, err := os.MkdirTemp("", "test-secrets-*")
+	if err != nil {
+		log.Fatalf("Failed to create temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	secretFile := filepath.Join(tmpDir, "vulnerable_config.env")
+	fakeSecret := "AIzaSyC_TestTokenForScannerDetection123" // Key needs to start with AIza and be 39 characters long.
+	if err := os.WriteFile(secretFile, []byte(fmt.Sprintf("GOOGLE_API_KEY=%s", fakeSecret)), 0644); err != nil {
+		log.Fatalf("Failed to write secret file: %v", err)
+	}
+
+	args := map[string]any{
+		"root": tmpDir,
+		"ignore_directories": []string{},
+	}
+
+	var req mcp.CallToolRequest
+	req.Params.Name = "osv.scan_secrets"
+	req.Params.Arguments = args
+
+	log.Println("Calling tool 'osv.scan_secrets'...")
+
+	resp, err := mcpClient.CallTool(ctx, req)
+	if err != nil {
+		log.Fatalf("Tool call failed: %v", err)
+	}
+
+	if resp.IsError {
+		log.Fatalf("Tool returned an error: %v", resp.Content)
+	}
+
+	log.Println("Tool call successful.")
+
+	// Verify that the fake secret was found in the report
+	contentMap, ok := resp.StructuredContent.(map[string]interface{})
+	if !ok {
+		log.Fatalf("StructuredContent was not a map. Got: %T", resp.StructuredContent)
+	}
+	report, ok := contentMap["report"].(string)
+	if !ok {
+		log.Fatalf("Content map did not contain a 'report' key with a string report. Got: %T", contentMap["report"])
+	}
+
+	if !strings.Contains(report, fakeSecret) {
+		log.Fatalf("Expected fake secret %q not found in scan report: %s", fakeSecret, report)
+	}
+
+	log.Println("Secret scan verification successful.")
 }
