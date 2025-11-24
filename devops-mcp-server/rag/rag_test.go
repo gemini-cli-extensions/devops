@@ -18,15 +18,14 @@ package rag
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
-	
 	"devops-mcp-server/rag/client/mocks"
 
 	"github.com/golang/mock/gomock"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
-
 
 func TestHandler_Register(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -67,7 +66,7 @@ func TestQueryPatternTool(t *testing.T) {
 				mock.EXPECT().QueryPatterns(gomock.Any(), query).Return("mocked pattern result", nil)
 			},
 			expectErr:      false,
-			expectedResult: "mocked pattern result",
+			expectedResult: map[string]any{"cicd-patterns": "mocked pattern result"},
 		},
 		{
 			name: "Error case",
@@ -100,7 +99,7 @@ func TestQueryPatternTool(t *testing.T) {
 				t.Errorf("queryPatternToolFunc() error = %q, expectedError %q", err.Error(), tt.expectedError)
 			}
 
-			if !tt.expectErr && res != tt.expectedResult {
+			if !tt.expectErr && !reflect.DeepEqual(res, tt.expectedResult) {
 				t.Errorf("queryPatternToolFunc() result = %v, expectedResult %v", res, tt.expectedResult)
 			}
 		})
@@ -124,7 +123,7 @@ func TestQueryKnowledgeTool(t *testing.T) {
 				mock.EXPECT().Queryknowledge(gomock.Any(), query).Return("mocked knowledge result", nil)
 			},
 			expectErr:      false,
-			expectedResult: "mocked knowledge result",
+			expectedResult: map[string]any{"knowledge": "mocked knowledge result"},
 		},
 		{
 			name: "Error case",
@@ -157,7 +156,7 @@ func TestQueryKnowledgeTool(t *testing.T) {
 				t.Errorf("queryKnowledgeToolFunc() error = %q, expectedError %q", err.Error(), tt.expectedError)
 			}
 
-			if !tt.expectErr && res != tt.expectedResult {
+			if !tt.expectErr && !reflect.DeepEqual(res, tt.expectedResult) {
 				t.Errorf("queryKnowledgeToolFunc() result = %v, expectedResult %v", res, tt.expectedResult)
 			}
 		})

@@ -48,7 +48,7 @@ func addQueryPatternTool(server *mcp.Server, ragClient ragclient.RagClient) {
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to query patterns: %w", err)
 		}
-		return &mcp.CallToolResult{}, res, nil
+		return &mcp.CallToolResult{}, map[string]any{"cicd-patterns": res}, nil
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "rag.search_common_cicd_patterns", Description: "Find common CICD patterns in the database."}, queryPatternToolFunc)
 }
@@ -59,7 +59,7 @@ func addQueryKnowledgeTool(server *mcp.Server, ragClient ragclient.RagClient) {
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to query knowledge: %w", err)
 		}
-		return &mcp.CallToolResult{}, res, nil
+		return &mcp.CallToolResult{}, map[string]any{"knowledge": res}, nil
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "rag.query_knowledge", Description: "Find knowledge snippets in the knowledge database."}, queryKnowledgeToolFunc)
 }

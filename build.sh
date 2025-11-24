@@ -70,7 +70,7 @@ build_mcp() {
     cd ${MCP_SERVER_DIR}
     go mod tidy
     go build -o "../${BINARY_NAME}"
-    echo "Successfully built '${BINARY_NAME}'."
+    echo "Successfully built '${BINARY_NAME}' Please move it to `.gemini/extensions/devops/bin/devops-mcp-server`"
   )
 }
 

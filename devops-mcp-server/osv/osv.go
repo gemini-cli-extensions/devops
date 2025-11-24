@@ -34,14 +34,15 @@ func (h *Handler) Register(server *mcp.Server) {
 }
 
 type ScanSecretsArgs struct {
-	Root string `json:"root" jsonschema:"The root directory to scan for secrets. Give the absolute directory path."`
+	Root                 string   `json:"root" jsonschema:"The root directory to scan for secrets. Give the absolute directory path."`
+	IgnoreDirectoryPaths []string `json:"ignore_directories" jsonschema:"The directory paths to ignore. Give the absolute directory path."`
 }
 
 var scanSecretsToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args ScanSecretsArgs) (*mcp.CallToolResult, any, error)
 
 func addScanSecretsTool(server *mcp.Server, oClient osvclient.OsvClient) {
 	scanSecretsToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args ScanSecretsArgs) (*mcp.CallToolResult, any, error) {
-		res, err := oClient.ScanSecrets(ctx, args.Root)
+		res, err := oClient.ScanSecrets(ctx, args.Root, args.IgnoreDirectoryPaths)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to scan for secrets: %w", err)
 		}

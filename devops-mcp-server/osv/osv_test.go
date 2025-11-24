@@ -1,4 +1,3 @@
-
 // Copyright 2024 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +21,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	
 	osvmocks "devops-mcp-server/osv/client/mocks"
 )
 
@@ -31,11 +29,11 @@ func TestAddScanSecretsTool(t *testing.T) {
 	root := "/test/dir"
 
 	tests := []struct {
-		name          string
-		args          ScanSecretsArgs
-		setupMocks    func(*osvmocks.MockOsvClient)
-		expectErr     bool
-		expectedError string
+		name           string
+		args           ScanSecretsArgs
+		setupMocks     func(*osvmocks.MockOsvClient)
+		expectErr      bool
+		expectedError  string
 		expectedResult string
 	}{
 		{
@@ -44,9 +42,9 @@ func TestAddScanSecretsTool(t *testing.T) {
 				Root: root,
 			},
 			setupMocks: func(osvMock *osvmocks.MockOsvClient) {
-				osvMock.EXPECT().ScanSecrets(gomock.Any(), root).Return("scan results", nil)
+				osvMock.EXPECT().ScanSecrets(gomock.Any(), root, nil).Return("scan results", nil)
 			},
-			expectErr: false,
+			expectErr:      false,
 			expectedResult: "scan results",
 		},
 		{
@@ -55,7 +53,7 @@ func TestAddScanSecretsTool(t *testing.T) {
 				Root: root,
 			},
 			setupMocks: func(osvMock *osvmocks.MockOsvClient) {
-				osvMock.EXPECT().ScanSecrets(gomock.Any(), root).Return("", errors.New("scan failed"))
+				osvMock.EXPECT().ScanSecrets(gomock.Any(), root, nil).Return("", errors.New("scan failed"))
 			},
 			expectErr:     true,
 			expectedError: "failed to scan for secrets: scan failed",
@@ -82,7 +80,7 @@ func TestAddScanSecretsTool(t *testing.T) {
 			if tt.expectErr && err.Error() != tt.expectedError {
 				t.Errorf("scanSecretsToolFunc() error = %q, expectedError %q", err.Error(), tt.expectedError)
 			}
-			
+
 			if !tt.expectErr {
 				resultMap, ok := res.(map[string]any)
 				if !ok {
@@ -99,7 +97,6 @@ func TestAddScanSecretsTool(t *testing.T) {
 		})
 	}
 }
-
 
 func TestHandler_Register(t *testing.T) {
 	ctrl := gomock.NewController(t)
