@@ -42,7 +42,6 @@ var knowledgeRAGSources = []Source{
 		ExcludePattern: ".*\\?hl=.+$",
 		Dir:            "GCP_DOCS",
 		URLs: []string{
-			//"https://cloud.google.com/docs/buildpacks/stacks", // Package list is too large for a single chunck
 			"https://cloud.google.com/docs/buildpacks/base-images",
 			"https://cloud.google.com/docs/buildpacks/build-application",
 			"https://cloud.google.com/docs/buildpacks/python",
@@ -112,11 +111,11 @@ func dbFile() string {
 	}
 	return dbFile
 }
-func setupRAGDB(ctx context.Context, token, projectID string) (*chromem.DB, chromem.EmbeddingFunc, error) {
-	vertexEmbeddingFunc := chromem.NewEmbeddingFuncVertex(
-		token,
-		projectID,
-		chromem.EmbeddingModelVertexEnglishV4)
+func setupRAGDB(ctx context.Context) (*chromem.DB, chromem.EmbeddingFunc, error) {
+	vertexEmbeddingFunc, err := newGeminiEmbeddingFunc(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
 	db := chromem.NewDB()
 	dbFile := dbFile()
 	if len(dbFile) > 0 {
@@ -130,7 +129,7 @@ func setupRAGDB(ctx context.Context, token, projectID string) (*chromem.DB, chro
 			}
 		}
 	}
-	_, err := db.GetOrCreateCollection("knowledge", nil, vertexEmbeddingFunc)
+	_, err = db.GetOrCreateCollection("knowledge", nil, vertexEmbeddingFunc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -156,12 +155,7 @@ func processAllSources(ragSourceDir string) {
 func main() {
 	ctx := context.Background()
 
-	token, projectID, err := getGCPToken(ctx)
-	if err != nil {
-		log.Fatalf("GCP Auth failed: %v", err)
-	}
-
-	db, embeddingFunc, err := setupRAGDB(ctx, token, projectID)
+	db, embeddingFunc, err := setupRAGDB(ctx)
 	if err != nil {
 		log.Fatalf("Failed to setup RAG DB: %v", err)
 	}

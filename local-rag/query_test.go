@@ -63,6 +63,9 @@ func TestRAGQuery(t *testing.T) {
 	}
 	if len(patternResult) < 1 || patternResult[0].Content == "" {
 		t.Fatalf("Failed to find pattern: %v", len(patternResult))
+	}else{
+		log.Printf("Knowledge result: %v", patternResult[0].Metadata)
+		log.Printf("Pattern result: %v", patternResult[0].Content)
 	}
 
 	collectionKnowledge, err := db.GetOrCreateCollection("knowledge", nil, vertexEmbeddingFunc)
@@ -80,5 +83,8 @@ func TestRAGQuery(t *testing.T) {
 		// The original test checked < 3 but maybe we should be lenient if the DB is small?
 		// I'll keep the original logic but add logging.
 		t.Fatalf("Failed to find pattern: %v", len(knowledgeResult))
+	}else{
+		log.Printf("Knowledge result: %v", knowledgeResult[0].Metadata)
+		log.Printf("Pattern result: %v", knowledgeResult[0].Content)
 	}
 }

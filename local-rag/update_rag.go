@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	chromem "github.com/philippgille/chromem-go"
 	"github.com/tmc/langchaingo/textsplitter"
@@ -28,8 +29,19 @@ import (
 func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir string) {
 	var docs []chromem.Document
 	log.Printf("Uploading directory %s to collection: %v", dir, collection.Name)
-	splitter := textsplitter.NewMarkdownTextSplitter()
-
+	//For embedding models Gemini limits to 2048 tokens.
+	//Assuming 4 charact per token and ~15% overlap
+	//set chunk size to max possible values, any larger and we hit the limit
+	splitter := textsplitter.NewRecursiveCharacter(
+		textsplitter.WithChunkSize(5000),
+		textsplitter.WithChunkOverlap(750),
+	)
+	sourcePath := ""
+	dirPath := strings.Split(dir, "/")
+	if len(dirPath) > 1 {
+		//sourcePath = strings.Join(dirPath[len(dirPath)-1], "/")
+		sourcePath =  dirPath[len(dirPath)-1]
+	}
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -62,8 +74,8 @@ func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir 
 				}
 				doc := chromem.Document{
 					ID:       chunkId,
-					Content:  chunk,
-					Metadata: map[string]string{"source": path},
+					Content:  string(chunk),
+					Metadata: map[string]string{"source":  strings.ReplaceAll(path,dir,sourcePath)},
 				}
 				docs = append(docs, doc)
 			}
