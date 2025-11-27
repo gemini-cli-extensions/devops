@@ -49,7 +49,7 @@ func DeployPrompt(ctx context.Context, server *mcp.Server) {
 			{
 				Name:        "query",
 				Description: "application to deploy, as explained by the user",
-				Required:    true,
+				Required:    false,
 			},
 		},
 	}
