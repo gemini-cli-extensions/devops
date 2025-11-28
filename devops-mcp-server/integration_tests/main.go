@@ -571,7 +571,7 @@ func testListServices(ctx context.Context, crClient cloudrunclient.CloudRunClien
 	log.Println("Services verification successful.")
 }
 
-// Tests the cloudrun.deploy_to_cloud_run_from_image tool with a new service.
+// Tests the cloudrun.deploy_to_cloud_run_from_image tool with a new private service.
 func testDeployToCloudRunFromImage(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
 	log.Println("--- Running test: CreateService ---")
 	const serverURL = "http://localhost:8080"
@@ -647,7 +647,7 @@ func testDeployToCloudRunFromImage(ctx context.Context, crClient cloudrunclient.
 	log.Println("Service verification successful.")
 }
 
-// Tests the cloudrun.deploy_to_cloud_run_from_image tool with a preexisting service.
+// Tests the cloudrun.deploy_to_cloud_run_from_image tool with a preexisting service (private service).
 func testDeployToCloudRunFromImageNewRevision(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
 	log.Println("--- Running test: CreateServiceRevision ---")
 	const serverURL = "http://localhost:8080"
@@ -739,6 +739,7 @@ func testDeployToCloudRunFromImageNewRevision(ctx context.Context, crClient clou
 	log.Println("Revision verification successful.")
 }
 
+// Tests creating a private cloudrun service.
 func testDeployToCloudRunFromSource(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
 	log.Println("--- Running test: DeployToCloudRunFromSource ---")
 	const serverURL = "http://localhost:8080"

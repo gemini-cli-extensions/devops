@@ -58,12 +58,13 @@ func addListServicesTool(server *mcp.Server, crClient cloudrunclient.CloudRunCli
 }
 
 type DeployToCloudRunFromImageArgs struct {
-	ProjectID    string `json:"project_id" jsonschema:"The Google Cloud project ID."`
-	Location     string `json:"location" jsonschema:"The Google Cloud location."`
-	ServiceName  string `json:"service_name" jsonschema:"The name of the Cloud Run service."`
-	RevisionName string `json:"revision_name" jsonschema:"The name of the Cloud run revision."`
-	ImageURL     string `json:"image_url" jsonschema:"The URL of the container image to deploy."`
-	Port         int32  `json:"port,omitempty" jsonschema:"The port the container listens on."`
+	ProjectID         string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location          string `json:"location" jsonschema:"The Google Cloud location."`
+	ServiceName       string `json:"service_name" jsonschema:"The name of the Cloud Run service."`
+	RevisionName      string `json:"revision_name" jsonschema:"The name of the Cloud run revision."`
+	ImageURL          string `json:"image_url" jsonschema:"The URL of the container image to deploy."`
+	Port              int32  `json:"port,omitempty" jsonschema:"The port the container listens on."`
+	AllowPublicAccess bool   `json:"allow_public_access,omitempty" jsonschema:"If the service should be public. Default is false."`
 }
 
 var deployToCloudRunFromImageToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args DeployToCloudRunFromImageArgs) (*mcp.CallToolResult, any, error)
@@ -73,6 +74,10 @@ func addDeployToCloudRunFromImageTool(server *mcp.Server, crClient cloudrunclien
 		// Attempt to create the service
 		service, err := crClient.CreateService(ctx, args.ProjectID, args.Location, args.ServiceName, args.ImageURL, args.Port)
 		if err == nil {
+			if err := crClient.SetServiceAccess(ctx, service.Name, args.AllowPublicAccess); err != nil {
+				return &mcp.CallToolResult{}, nil, fmt.Errorf("created service, but failed to set IAM policy for allowing public access = %v: %w", args.AllowPublicAccess, err)
+
+			}
 			return &mcp.CallToolResult{}, service, nil
 		}
 
@@ -92,6 +97,9 @@ func addDeployToCloudRunFromImageTool(server *mcp.Server, crClient cloudrunclien
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to update service with new revision: %w", err)
 		}
+		if err := crClient.SetServiceAccess(ctx, service.Name, args.AllowPublicAccess); err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("updated service, but failed to set IAM policy for allowing public access = %v: %w", args.AllowPublicAccess, err)
+		}
 		revision, err := crClient.GetRevision(ctx, service)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to get revision: %w", err)
@@ -102,18 +110,19 @@ func addDeployToCloudRunFromImageTool(server *mcp.Server, crClient cloudrunclien
 }
 
 type DeployToCloudRunFromSourceArgs struct {
-	ProjectID   string `json:"project_id" jsonschema:"The Google Cloud project ID."`
-	Location    string `json:"location" jsonschema:"The Google Cloud location."`
-	ServiceName string `json:"service_name" jsonschema:"The name of the Cloud Run service."`
-	Source      string `json:"source" jsonschema:"The path to the source code to deploy."`
-	Port        int32  `json:"port,omitempty" jsonschema:"The port the container listens on."`
+	ProjectID         string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location          string `json:"location" jsonschema:"The Google Cloud location."`
+	ServiceName       string `json:"service_name" jsonschema:"The name of the Cloud Run service."`
+	Source            string `json:"source" jsonschema:"The path to the source code to deploy."`
+	Port              int32  `json:"port,omitempty" jsonschema:"The port the container listens on."`
+	AllowPublicAccess bool   `json:"allow_public_access,omitempty" jsonschema:"If the service should be public. Default is false."`
 }
 
 var deployToCloudRunFromSourceToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args DeployToCloudRunFromSourceArgs) (*mcp.CallToolResult, any, error)
 
 func addDeployToCloudRunFromSourceTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
 	deployToCloudRunFromSourceToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args DeployToCloudRunFromSourceArgs) (*mcp.CallToolResult, any, error) {
-		err := crClient.DeployFromSource(ctx, args.ProjectID, args.Location, args.ServiceName, args.Source, args.Port)
+		err := crClient.DeployFromSource(ctx, args.ProjectID, args.Location, args.ServiceName, args.Source, args.Port, args.AllowPublicAccess)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create service: %w", err)
 		}

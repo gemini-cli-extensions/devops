@@ -23,12 +23,13 @@ import (
 // MockCloudRunClient is a mock of CloudRunClient interface.
 type MockCloudRunClient struct {
 	GetServiceFunc       func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error)
-	ListServicesFunc 	 func(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error)
+	ListServicesFunc     func(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error)
 	CreateServiceFunc    func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error)
 	UpdateServiceFunc    func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error)
 	GetRevisionFunc      func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error)
-	DeployFromSourceFunc func(ctx context.Context, projectID, location, serviceName, source string, port int32) error
+	DeployFromSourceFunc func(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error
 	DeleteServiceFunc    func(ctx context.Context, projectID, location, serviceName string) error
+	SetServiceAccessFunc func(ctx context.Context, serviceName string, allowPublicAccess bool) error
 }
 
 // DeleteService mocks the DeleteService method.
@@ -62,6 +63,10 @@ func (m *MockCloudRunClient) GetRevision(ctx context.Context, service *cloudrunp
 }
 
 // DeployFromSource mocks the DeployFromSource method.
-func (m *MockCloudRunClient) DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32) error {
-	return m.DeployFromSourceFunc(ctx, projectID, location, serviceName, source, port)
+func (m *MockCloudRunClient) DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error {
+	return m.DeployFromSourceFunc(ctx, projectID, location, serviceName, source, port, allowPublicAccess)
+}
+
+func (m *MockCloudRunClient) SetServiceAccess(ctx context.Context, serviceName string, allowPublicAccess bool) error {
+	return m.SetServiceAccessFunc(ctx, serviceName, allowPublicAccess)
 }

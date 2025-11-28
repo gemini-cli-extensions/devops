@@ -156,7 +156,7 @@ func TestCreateServiceTool(t *testing.T) {
 		expectedErrorSubstring string
 	}{
 		{
-			name: "Success",
+			name: "Success private service",
 			args: DeployToCloudRunFromImageArgs{
 				ProjectID:   projectID,
 				Location:    location,
@@ -168,11 +168,34 @@ func TestCreateServiceTool(t *testing.T) {
 				mockClient.CreateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error) {
 					return &cloudrunpb.Service{}, nil
 				}
+				mockClient.SetServiceAccessFunc = func(ctx context.Context, serviceName string, allowPublicAccess bool) error {
+					return nil
+				}
 			},
 			expectErr: false,
 		},
 		{
-			name: "Success with preexisting service",
+			name: "Success public service",
+			args: DeployToCloudRunFromImageArgs{
+				ProjectID:         projectID,
+				Location:          location,
+				ServiceName:       serviceName,
+				ImageURL:          imageURL,
+				Port:              port,
+				AllowPublicAccess: true,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.CreateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error) {
+					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.SetServiceAccessFunc = func(ctx context.Context, serviceName string, allowPublicAccess bool) error {
+					return nil
+				}
+			},
+			expectErr: false,
+		},
+		{
+			name: "Success with preexisting service - private",
 			args: DeployToCloudRunFromImageArgs{
 				ProjectID:   projectID,
 				Location:    location,
@@ -189,6 +212,38 @@ func TestCreateServiceTool(t *testing.T) {
 				}
 				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
 					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.SetServiceAccessFunc = func(ctx context.Context, serviceName string, allowPublicAccess bool) error {
+					return nil
+				}
+				mockClient.GetRevisionFunc = func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {
+					return &cloudrunpb.Revision{}, nil
+				}
+			},
+			expectErr: false,
+		},
+		{
+			name: "Success with preexisting service - public",
+			args: DeployToCloudRunFromImageArgs{
+				ProjectID:         projectID,
+				Location:          location,
+				ServiceName:       serviceName,
+				ImageURL:          imageURL,
+				Port:              port,
+				AllowPublicAccess: true,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.CreateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error) {
+					return nil, status.Errorf(codes.AlreadyExists, "error service already exists")
+				}
+				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
+					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
+					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.SetServiceAccessFunc = func(ctx context.Context, serviceName string, allowPublicAccess bool) error {
+					return nil
 				}
 				mockClient.GetRevisionFunc = func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {
 					return &cloudrunpb.Revision{}, nil
@@ -212,6 +267,27 @@ func TestCreateServiceTool(t *testing.T) {
 			},
 			expectErr:              true,
 			expectedErrorSubstring: "failed to create service: error creating service",
+		},
+		{
+			name: "Fail to set service access after creating service",
+			args: DeployToCloudRunFromImageArgs{
+				ProjectID:         projectID,
+				Location:          location,
+				ServiceName:       serviceName,
+				ImageURL:          imageURL,
+				Port:              port,
+				AllowPublicAccess: true,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.CreateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error) {
+					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.SetServiceAccessFunc = func(ctx context.Context, serviceName string, allowPublicAccess bool) error {
+					return errors.New("failed to set public IAM policy")
+				}
+			},
+			expectErr:              true,
+			expectedErrorSubstring: "created service, but failed to set IAM policy for allowing public access = true: failed to set public IAM policy",
 		},
 		{
 			name: "Fail to get service",
@@ -257,6 +333,33 @@ func TestCreateServiceTool(t *testing.T) {
 			expectedErrorSubstring: "failed to update service with new revision: error updating service",
 		},
 		{
+			name: "Fail to set service access after updating service",
+			args: DeployToCloudRunFromImageArgs{
+				ProjectID:         projectID,
+				Location:          location,
+				ServiceName:       serviceName,
+				ImageURL:          imageURL,
+				Port:              port,
+				AllowPublicAccess: true,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.CreateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error) {
+					return nil, status.Errorf(codes.AlreadyExists, "error service already exists")
+				}
+				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
+					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
+					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.SetServiceAccessFunc = func(ctx context.Context, serviceName string, allowPublicAccess bool) error {
+					return errors.New("failed to set public IAM policy")
+				}
+			},
+			expectErr:              true,
+			expectedErrorSubstring: "updated service, but failed to set IAM policy for allowing public access = true: failed to set public IAM policy",
+		},
+		{
 			name: "Fail to get revision after updating service",
 			args: DeployToCloudRunFromImageArgs{
 				ProjectID:   projectID,
@@ -274,6 +377,9 @@ func TestCreateServiceTool(t *testing.T) {
 				}
 				mockClient.UpdateServiceFunc = func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error) {
 					return &cloudrunpb.Service{}, nil
+				}
+				mockClient.SetServiceAccessFunc = func(ctx context.Context, serviceName string, allowPublicAccess bool) error {
+					return nil
 				}
 				mockClient.GetRevisionFunc = func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {
 					return &cloudrunpb.Revision{}, errors.New("error getting revision")
@@ -324,7 +430,7 @@ func TestCreateServiceFromSourceTool(t *testing.T) {
 		expectedErrorSubstring string
 	}{
 		{
-			name: "Success",
+			name: "Success private service",
 			args: DeployToCloudRunFromSourceArgs{
 				ProjectID:   projectID,
 				Location:    location,
@@ -332,7 +438,26 @@ func TestCreateServiceFromSourceTool(t *testing.T) {
 				Source:      source,
 			},
 			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
-				mockClient.DeployFromSourceFunc = func(ctx context.Context, projectID, location, serviceName, source string, port int32) error {
+				mockClient.DeployFromSourceFunc = func(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error {
+					return nil
+				}
+				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
+					return &cloudrunpb.Service{}, nil
+				}
+			},
+			expectErr: false,
+		},
+		{
+			name: "Success public service",
+			args: DeployToCloudRunFromSourceArgs{
+				ProjectID:         projectID,
+				Location:          location,
+				ServiceName:       serviceName,
+				Source:            source,
+				AllowPublicAccess: true,
+			},
+			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
+				mockClient.DeployFromSourceFunc = func(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error {
 					return nil
 				}
 				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
@@ -350,7 +475,7 @@ func TestCreateServiceFromSourceTool(t *testing.T) {
 				Source:      source,
 			},
 			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
-				mockClient.DeployFromSourceFunc = func(ctx context.Context, projectID, location, serviceName, source string, port int32) error {
+				mockClient.DeployFromSourceFunc = func(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error {
 					return errors.New("error deploying")
 				}
 				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {
@@ -369,7 +494,7 @@ func TestCreateServiceFromSourceTool(t *testing.T) {
 				Source:      source,
 			},
 			setupMocks: func(mockClient *mocks.MockCloudRunClient) {
-				mockClient.DeployFromSourceFunc = func(ctx context.Context, projectID, location, serviceName, source string, port int32) error {
+				mockClient.DeployFromSourceFunc = func(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error {
 					return nil
 				}
 				mockClient.GetServiceFunc = func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error) {

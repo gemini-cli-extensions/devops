@@ -21,6 +21,7 @@ import (
 
 	"google.golang.org/api/iterator"
 
+	iampb "cloud.google.com/go/iam/apiv1/iampb"
 	cloudrun "cloud.google.com/go/run/apiv2"
 	cloudrunpb "cloud.google.com/go/run/apiv2/runpb"
 )
@@ -50,8 +51,9 @@ type CloudRunClient interface {
 	CreateService(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error)
 	UpdateService(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error)
 	GetRevision(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error)
-	DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32) error
+	DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error
 	DeleteService(ctx context.Context, projectID, location, serviceName string) error
+	SetServiceAccess(ctx context.Context, serviceName string, allowPublicAccess bool) error
 }
 
 // NewCloudRunClient creates a new CloudRunClient.
@@ -181,11 +183,17 @@ func (c *CloudRunClientImpl) UpdateService(ctx context.Context, projectID, locat
 }
 
 // DeployFromSource creates a new Cloud Run service or updates an existing one from source.
-func (c *CloudRunClientImpl) DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32) error {
+func (c *CloudRunClientImpl) DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error {
 	args := []string{"run", "deploy", serviceName, "--project", projectID, "--region", location, "--source", source, "--format", "json", "--quiet"}
 	if port != 0 {
 		args = append(args, "--port", fmt.Sprintf("%d", port))
 	}
+	if allowPublicAccess {
+		args = append(args, "--allow-unauthenticated")
+	} else {
+		args = append(args, "--no-allow-unauthenticated")
+	}
+
 	cmd := c.execer.Command("gcloud", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -212,5 +220,103 @@ func (c *CloudRunClientImpl) DeleteService(ctx context.Context, projectID, locat
 		return fmt.Errorf("failed to wait for service deletion: %w", err)
 	}
 
+	return nil
+}
+
+// SetServiceAccess updates the IAM policy to allow or deny unauthenticated access.
+func (c *CloudRunClientImpl) SetServiceAccess(ctx context.Context, serviceName string, allowPublicAccess bool) error {
+	// Get current IAM policy
+	policy, err := c.servicesClient.GetIamPolicy(ctx, &iampb.GetIamPolicyRequest{
+		Resource: serviceName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get iam policy: %w", err)
+	}
+
+	role := "roles/run.invoker"
+	publicMember := "allUsers"
+	policyChanged := false
+
+	if allowPublicAccess {
+		// === MAKE PUBLIC ===
+		bindingFound := false
+		for _, b := range policy.Bindings {
+			if b.Role == role {
+				bindingFound = true
+				// Check if member exists
+				memberExists := false
+				for _, m := range b.Members {
+					if m == publicMember {
+						memberExists = true
+						break
+					}
+				}
+				if !memberExists {
+					b.Members = append(b.Members, publicMember)
+					policyChanged = true
+				}
+				break
+			}
+		}
+		if !bindingFound {
+			policy.Bindings = append(policy.Bindings, &iampb.Binding{
+				Role:    role,
+				Members: []string{publicMember},
+			})
+			policyChanged = true
+		}
+	} else {
+		// === MAKE PRIVATE ===
+
+		// Create a completely new slice to ensure clean state
+		var newBindings []*iampb.Binding
+
+		for _, b := range policy.Bindings {
+			if b.Role == role {
+				// We found the invoker role. Rebuild its members list.
+				var keepMembers []string
+				removed := false
+				for _, m := range b.Members {
+					if m == publicMember {
+						removed = true
+					} else {
+						keepMembers = append(keepMembers, m)
+					}
+				}
+
+				if removed {
+					policyChanged = true
+				}
+
+				// Only add this binding back to the policy if it still has members
+				if len(keepMembers) > 0 {
+					b.Members = keepMembers
+					newBindings = append(newBindings, b)
+				}
+			} else {
+				// Keep all other roles (owners, editors, etc.)
+				newBindings = append(newBindings, b)
+			}
+		}
+
+		// Update the policy with the filtered list
+		if policyChanged {
+			policy.Bindings = newBindings
+		}
+	}
+
+	// Apply Changes
+	if policyChanged {
+		// Explicitly set the policy version to 3 to ensure full fidelity
+		policy.Version = 3
+
+		_, err = c.servicesClient.SetIamPolicy(ctx, &iampb.SetIamPolicyRequest{
+			Resource: serviceName,
+			Policy:   policy,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update iam policy: %w", err)
+		}
+	}
 	return nil
 }

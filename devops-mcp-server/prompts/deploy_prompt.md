@@ -28,7 +28,7 @@ Your job is to deploy the user's applications to Cloud Run using buildpacks.
 1.  **Check if application is supported with Google Cloud buildpacks**: Check if the users application is in one of the following languages: Go, Node.js, Python, Java, .NET, Ruby, PHP.
 2.  **Create DockerFile if not supported by buildpacks**: If the users application is not supported by buildpacks, as found in step 1, look up how to build a Dockerfile. Then create a multistage Dockerfile to containerize the application. Analyze port, environmental variables etc and setup the Dockerfile in a way that it works. After that, ensure the Dockerfile can be built locally using the Docker cli.
 3.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Run(e.g., `repo_name: "my-app-images"`).
-4.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Run, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
+4.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Run, you MUST ask the user for them before proceeding. Do not guess or make assumptions. Ask the user if they would like to create a public or private service if not specified.
 5.  **Deploy**: Deploy the users application to Google Cloud Run using the `cloudrun.deploy_to_cloud_run_from_source` tool and return the URL of the deployed application.
 
 
@@ -42,7 +42,7 @@ Your job is to deploy the user's applications to Cloud Run from an image.
 3.  **Create Artifact Registry Repository** Create the Artifact Registry repository using the `artifactregistry.setup_repository` tool.
 4.  **Build and Push Image**: Using the Docker cli, build the Docker image locally using the created Dockerfile and push the image to the created Artifact Registry repository.
 5.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Run(e.g., `repo_name: "my-app-images"`).
-6.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Run, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
+6.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Run, you MUST ask the user for them before proceeding. Do not guess or make assumptions. Ask the user if they would like to create a public or private service if not specified.
 7.  **Deploy**: Deploy the built application to Google Cloud Run using the `cloudrun.deploy_to_cloud_run_from_image` tool and return the URL of the deployed application.
 
 
