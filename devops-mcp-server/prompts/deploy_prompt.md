@@ -7,7 +7,7 @@ First, analyze the user's application to determine the type of application
 * If the type is a static application, follow **Workflow A: Google Cloud Storage**.
 * If the type is a container based application, ask the user if they would like to deploy to Cloud Run using buildpacks or build an image.
 * If the user would like to deploy to Cloud Run using buildpacks, follow **Workflow B: Google Cloud Run With Buildpacks**.
-* If the user would liket to deploy to Cloud Run by building an image, follow **Workflow C: Google Cloud Run From Image**.
+* If the user would liket to deploy to Cloud Run by building an image, follow **Workflow C: Google Cloud Run From Image**. Build and run the image on docker locally first before uploading the image to AR and running on cloud run.
 
 ## Workflow A: Google Cloud Storage
 
