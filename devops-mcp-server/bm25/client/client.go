@@ -2,27 +2,30 @@ package bm25
 
 import (
 	"context"
-	_ "embed"
+	"embed"
 	"encoding/json"
 	"fmt"
-	"io/fs"
-	"log"
 	"math"
 	"sort"
 	"strings"
 )
 
-//go:embed ../../../local-rag/knowledge/*
+// go:embed knowledge/*
 var knowledgeFiles embed.FS
-
-//go:embed ../../../local-rag/patterns/*
-var patternFiles embed.FS
+// go:embed patterns/*
+var patternsFiles embed.FS
 
 type BM25Client interface {
 	Queryknowledge(ctx context.Context, query string) (string, error)
 	QueryPatterns(ctx context.Context, query string) (string, error)
 }
 
+// Only expose what the LLM needs to read.
+type Result struct {
+	Content    string            `json:"content"`
+	Metadata   map[string]string `json:"metadata,omitempty"` // Source info
+	Similarity float64           `json:"relevance_score"`    // Helps LLM weigh confidence
+}
 
 // BM25 Constants
 const (
@@ -207,38 +210,29 @@ func NewClient(ctx context.Context) (BM25Client, error) {
 
 func loadDoc(ctx context.Context) (BM25Client, error) {
 	bm25Client := &BM25ClientImpl{}
-	patternIdx := NewBM25Index()
+	patternsIdx := NewBM25Index()
 	// Load documents from patterns directory
-	loadFilesFromDirectory(patternIdx, patternFiles, "patterns", 1)
+	loadFilesFromDirectory(patternsIdx, patternsFiles, "patterns", 1)
 	knowledgeIdx := NewBM25Index()
 	// Load documents from knowledge directory
 	loadFilesFromDirectory(knowledgeIdx, knowledgeFiles, "knowledge", 1)
-	bm25Client.Pattern = patternIdx
+	bm25Client.Patterns = patternsIdx
 	bm25Client.Knowledge = knowledgeIdx
 	return bm25Client, nil
 }
 
 type BM25ClientImpl struct {
-	Pattern   *BM25Index
+	Patterns   *BM25Index
 	Knowledge *BM25Index
-}
-
-type BM25Client interface {
-	Queryknowledge(ctx context.Context, query string) (string, error)
-	QueryPatterns(ctx context.Context, query string) (string, error)
 }
 
 
 func (b *BM25ClientImpl) Queryknowledge(ctx context.Context, query string) (string, error) {
-	results, err :=  b.Knowledge.Search(query)
-	if err != nil {
-		log.Fatalf("Unable to Query collection knowledge: %v", err)
-	}
+	results :=  b.Knowledge.Search(query)
 	cleanResults := make([]Result, len(results))
 	for i, r := range results {
 		cleanResults[i] = Result{
 			Content:    r.Text,
-			Metadata:   r.DocID,
 			Similarity: r.Score,
 		}
 	}
@@ -252,15 +246,11 @@ func (b *BM25ClientImpl) Queryknowledge(ctx context.Context, query string) (stri
 }
 
 func (b *BM25ClientImpl) QueryPatterns(ctx context.Context, query string) (string, error) {
-	results, err :=  b.Pattern.Search(query)
-	if err != nil {
-		log.Fatalf("Unable to Query collection patterns: %v", err)
-	}
+	results :=  b.Patterns.Search(query)
 	cleanResults := make([]Result, len(results))
 	for i, r := range results {
 		cleanResults[i] = Result{
 			Content:    r.Text,
-			Metadata:   r.DocID,
 			Similarity: r.Score,
 		}
 	}
