@@ -24,9 +24,9 @@ import (
 	"strings"
 )
 
-// go:embed knowledge/*
+//go:embed knowledge/*
 var knowledgeFiles embed.FS
-// go:embed patterns/*
+//go:embed patterns/*
 var patternsFiles embed.FS
 
 type BM25Client interface {
