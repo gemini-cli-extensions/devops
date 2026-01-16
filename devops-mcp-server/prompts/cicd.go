@@ -43,7 +43,7 @@ func DesignPrompt(ctx context.Context, server *mcp.Server) {
 
 	// Create a server with a single prompt.
 	prompt := &mcp.Prompt{
-		Name:  "devops:design",
+		Name:  "devops:design-prompt",
 		Title: "Design and implement a Google Cloud based CI/CD pipeline.",
 		Arguments: []*mcp.PromptArgument{
 			{
