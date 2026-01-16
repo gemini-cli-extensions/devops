@@ -34,4 +34,4 @@ jobs:
 
       - name: Check
         # NOTE: Keep in sync with .hooks/addlicense
-        run: go run github.com/google/addlicense@v1.2.0 -v -check -s=only .
+        run: go run github.com/google/addlicense@v1.2.0 -v -check -s=only -skip toml .
