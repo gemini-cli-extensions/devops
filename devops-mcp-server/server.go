@@ -26,7 +26,8 @@ import (
 	"devops-mcp-server/devconnect"
 	"devops-mcp-server/osv"
 	"devops-mcp-server/prompts"
-	"devops-mcp-server/rag"
+	"devops-mcp-server/bm25"
+	// "devops-mcp-server/rag"
 
 	artifactregistryclient "devops-mcp-server/artifactregistry/client"
 	cloudbuildclient "devops-mcp-server/cloudbuild/client"
@@ -35,7 +36,7 @@ import (
 	developerconnectclient "devops-mcp-server/devconnect/client"
 	iamclient "devops-mcp-server/iam/client"
 	osvclient "devops-mcp-server/osv/client"
-	ragclient "devops-mcp-server/rag/client"
+	// ragclient "devops-mcp-server/rag/client"
 	bm25client "devops-mcp-server/bm25/client"
 	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
 
