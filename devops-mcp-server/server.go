@@ -20,13 +20,13 @@ import (
 	"log"
 
 	"devops-mcp-server/artifactregistry"
+	"devops-mcp-server/bm25"
 	"devops-mcp-server/cloudbuild"
 	"devops-mcp-server/cloudrun"
 	"devops-mcp-server/cloudstorage"
 	"devops-mcp-server/devconnect"
 	"devops-mcp-server/osv"
-	"devops-mcp-server/prompts"
-	"devops-mcp-server/bm25"
+
 	// "devops-mcp-server/rag"
 
 	artifactregistryclient "devops-mcp-server/artifactregistry/client"
@@ -36,6 +36,7 @@ import (
 	developerconnectclient "devops-mcp-server/devconnect/client"
 	iamclient "devops-mcp-server/iam/client"
 	osvclient "devops-mcp-server/osv/client"
+
 	// ragclient "devops-mcp-server/rag/client"
 	bm25client "devops-mcp-server/bm25/client"
 	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
@@ -65,16 +66,7 @@ func createServer() *mcp.Server {
 		log.Fatalf("failed to add tools: %v", err)
 	}
 
-	//TODO: Remove-addAllPrompts(ctx, server)
-
 	return server
-}
-
-func addAllPrompts(ctx context.Context, server *mcp.Server) {
-	// Add design prompt.
-	prompts.DesignPrompt(ctx, server)
-	// Add deploy prompt.
-	prompts.DeployPrompt(ctx, server)
 }
 
 func addAllTools(ctx context.Context, server *mcp.Server) error {
