@@ -65,7 +65,7 @@ func createServer() *mcp.Server {
 		log.Fatalf("failed to add tools: %v", err)
 	}
 
-	addAllPrompts(ctx, server)
+	//TODO: Remove-addAllPrompts(ctx, server)
 
 	return server
 }
