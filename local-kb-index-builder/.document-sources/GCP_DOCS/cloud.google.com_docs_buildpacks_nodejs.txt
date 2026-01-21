@@ -1,0 +1,257 @@
+- [Home](https://docs.cloud.google.com/)
+- [Documentation](https://docs.cloud.google.com/docs)
+- [Application hosting](https://docs.cloud.google.com/docs/application-hosting)
+- [Buildpacks](https://docs.cloud.google.com/docs/buildpacks)
+- [Guides](https://docs.cloud.google.com/docs/buildpacks/overview)
+
+
+
+ Send feedback
+
+
+
+# Building a Node.js application    Stay organized with collections      Save and categorize content based on your preferences.
+
+## Specifying versions of Node.js
+
+The buildpacks project provides support for the Current and Active LTS releases of Node.js. Older releases of Node.js are available but may not be actively maintained by the project.
+
+### Using `package.json`
+
+You can specify the Node.js version of your application during deployment by configuring the `engines.node` field in `package.json`. To configure the buildpack to use the latest version of Node.js v16 when deploying your app, you can use the following values in your `package.json`:
+
+```
+"engines": {
+  "node": "16.x.x"
+}
+
+```
+
+### Using `GOOGLE_NODEJS_VERSION`
+
+It is also possible to specify the Node.js version via the `GOOGLE_NODEJS_VERSION` environment variable.
+If both configurations are set, the `GOOGLE_NODEJS_VERSION` value takes precedence
+over the `engines.node` property. If no value is provided, then the most recent LTS version of Node.js is used
+
+To configure the buildpack to use Node.js 16 when deploying your app:
+
+```
+pack build --builder=gcr.io/buildpacks/builder \
+   sample-functions-framework-node \
+   --env GOOGLE_NODEJS_VERSION=16.x.x
+
+```
+
+You can also use a `project.toml` project descriptor to encode
+the environment variable alongside your project files. See instructions on
+[building the application with environment variables](https://docs.cloud.google.com/docs/buildpacks/set-environment-variables#build_the_application_with_environment_variables)).
+
+### Tips
+
+- `engines.node` field can take a semver constraint. The specific library we use for the Node.js buildpacks is [Masterminds/semver](https://github.com/Masterminds/semver)
+- Avoid using greater than (>) specifiers in `engines.node`
+- When deploying the application into App Engine standard environment, the `engines.node` property should be compatible with the runtime specified in `app.yaml`
+- Additional documentation about the `engines.node` configuration option in `package.json` can be found in the official NPM documentation under the [engines topic](https://docs.npmjs.com/cli/v8/configuring-npm/package-json)
+- When deploying a function onto Cloud Run functions, the `engines.node` property should be compatible with the runtime used to deploy your function
+
+## Installing dependencies
+
+### Using NPM
+
+- NPM is the default package manager.
+- Whenever possible, use `package-lock.json` to improve cache performance.
+- By default only production dependencies are installed.
+- You can specify the npm version section using the `engines.npm` field in your
+`package.json` file.
+
+### Using Yarn
+
+- Yarn is used instead when you include the `yarn.lock` file in your project.
+- You can specify the yarn version to use in the `engines.yarn` field of your
+`package.json` file.
+- We support Yarn2 PnP mode if your project includes a `.yarn/cache`.
+
+### Using Pnpm
+
+- Pnpm is used instead when you include the `pnpm-lock.yaml` file in your
+project.
+- You can specify a version of pnpm in the `engines.pnpm` field of your
+`package.json` file.
+- For a working example, see the
+[sample-node-pnpm](https://github.com/GoogleCloudPlatform/buildpack-samples/tree/master/sample-node-pnpm)
+app.
+
+## Using private modules
+
+You can use a [private npm module](https://docs.npmjs.com/private-modules/intro) by providing settings for authenticating with
+the registry in a `.npmrc` file in the function's directory. If you're using
+Yarn version 2 or later as your package manager, this file is named
+`.yarnrc.yml`.
+
+### Private modules from Artifact Registry
+
+An [Artifact Registry Node.js package repository](/artifact-registry/docs/nodejs/quickstart)
+can host private modules for your function. When you deploy a Buildpacks
+function, the build process automatically generates Artifact Registry credentials
+for the [Cloud Build service account](/build/docs/cloud-build-service-account).
+You only need to list the Artifact Registry repository in your `.npmrc` file
+when using NPM or Yarn version 1. For example, when using NPM or Yarn version 1:
+
+```
+@SCOPE:registry=https://REGION_ID-npm.pkg.dev/PROJECT_ID/REPOSITORY_NAME
+//REGION_ID-npm.pkg.dev/PROJECT_ID/REPOSITORY_NAME:always-auth=true
+
+```
+
+If you're using Yarn version 2 or later, you only need to list the Artifact Registry
+repository in your `.yarnrc.yml` file without additional credentials.
+For example:
+
+```
+npmScopes:
+  SCOPE:
+    npmRegistryServer: https://REGION_ID-npm.pkg.dev/PROJECT_ID/REPOSITORY_NAME
+    npmAlwaysAuth: true
+
+```
+
+### Private modules from other repositories
+
+The [npm documentation](https://docs.npmjs.com/getting-started/working_with_tokens) explains how to create custom read-only
+access tokens. We discourage using the `.npmrc` file created in the home
+directory because it contains a read-write token. Write permissions are not
+required during deployment, and could pose a security risk.
+
+Do not include the `.npmrc` file if you're not using private repositories,
+as it can increase the deployment time for your functions.
+
+**Note:** If you're using any custom permissions (such as those necessary for
+[VPC](/functions/docs/networking/connecting-vpc)), make sure that you explicitly
+allow your functions to access the target private repository.
+
+#### File format
+
+If you're using an `.npmrc` file to set a custom auth token, it should include
+the line shown below.
+
+```
+//REGISTRY_DOMAIN/:_authToken=AUTH_TOKEN
+
+```
+
+Replace:
+
+- REGISTRY\_DOMAIN: the domain name of your private
+npm registry. For example if your repository host is `npmjs.org`, set this field
+to `registry.npmjs.org`.
+- AUTH\_TOKEN: the authorization token for your npm registry.
+This can either be the literal text value of the token or the text string
+`${NPM_TOKEN}`, which the `npm` command replaces with the actual token value from the
+environment.
+
+You can set the `$NPM_TOKEN` environment variable with the
+[`--set-build-env-vars`](/functions/docs/configuring/env-var#using_build_environment_variables)
+argument to your
+[`gcloud functions deploy`](/sdk/gcloud/reference/functions/deploy) command.
+See the [NPM tutorial on private modules](https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow#create-and-check-in-a-project-specific-npmrc-file)
+for more details of the NPM auth token.
+
+
+## Executing custom build steps during deployment
+
+By default, `npm run build` is run if a script is specified in your
+`package.json` file. However, you can instead specify custom build steps to
+override the default behavior and run only the scripts that you want
+during the build. You can control the build steps by using either the
+`GOOGLE_NODE_RUN_SCRIPTS` environment variable or `gcp-build` in your
+`package.json` file.
+
+You can only use one method. Note that the `GOOGLE_NODE_RUN_SCRIPTS`
+environment variable takes precedence and overrides anything that is specified
+for `gcp-build` in your `package.json`.
+
+By default, when you configure custom build steps, both the `dependencies` and
+`devDependencies` in your `package.json` file are installed first
+before any scripts or commands are executed. To override the default behavior,
+you can use the [`NODE_ENV`](#node_env) environment variable.
+
+### Using `GOOGLE_NODE_RUN_SCRIPTS`
+
+You can pass the `GOOGLE_NODE_RUN_SCRIPTS` environment variable to the build to
+control what scripts run. You can specify one or more scripts, or instead
+pass an empty environment variable to prevent the default behavior from
+running, like `GOOGLE_NODE_RUN_SCRIPTS=`. For complete details, see
+[Environment variables](#google_node_run_scripts).
+
+### Using `package.json`
+
+Adding `gcp-build` in your `package.json` file only runs
+`npm run gcp-build`, meaning that it overrides the default
+behavior. You can specify one or more commands, or instead specify an
+empty string to prevent any command from running, like `"gcp-build":""`.
+
+```
+"scripts": {
+  ...
+  "gcp-build": "npm run lint && npm run build"
+  ...
+}
+
+```
+
+## Application entrypoint
+
+The Node.js buildpack will execute the command specified in the `scripts.start` field of your `package.json`.
+If `scripts.start` is not set, the buildpack will run `npm start`.
+
+We recommend using a Procfile because it takes `npm` or `yarn` out of the path.
+
+## Environment variables
+
+You can [set environment variables to configure builds](/docs/buildpacks/set-environment-variables) of your container image.
+
+The Node.js buildpack supports the following environment
+variables to customize your container.
+
+### `NPM_CONFIG_<key>`
+
+See [documentation](https://docs.npmjs.com/misc/config#environment-variables).
+
+**Example:** `NPM_CONFIG_FLAG=value` passes `-flag=value` to `npm` commands.
+
+### `NODE_ENV`
+
+Specifies the development environment during the build; set for `npm install`.
+
+**Example:** `NODE_ENV=development` installs both the `dependencies` and `devDependencies` specified in `package.json`.
+
+### `GOOGLE_NODE_RUN_SCRIPTS`
+
+Specifies an ordered list of npm scripts from `package.json` to run after
+installing dependencies. The list must be comma-separated and runs in the order
+that you list each script.
+
+When you specify `GOOGLE_NODE_RUN_SCRIPTS`, only the scripts that you list are
+run. For example, if you want to prevent the default `npm run build` from
+running, you specify the environment variable without a value.
+
+**Examples:**
+
+- `GOOGLE_NODE_RUN_SCRIPTS=lint,build` runs `npm run lint` and then `npm run build`.
+- `GOOGLE_NODE_RUN_SCRIPTS=` runs no scripts.
+
+
+
+ Send feedback
+
+
+
+Except as otherwise noted, the content of this page is licensed under the [Creative Commons Attribution 4.0 License](https://creativecommons.org/licenses/by/4.0/), and code samples are licensed under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0). For details, see the [Google Developers Site Policies](https://developers.google.com/site-policies). Java is a registered trademark of Oracle and/or its affiliates.
+
+Last updated 2026-01-13 UTC.
+
+
+Need to tell us more?
+
+
+\[\[\["Easy to understand","easyToUnderstand","thumb-up"\],\["Solved my problem","solvedMyProblem","thumb-up"\],\["Other","otherUp","thumb-up"\]\],\[\["Hard to understand","hardToUnderstand","thumb-down"\],\["Incorrect information or sample code","incorrectInformationOrSampleCode","thumb-down"\],\["Missing the information/samples I need","missingTheInformationSamplesINeed","thumb-down"\],\["Other","otherDown","thumb-down"\]\],\["Last updated 2026-01-13 UTC."\],\[\],\[\]\]

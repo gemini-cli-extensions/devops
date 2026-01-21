@@ -26,7 +26,7 @@ import (
 
 func TestDownloadFile(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("test content"))
+		_, _ = w.Write([]byte("test content"))
 	}))
 	defer server.Close()
 
@@ -97,9 +97,9 @@ func TestDownloadWebsites(t *testing.T) {
 	// Mock server to simulate website structure
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			w.Write([]byte(`<html><body><devsite-content><a href="/page2">Page 2</a></devsite-content></body></html>`))
+			_, _ = w.Write([]byte(`<html><body><devsite-content><a href="/page2">Page 2</a></devsite-content></body></html>`))
 		} else if r.URL.Path == "/page2" {
-			w.Write([]byte(`<html><body><devsite-content>Content of Page 2</devsite-content></body></html>`))
+			_, _ = w.Write([]byte(`<html><body><devsite-content>Content of Page 2</devsite-content></body></html>`))
 		} else {
 			http.NotFound(w, r)
 		}

@@ -1,0 +1,16 @@
+# Installing packages using virtualenv [¶](\#installing-packages-using-virtualenv "Link to this heading")
+
+This guide discusses how to install packages using [pip](../../key_projects/#pip) and
+[virtualenv](../../key_projects/#virtualenv), a tool to create isolated Python environments.
+
+Important
+
+This “how to” guide on installing packages and using [virtualenv](../../key_projects/#virtualenv) is
+under development. Please refer to the [virtualenv](../../key_projects/#virtualenv) documentation for
+details on installation and usage.
+
+Note
+
+This doc uses the term **package** to refer to a
+[Distribution Package](../../glossary/#term-Distribution-Package) which is different from an [Import\
+Package](../../glossary/#term-Import-Package) that which is used to import modules in your Python source code.

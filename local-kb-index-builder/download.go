@@ -15,12 +15,9 @@
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 	"path/filepath"
-
-	chromem "github.com/philippgille/chromem-go"
 )
 
 // Source represents a data source to be fetched.
@@ -96,109 +93,34 @@ func processSource(source Source, tmpDir string) {
 			}
 		}
 	default:
-		log.Printf("RAG Source type [%s] is not supported", sourceType)
+		log.Printf("Document Source type [%s] is not supported", sourceType)
 	}
 }
 
-func dbFile() string {
-	dbFile := os.Getenv("RAG_DB_PATH")
-	if len(dbFile) == 0 {
-		pwd, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		dbFile = filepath.Join(pwd, "devops-rag.db")
-	}
-	return dbFile
-}
-func setupRAGDB(ctx context.Context) (*chromem.DB, chromem.EmbeddingFunc, error) {
-	vertexEmbeddingFunc, err := newGeminiEmbeddingFunc(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	db := chromem.NewDB()
-	dbFile := dbFile()
-	if len(dbFile) > 0 {
-		if _, err := os.Stat(dbFile); os.IsNotExist(err) {
-			log.Printf("RAG_DB_PATH file does not exist, skipping import: %v", dbFile)
-		} else {
-			err := db.ImportFromFile(dbFile, "")
-			log.Printf("Imported RAG with collections:%d", len(db.ListCollections()))
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-	}
-	_, err = db.GetOrCreateCollection("knowledge", nil, vertexEmbeddingFunc)
-	if err != nil {
-		return nil, nil, err
-	}
-	_, err = db.GetOrCreateCollection("pattern", nil, vertexEmbeddingFunc)
-	if err != nil {
-		return nil, nil, err
-	}
-	return db, vertexEmbeddingFunc, nil
-}
-
-func processAllSources(ragSourceDir string) {
-	entries, err := os.ReadDir(ragSourceDir)
+func processAllSources(documentSourceDir string) {
+	entries, err := os.ReadDir(documentSourceDir)
 	if err != nil {
 		log.Fatalf("Unable to read directory: %v", err)
 	}
 	if len(entries) == 0 {
 		for _, source := range knowledgeRAGSources {
-			processSource(source, ragSourceDir)
+			processSource(source, documentSourceDir)
 		}
+	} else {
+		log.Printf("Document source directory %s is not empty, skipping download", documentSourceDir)
 	}
 }
 
-func main() {
-	ctx := context.Background()
+func DownloadDocuments(documentSourceDir string) {
 
-	db, embeddingFunc, err := setupRAGDB(ctx)
-	if err != nil {
-		log.Fatalf("Failed to setup RAG DB: %v", err)
-	}
-
-	// Upload local directories
-	pwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	collectionPattern := db.GetCollection("pattern", embeddingFunc)
-	patternsDir := filepath.Join(pwd, "patterns")
-	addDirectoryToRag(ctx, collectionPattern, patternsDir)
-
-	collectionKnowledge := db.GetCollection("knowledge", embeddingFunc)
-	knowledgeDir := filepath.Join(pwd, "knowledge")
-	addDirectoryToRag(ctx, collectionKnowledge, knowledgeDir)
-
-	ragSourceDir := filepath.Join(pwd, ".rag-sources")
-	if _, err := os.Stat(ragSourceDir); os.IsNotExist(err) {
-		log.Printf("Dir does not exist: %v", ragSourceDir)
-		err = os.MkdirAll(ragSourceDir, 0755)
+	if _, err := os.Stat(documentSourceDir); os.IsNotExist(err) {
+		log.Printf("Dir does not exist: %v", documentSourceDir)
+		err = os.MkdirAll(documentSourceDir, 0755)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("Dir created: %v", ragSourceDir)
+		log.Printf("Dir created: %v", documentSourceDir)
 	}
 
-	processAllSources(ragSourceDir)
-
-	// Upload all files in the source directory to RAG
-	addDirectoryToRag(ctx, collectionKnowledge, ragSourceDir)
-
-	// Export the database to a file
-	dbFile := dbFile()
-	if len(dbFile) > 0 {
-		log.Printf("Exporting database Knowledge base docs:%d, Pattern docs:%d",
-			collectionKnowledge.Count(),
-			collectionPattern.Count())
-		err = db.ExportToFile(dbFile, true, "")
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Database exported to %s", dbFile)
-	}
+	processAllSources(documentSourceDir)
 }

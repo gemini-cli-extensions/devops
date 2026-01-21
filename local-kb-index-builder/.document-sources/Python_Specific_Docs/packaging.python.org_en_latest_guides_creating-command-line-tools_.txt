@@ -1,0 +1,177 @@
+# Creating and packaging command-line tools [¶](\#creating-and-packaging-command-line-tools "Link to this heading")
+
+This guide will walk you through creating and packaging a standalone command-line application
+that can be installed with [pipx](../../key_projects/#pipx), a tool for creating and managing [Python Virtual Environments](../../glossary/#term-Virtual-Environment)
+and exposing the executable scripts of packages (and available manual pages) for use on the command-line.
+
+## Creating the package [¶](\#creating-the-package "Link to this heading")
+
+First of all, create a source tree for the [project](../../glossary/#term-Project). For the sake of an example, we’ll
+build a simple tool outputting a greeting (a string) for a person based on arguments given on the command-line.
+
+Todo
+
+Advise on the optimal structure of a Python package in another guide or discussion and link to it here.
+
+This project will adhere to [src-layout](../../discussions/src-layout-vs-flat-layout/#src-layout-vs-flat-layout) and in the end be alike this file tree,
+with the top-level folder and package name `greetings`:
+
+```
+.
+├── pyproject.toml
+└── src
+    └── greetings
+        ├── cli.py
+        ├── greet.py
+        ├── __init__.py
+        └── __main__.py
+
+```
+
+The actual code responsible for the tool’s functionality will be stored in the file `greet.py`,
+named after the main module:
+
+```
+import typer
+from typing_extensions import Annotated
+
+def greet(
+    name: Annotated[str, typer.Argument(help="The (last, if --title is given) name of the person to greet")] = "",
+    title: Annotated[str, typer.Option(help="The preferred title of the person to greet")] = "",
+    doctor: Annotated[bool, typer.Option(help="Whether the person is a doctor (MD or PhD)")] = False,
+    count: Annotated[int, typer.Option(help="Number of times to greet the person")] = 1
+):
+    greeting = "Greetings, "
+    if doctor and not title:
+        title = "Dr."
+    if not name:
+        if title:
+            name = title.lower().rstrip(".")
+        else:
+            name = "friend"
+    if title:
+        greeting += f"{title} "
+    greeting += f"{name}!"
+    for i in range(0, count):
+        print(greeting)
+
+```
+
+The above function receives several keyword arguments that determine how the greeting to output is constructed.
+Now, construct the command-line interface to provision it with the same, which is done
+in `cli.py`:
+
+```
+import typer
+
+from .greet import greet
+
+app = typer.Typer()
+app.command()(greet)
+
+if __name__ == "__main__":
+    app()
+
+```
+
+The command-line interface is built with [typer](https://typer.tiangolo.com/), an easy-to-use CLI parser based on Python type hints. It provides
+auto-completion and nicely styled command-line help out of the box. Another option would be [`argparse`](https://docs.python.org/3/library/argparse.html#module-argparse "(in Python v3.14)"),
+a command-line parser which is included in Python’s standard library. It is sufficient for most needs, but requires
+a lot of code, usually in `cli.py`, to function properly. Alternatively, [docopt](https://docopt.readthedocs.io/en/latest/) makes it possible to create CLI
+interfaces based solely on docstrings; advanced users are encouraged to make use of [click](https://click.palletsprojects.com/) (on which `typer` is based).
+
+Now, add an empty `__init__.py` file, to define the project as a regular [import package](../../glossary/#term-Import-Package).
+
+The file `__main__.py` marks the main entry point for the application when running it via [`runpy`](https://docs.python.org/3/library/runpy.html#module-runpy "(in Python v3.14)")
+(i.e. `python -m greetings`, which works immediately with flat layout, but requires installation of the package with src layout),
+so initialize the command-line interface here:
+
+```
+if __name__ == "__main__":
+    from greetings.cli import app
+    app()
+
+```
+
+Note
+
+In order to enable calling the command-line interface directly from the [source tree](../../glossary/#term-Project-Source-Tree),
+i.e. as `python src/greetings`, a certain hack could be placed in this file; read more at
+[Running a command-line interface from source with src-layout](../../discussions/src-layout-vs-flat-layout/#running-cli-from-source-src-layout).
+
+### `pyproject.toml` [¶](\#pyproject-toml "Link to this heading")
+
+The project’s [metadata](../../glossary/#term-Pyproject-Metadata) is placed in [pyproject.toml](../../glossary/#term-pyproject.toml). The [pyproject metadata keys](../../glossary/#term-Pyproject-Metadata-Key) and the `[build-system]` table may be filled in as described in [Writing your pyproject.toml](../writing-pyproject-toml/#writing-pyproject-toml), adding a dependency
+on `typer` (this tutorial uses version _0.12.3_).
+
+For the project to be recognised as a command-line tool, additionally a `console_scripts` [entry point](../../specifications/entry-points/#entry-points) (see [Creating executable scripts](../writing-pyproject-toml/#console-scripts)) needs to be added as a [subkey](../../glossary/#term-Pyproject-Metadata-Subkey):
+
+```
+[project.scripts]
+greet = "greetings.cli:app"
+
+```
+
+Now, the project’s source tree is ready to be transformed into a [distribution package](../../glossary/#term-Distribution-Package),
+which makes it installable.
+
+## Installing the package with `pipx` [¶](\#installing-the-package-with-pipx "Link to this heading")
+
+After installing `pipx` as described in [Installing stand alone command line tools](../installing-stand-alone-command-line-tools/#installing-stand-alone-command-line-tools), install your project:
+
+```
+$ cd path/to/greetings/
+$ pipx install .
+
+```
+
+This will expose the executable script we defined as an entry point and make the command `greet` available.
+Let’s test it:
+
+```
+$ greet
+Greetings, friend!
+$ greet --doctor Brennan
+Greetings, Dr. Brennan!
+$ greet --title Ms. Parks
+Greetings, Ms. Parks!
+$ greet --title Mr.
+Greetings, Mr. mr!
+
+```
+
+Since this example uses `typer`, you could now also get an overview of the program’s usage by calling it with
+the `--help` option, or configure completions via the `--install-completion` option.
+
+To just run the program without installing it permanently, use `pipx run`, which will create a temporary
+(but cached) virtual environment for it:
+
+```
+$ pipx run --spec . greet --doctor
+
+```
+
+This syntax is a bit impractical, however; as the name of the entry point we defined above does not match the package name,
+we need to state explicitly which executable script to run (even though there is only one in existence).
+
+There is, however, a more practical solution to this problem, in the form of an entry point specific to `pipx run`.
+The same can be defined as follows in `pyproject.toml`:
+
+```
+[project.entry-points."pipx.run"]
+greetings = "greetings.cli:app"
+
+```
+
+Thanks to this entry point (which _must_ match the package name), `pipx` will pick up the executable script as the
+default one and run it, which makes this command possible:
+
+```
+$ pipx run . --doctor
+
+```
+
+## Conclusion [¶](\#conclusion "Link to this heading")
+
+You know by now how to package a command-line application written in Python. A further step could be to distribute your package,
+meaning uploading it to a [package index](../../glossary/#term-Package-Index), most commonly [PyPI](../../glossary/#term-Python-Package-Index-PyPI). To do that, follow the instructions at [Packaging your project](../distributing-packages-using-setuptools/#packaging-your-project). And once you’re done, don’t forget to [do some research](../analyzing-pypi-package-downloads/#analyzing-pypi-package-downloads) on how your package is received!

@@ -1,0 +1,135 @@
+# Package index mirrors and caches [¶](\#package-index-mirrors-and-caches "Link to this heading")
+
+Page Status:
+
+Incomplete
+
+Last Reviewed:
+
+2023-11-08
+
+Mirroring or caching of PyPI (and other
+[package indexes](../../glossary/#term-Package-Index)) can be used to speed up local
+package installation,
+allow offline work, handle corporate firewalls or just plain Internet flakiness.
+
+There are multiple classes of options in this area:
+
+1. local/hosted caching of package indexes.
+
+2. local/hosted mirroring of a package index. A mirror is a (whole or
+   partial) copy of a package index, which can be used in place of the
+   original index.
+
+3. private package index with fall-through to public package indexes (for
+   example, to mitigate dependency confusion attacks), also known as a
+   proxy.
+
+
+## Caching with pip [¶](\#caching-with-pip "Link to this heading")
+
+pip provides a number of facilities for speeding up installation by using local
+cached copies of [packages](../../glossary/#term-Distribution-Package):
+
+1. [Fast & local installs](https://pip.pypa.io/en/latest/user_guide/#installing-from-local-packages "(in pip v26.0)")
+   by downloading all the requirements for a project and then pointing pip at
+   those downloaded files instead of going to PyPI.
+
+2. A variation on the above which pre-builds the installation files for
+   the requirements using [python3 -m pip wheel](https://pip.pypa.io/en/latest/cli/pip_wheel/#pip-wheel "(in pip v26.0)"):
+
+
+
+
+
+   ```
+   python3 -m pip wheel --wheel-dir=/tmp/wheelhouse SomeProject
+   python3 -m pip install --no-index --find-links=/tmp/wheelhouse SomeProject
+
+   ```
+
+
+## Existing projects [¶](\#existing-projects "Link to this heading")
+
+Project
+
+Cache
+
+Mirror
+
+Proxy
+
+Additional notes
+
+[devpi](../../key_projects/#devpi)
+
+✔
+
+✔
+
+multiple indexes with inheritance; syncing, replication, fail-over;
+package upload
+
+[bandersnatch](../../key_projects/#bandersnatch)
+
+✔
+
+✔
+
+[simpleindex](../../key_projects/#simpleindex)
+
+✔
+
+custom plugin enables caching; re-routing to other package indexes
+
+[PyPI Cloud](../../key_projects/#pypicloud)
+
+✔
+
+✔
+
+unmaintained; authentication, authorisation
+
+[Pulp-python](../../key_projects/#pulppython)
+
+✔
+
+✔
+
+plugin for Pulp; multiple proxied indexes; package upload
+
+[proxpi](../../key_projects/#proxpi)
+
+✔
+
+✔
+
+multiple proxied indexes
+
+[nginx\_pypi\_cache](../../key_projects/#nginx-pypi-cache)
+
+✔
+
+✔
+
+multiple proxied indexes
+
+[Flask-Pypi-Proxy](../../key_projects/#flaskpypiproxy)
+
+✔
+
+✔
+
+unmaintained
+
+[Apache](https://httpd.apache.org/)
+
+✔
+
+✔
+
+using
+[mod\_rewrite](https://httpd.apache.org/docs/current/mod/mod_rewrite.html)
+and
+[mod\_cache\_disk](https://httpd.apache.org/docs/current/mod/mod_cache_disk.html),
+you can cache requests to package indexes through an Apache server

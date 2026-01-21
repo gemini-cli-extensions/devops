@@ -17,6 +17,7 @@ package cloudbuildclient
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	cloudbuild "cloud.google.com/go/cloudbuild/apiv1/v2"
 	cloudbuildpb "cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
@@ -79,19 +80,24 @@ func (c *CloudBuildClientImpl) CreateBuildTrigger(ctx context.Context, projectID
 		return nil, fmt.Errorf("exactly one of 'branch' or 'tag' must be provided")
 	}
 
+	pushFilter := &build.PushFilter{}
+	if branch != "" {
+		pushFilter.Branch = branch
+
+	} else {
+		pushFilter.Tag = tag
+	}
+	sa := strings.TrimPrefix(serviceAccount, "serviceAccount:")
+	sa = fmt.Sprintf("projects/%s/serviceAccounts/%s", projectID, sa)
 	trigger := &build.BuildTrigger{
 		Name: triggerID,
-		TriggerTemplate: &build.RepoSource{
-			RepoName: repoLink, // This should be the Developer Connect repo link
+		DeveloperConnectEventConfig: &build.DeveloperConnectEventConfig{
+			GitRepositoryLink:     repoLink, // This should be the Developer Connect repo link
+			Push:                  pushFilter,
+			GitRepositoryLinkType: "GITHUB",
 		},
-		ServiceAccount: serviceAccount,
-		Autodetect:     true,
-	}
-
-	if branch != "" {
-		trigger.TriggerTemplate.BranchName = branch
-	} else {
-		trigger.TriggerTemplate.TagName = tag
+		ServiceAccount: sa,
+		Filename:       "cloudbuild.yaml",
 	}
 
 	return c.legacyClient.Projects.Locations.Triggers.Create(fmt.Sprintf("projects/%s/locations/%s", projectID, location), trigger).Context(ctx).Do()

@@ -12,35 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package bm25
 
 import (
-	"fmt"
-	"io/ioutil"
+	"bytes"
+	"encoding/gob"
 	"math"
-	"path/filepath"
+	"os"
 	"sort"
 	"strings"
 )
 
 // BM25 Constants
 const (
-	k1 = 1.2  // Term saturation parameter
-	b  = 0.75 // Length normalization parameter
+	K1 = 1.2  // Term saturation parameter
+	B  = 0.75 // Length normalization parameter
 )
 
 // Document represents a simple document with an ID and content
 type Document struct {
-	ID      int
-	Content string
-	Tokens  []string
+	ID       int               `json:"id"`
+	Content  string            `json:"content"`
+	Metadata map[string]string `json:"metadata,omitempty"`
+	Tokens   []string          `json:"-"`
 }
 
 // SearchResult holds the score and document ID
 type SearchResult struct {
-	DocID int
-	Score float64
-	Text  string
+	DocID    int               `json:"doc_id"`
+	Score    float64           `json:"relevance_score"`
+	Text     string            `json:"content"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
 // BM25Index holds the index data structures
@@ -64,12 +66,12 @@ func NewBM25Index() *BM25Index {
 }
 
 // AddDocument processes a document and adds it to the index
-func (idx *BM25Index) AddDocument(id int, content string) {
-	tokens := tokenize(content)
+func (idx *BM25Index) AddDocument(id int, content string, metadata map[string]string) {
+	tokens := Tokenize(content)
 	docLen := len(tokens)
 
 	// Store document metadata
-	idx.Docs = append(idx.Docs, Document{ID: id, Content: content, Tokens: tokens})
+	idx.Docs = append(idx.Docs, Document{ID: id, Content: content, Tokens: tokens, Metadata: metadata})
 	idx.DocLengths[id] = docLen
 	idx.DocCount++
 
@@ -94,8 +96,8 @@ func (idx *BM25Index) AddDocument(id int, content string) {
 }
 
 // Search ranks documents based on the query using the BM25 formula
-func (idx *BM25Index) Search(query string) []SearchResult {
-	queryTerms := tokenize(query)
+func (idx *BM25Index) Search(query string, limit int) []SearchResult {
+	queryTerms := Tokenize(query)
 	scores := make(map[int]float64)
 
 	for _, term := range queryTerms {
@@ -117,12 +119,12 @@ func (idx *BM25Index) Search(query string) []SearchResult {
 			}
 
 			docLen := float64(idx.DocLengths[docID])
-			
-			// Numerator: tf * (k1 + 1)
-			numerator := tf * (k1 + 1)
-			
-			// Denominator: tf + k1 * (1 - b + b * (docLen / avgDocLen))
-			denominator := tf + k1*(1-b+b*(docLen/idx.AvgDocLength))
+
+			// Numerator: tf * (K1 + 1)
+			numerator := tf * (K1 + 1)
+
+			// Denominator: tf + K1 * (1 - B + B * (docLen / avgDocLen))
+			denominator := tf + K1*(1-B+B*(docLen/idx.AvgDocLength))
 
 			score := idf * (numerator / denominator)
 			scores[docID] += score
@@ -134,13 +136,15 @@ func (idx *BM25Index) Search(query string) []SearchResult {
 	for docID, score := range scores {
 		// Find the original text for display
 		var text string
+		var metadata map[string]string
 		for _, d := range idx.Docs {
 			if d.ID == docID {
 				text = d.Content
+				metadata = d.Metadata
 				break
 			}
 		}
-		results = append(results, SearchResult{DocID: docID, Score: score, Text: text})
+		results = append(results, SearchResult{DocID: docID, Score: score, Text: text, Metadata: metadata})
 	}
 
 	// Sort by score descending
@@ -148,12 +152,15 @@ func (idx *BM25Index) Search(query string) []SearchResult {
 		return results[i].Score > results[j].Score
 	})
 
+	if limit > 0 && len(results) > limit {
+		results = results[:limit]
+	}
 	return results
 }
 
-// tokenize is a simple helper to lowercase and split text
+// Tokenize is a simple helper to lowercase and split text
 // In a real app, use a stemmer (Snowball) and stop-word filter
-func tokenize(text string) []string {
+func Tokenize(text string) []string {
 	text = strings.ToLower(text)
 	// Remove punctuation (basic)
 	f := func(c rune) bool {
@@ -163,54 +170,40 @@ func tokenize(text string) []string {
 	return strings.FieldsFunc(text, f)
 }
 
-// loadFilesFromDirectory reads all files from a directory and adds them to the index
-func loadFilesFromDirectory(idx *BM25Index, dirPath string, startID int) int {
-	files, err := ioutil.ReadDir(dirPath)
+// SaveIndex serializes the BM25Index to a binary file using Gob.
+func SaveIndex(filename string, idx *BM25Index) error {
+	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Printf("Error reading directory %s: %v\n", dirPath, err)
-		return startID
+		return err
 	}
+	defer file.Close()
 
-	docID := startID
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-
-		filePath := filepath.Join(dirPath, file.Name())
-		content, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			fmt.Printf("Error reading file %s: %v\n", filePath, err)
-			continue
-		}
-
-		idx.AddDocument(docID, string(content))
-		fmt.Printf("Added document %d from %s\n", docID, file.Name())
-		docID++
-	}
-
-	return docID
+	encoder := gob.NewEncoder(file)
+	return encoder.Encode(idx)
 }
 
-func main() {
-	idx := NewBM25Index()
-
-	// Load documents from patterns directory
-	nextID := loadFilesFromDirectory(idx, "./patterns", 1)
-
-	// Load documents from knowledge directory
-	loadFilesFromDirectory(idx, "./knowledge", nextID)
-
-	// 2. Perform Search
-	query := "how to create a cloud build yaml"
-	fmt.Printf("Search Query: '%s'\n", query)
-	results := idx.Search(query)
-
-	// 3. Display Results
-	fmt.Println("---------------------------------------------------")
-	fmt.Printf("%-5s | %-10s | %s\n", "Rank", "Score", "Content")
-	fmt.Println("---------------------------------------------------")
-	for i, res := range results {
-		fmt.Printf("%-5d | %-10.4f | %s\n", i+1, res.Score, res.Text)
+// LoadIndex deserializes the BM25Index from a binary file using Gob.
+func LoadIndex(filename string) (*BM25Index, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
 	}
+	defer file.Close()
+
+	var idx BM25Index
+	decoder := gob.NewDecoder(file)
+	if err := decoder.Decode(&idx); err != nil {
+		return nil, err
+	}
+	return &idx, nil
+}
+
+// LoadIndexFromBytes deserializes the BM25Index from a byte slice using Gob.
+func LoadIndexFromBytes(data []byte) (*BM25Index, error) {
+	var idx BM25Index
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	if err := decoder.Decode(&idx); err != nil {
+		return nil, err
+	}
+	return &idx, nil
 }

@@ -1,0 +1,410 @@
+- [Home](https://docs.cloud.google.com/)
+- [Documentation](https://docs.cloud.google.com/docs)
+- [Application development](https://docs.cloud.google.com/docs/application-development)
+- [Cloud Build](https://docs.cloud.google.com/build/docs)
+- [Guides](https://docs.cloud.google.com/build/docs/build-push-docker-image)
+
+
+
+ Send feedback
+
+
+
+# Deploying to GKE    Stay organized with collections      Save and categorize content based on your preferences.
+
+This page explains how to deploy an application to Kubernetes using
+Cloud Build.
+
+Cloud Build provides a [`gke-deploy` builder](https://github.com/GoogleCloudPlatform/cloud-builders/tree/master/gke-deploy) that enables you to deploy a containerized application to a
+GKE cluster.
+
+`gke-deploy` is a wrapper around `kubectl`, the command-line interface for
+Kubernetes. It applies Google's recommended practices for deploying applications
+to Kubernetes by:
+
+- Updating the application's Kubernetes resource file to use the container
+image's digest instead of a tag.
+
+- Adding [recommended labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/#labels) to the Kubernetes resource file.
+
+- Retrieving credentials for the GKE clusters
+to which you're deploying the image.
+
+- Waiting for the Kubernetes resource file that was submitted to be ready.
+
+
+If you want to deploy your applications using `kubectl` directly and do not need
+additional functionality, Cloud Build also provides a [`kubectl` builder](https://github.com/GoogleCloudPlatform/cloud-builders/tree/master/kubectl) that you can use to deploy your application to a
+GKE cluster.
+
+## Before you begin
+
+- Create a [GKE cluster](/../../kubernetes-engine/docs/how-to/creating-a-cluster), if you do not have one yet.
+
+- Have your containerized application in the form of source code and a
+`Dockerfile` ready. Your source code needs to be stored in a repository, such as
+Cloud Source Repositories, GitHub, or Bitbucket.
+
+- You'll need at least one Kubernetes resource file describing the Kubernetes
+resources used to run your application. If you do not have Kubernetes
+resource files, use the following steps to generate one for your
+application:
+
+
+1. Open the [Kubernetes Engine clusters page](http://console.cloud.google.com/kubernetes/list) in the Google Cloud console.
+2. On the Kubernetes Engine clusters page, click **Deploy**.
+3. Select your container and click **Continue**. You will see the Configuration
+     section.
+4. Under Configuration YAML, click **View YAML** to get a sample Kubernetes
+     resource file.
+
+**Note:** If you already have another form of templated Kubernetes resource file
+such as a Helm chart or a resource in Kustomize format, see the [helm builder](https://github.com/GoogleCloudPlatform/cloud-builders-community/tree/master/helm)
+or [kustomize builder](https://github.com/GoogleCloudPlatform/cloud-builders-community/tree/master/kustomize) for examples of build configurations you can
+use for deployment.
+
+**Caution:** Effective June 17, 2024, Cloud Source Repositories isn't available
+to new customers. If your organization hasn't
+previously used Cloud Source Repositories, you can't enable the API or use
+Cloud Source Repositories. New projects not connected to an organization can't enable the
+Cloud Source Repositories API. Organizations that have used Cloud Source Repositories prior to
+June 17, 2024 are not affected by this change.
+
+### Required IAM permissions
+
+Add the Google Kubernetes Engine Developer role to your account:
+
+1. In the Google Cloud console, go to the
+    _settings_ Cloud Build **Permissions** page:
+
+
+[Go to **Permissions**](https://console.cloud.google.com/cloud-build/settings)
+
+2. Set the status of the **Kubernetes Engine Developer** role to **Enabled**.
+
+
+## Deploying a prebuilt container image
+
+To deploy a particular version of your application with `gke-deploy`:
+
+1. Make sure your Kubernetes resource file is referring to the
+correct container image tag or digest.
+
+2. Add the `gke-deploy` step in your [build configuration file](/build/docs/configuring-builds/create-basic-configuration):
+
+
+
+### YAML
+
+
+
+
+
+
+
+```
+steps:
+...
+# deploy container image to GKE
+- name: "gcr.io/cloud-builders/gke-deploy"
+args:
+  - run
+  - --filename=kubernetes-resource-file
+  - --location=location
+  - --cluster=cluster
+
+```
+
+### JSON
+
+```
+{
+"steps": [
+    {
+      "name": "gcr.io/cloud-builders/gke-deploy",
+      "args": [
+        "run",
+        "--filename=kubernetes-resource-file",
+        "--location=location",
+        "--cluster=cluster"
+      ]
+    }
+]
+}
+
+```
+
+Where:
+
+   - kubernetes-resource-file is the file path of your Kubernetes resource
+     file or the directory path containing your Kubernetes resource files.
+   - cluster is the name of the GKE cluster that the application
+     will be deployed to.
+   - location is the region/zone of the cluster.
+
+For more information on available flags, see [`gke-deploy run` flags](https://github.com/GoogleCloudPlatform/cloud-builders/blob/master/gke-deploy/cmd/run/run.go).
+**Note:** When deploying to multiple GKE clusters,
+Cloud Build persists the home directory across build steps,
+which means that the `kubectl` context of the previous step to be used by
+subsequent steps by default. To avoid this, add an environment variable
+declaration, `KUBECONFIG=/tmp/kubeconfig`, to each step of your build
+config file.
+3. Start your build:
+
+
+
+
+   ```
+   gcloud builds submit --region=REGION --project=project-id --config build-config
+
+   ```
+
+
+   Where:
+
+   - project-id is the ID for your project.
+   - build-config is the name of your build configuration file.
+   - `REGION` is one of the [supported build regions](/build/docs/locations).
+
+## Building and deploying a new container image
+
+To build a new container image and deploy the new container image:
+
+1. Update your Kubernetes resource file with the new container
+   image using the `--image` attribute:
+
+
+
+   ### YAML
+
+
+
+
+
+
+
+   ```
+   steps:
+     # build the container image
+- name: "gcr.io/cloud-builders/docker"
+  args: ["build", "-t", "gcr.io/project-id/image:tag", "."]
+  # push container image
+- name: "gcr.io/cloud-builders/docker"
+  args: ["push", "gcr.io/project-id/image:tag"]
+  # deploy container image to GKE
+- name: "gcr.io/cloud-builders/gke-deploy"
+  args:
+  - run
+  - --filename=kubernetes-resource-file
+  - --image=gcr.io/project-id/image:tag
+  - --location=location
+  - --cluster=cluster
+
+```
+
+### JSON
+
+```
+{
+  "steps": [
+    {
+      "name": "gcr.io/cloud-builders/docker",
+      "args": [
+        "build",
+        "-t",
+        "gcr.io/project-id/image:tag",
+        "."
+      ]
+    },
+    {
+      "name": "gcr.io/cloud-builders/docker",
+      "args": [
+        "push",
+        "gcr.io/project-id/image:tag"
+      ]
+    },
+    {
+      "name": "gcr.io/cloud-builders/gke-deploy",
+      "args": [
+        "run",
+        "--filename=kubernetes-resource-file",
+        "--image=gcr.io/project-id/image:tag",
+        "--location=location",
+        "--cluster=cluster"
+      ]
+    }
+  ]
+}
+
+```
+
+Where:
+
+   - project-id is the ID for your project.
+   - image is the desired name of the container image, usually the application
+     name.
+   - tag is the tag of the container image.
+
+     - If you are building a new container image with each commit, a good practice
+       is to use the commit short SHA as a tag. Cloud Build makes this
+       available as a [default substitution](/build/docs/configuring-builds/substitute-variable-values#using_user-defined_substitutions), `$SHORT_SHA`.
+   - kubernetes-resource-file is the file path of your Kubernetes resource
+     file or the directory path containing your Kubernetes resource files.
+   - cluster is the name of the GKE cluster that the application
+     will be deployed to.
+   - location is the region/zone of the cluster will be deployed to.
+
+**Note:**`gke-deploy` can only reference one image in your build configuration
+file. If your Kubernetes resource files contain multiple image
+references, only the images beginning with `gcr/project-id/image` will
+be updated to reference the specified tag.
+2. Start your build:
+
+
+
+
+```
+gcloud builds submit --region=REGION --project=project-id --config build-config
+
+```
+
+
+Where:
+
+   - project-id is the ID for your project.
+   - build-config is the name of your build configuration file.
+   - `REGION` is one of the [supported build regions](/build/docs/locations).
+
+## Automating deployments
+
+You can automate the deployment of your application to GKE by
+creating a trigger in Cloud Build. You can configure triggers to
+build and deploy images whenever you push changes to your code.
+
+To create a build trigger:
+
+1. Open the **Triggers** page in the Google Cloud console:
+
+
+
+[Open the Triggers page](https://console.cloud.google.com/cloud-build/triggers)
+
+2. Select your project from the project selector drop-down menu at the top of
+    the page.
+
+3. Click **Open**.
+
+4. Click **Create trigger**.
+
+On the **Create trigger** page, enter the following settings:
+
+1. Enter a name for your trigger.
+
+2. Select the repository event to start your trigger.
+
+3. Select the repository that contains your source code and build config
+       file.
+
+4. Specify the regex for the branch or tag name that will start your
+       trigger.ee
+
+5. Choose a **Configuration** for your trigger.
+
+      If you choose a Cloud Build configuration file, you can
+       specify **Substitution variables** by providing a variable name and
+       the value you want to associate with that variable. In the example
+       below, the user-defined substitution variable
+       `_CLOUDSDK_CONTAINER_CLUSTER` specifies the cluster to deploy to,
+       and the user-defined substitution variable `_CLOUDSDK_COMPUTE_ZONE`
+       specifies its location. If you want to deploy to a different cluster,
+       you can use the same build configuration and only need to change
+       the values of the substitution variables:
+
+
+
+      ### YAML
+
+
+
+
+
+
+
+      ```
+      steps:
+      ...
+      # deploy container image to GKE
+- name: "gcr.io/cloud-builders/gke-deploy"
+args:
+  - run
+  - --filename=kubernetes-resource-file
+  - --image=gcr.io/project-id/image:tag
+  - --location=${_CLOUDSDK_COMPUTE_ZONE}
+  - --cluster=${_CLOUDSDK_CONTAINER_CLUSTER}
+
+```
+
+### JSON
+
+```
+{
+"steps": [
+    {
+      "name": "gcr.io/cloud-builders/gke-deploy",
+      "args": [
+        "run",
+        "--filename=kubernetes-resource-file",
+        "--image=gcr.io/project-id/image:tag",
+        "--location=${_CLOUDSDK_COMPUTE_ZONE}",
+        "--cluster=${_CLOUDSDK_CONTAINER_CLUSTER}"
+      ]
+    }
+]
+}
+
+```
+
+Where:
+
+      - kubernetes-resource-file is the file path of
+        your Kubernetes configuration file or the directory path containing
+        your Kubernetes resource files.
+      - project-id is the ID for your project.
+      - image is the desired name of the container image, usually the application name.
+      - tag is the tag of the container image.
+
+To learn more about how to define substitutions for build configuration files,
+ see [Using user-defined substitutions](/build/docs/configuring-builds/substitute-variable-values#using_user-defined_substitutions).
+5. Click **Create** to save your build trigger.
+
+
+When you push code to your repository, Cloud Build will automatically
+trigger a build. To learn more about build triggers, see [Creating and managing\
+build triggers](/build/docs/automating-builds/create-manage-triggers).
+
+## What's next
+
+- Learn how to
+  [configure automated deployments for your workloads on GKE](/kubernetes-engine/docs/how-to/automated-deployment).
+- Learn how to [create a GitOps-style CI/CD pipeline deploying to\
+  GKE with Cloud Build](/../../kubernetes-engine/docs/tutorials/gitops-cloud-build).
+- Learn about additional [`gke-deploy` options](https://github.com/GoogleCloudPlatform/cloud-builders/tree/master/gke-deploy/doc).
+- Learn how to [perform blue/green deployments on Compute Engine](/build/docs/deploying-builds/deploy-compute-engine).
+- Learn about additional [Cloud builders](/build/docs/cloud-builders).
+- Learn how to [troubleshoot build errors](/build/docs/troubleshooting).
+
+
+
+ Send feedback
+
+
+
+Except as otherwise noted, the content of this page is licensed under the [Creative Commons Attribution 4.0 License](https://creativecommons.org/licenses/by/4.0/), and code samples are licensed under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0). For details, see the [Google Developers Site Policies](https://developers.google.com/site-policies). Java is a registered trademark of Oracle and/or its affiliates.
+
+Last updated 2026-01-13 UTC.
+
+
+Need to tell us more?
+
+
+\[\[\["Easy to understand","easyToUnderstand","thumb-up"\],\["Solved my problem","solvedMyProblem","thumb-up"\],\["Other","otherUp","thumb-up"\]\],\[\["Hard to understand","hardToUnderstand","thumb-down"\],\["Incorrect information or sample code","incorrectInformationOrSampleCode","thumb-down"\],\["Missing the information/samples I need","missingTheInformationSamplesINeed","thumb-down"\],\["Other","otherDown","thumb-down"\]\],\["Last updated 2026-01-13 UTC."\],\[\],\[\]\]

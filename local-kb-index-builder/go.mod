@@ -1,6 +1,6 @@
-module local-rag
+module local-kb-index-builder
 
-go 1.24.4
+go 1.24.8
 
 require (
 	cloud.google.com/go/auth v0.17.0
@@ -14,6 +14,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.8.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
+	devops/lib/bm25 v0.0.0
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v1.1.3 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
@@ -48,3 +49,5 @@ require (
 	golang.org/x/tools v0.35.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
+
+replace devops/lib/bm25 => ../lib/bm25

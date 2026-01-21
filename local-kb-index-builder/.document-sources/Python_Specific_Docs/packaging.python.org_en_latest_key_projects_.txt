@@ -1,0 +1,693 @@
+# Project Summaries [¶](\#project-summaries "Link to this heading")
+
+Summaries and links for the most relevant projects in the space of Python
+installation and packaging.
+
+## PyPA Projects [¶](\#pypa-projects "Link to this heading")
+
+### bandersnatch [¶](\#bandersnatch "Link to this heading")
+
+[Docs](https://bandersnatch.readthedocs.io) \|
+[Issues](https://github.com/pypa/bandersnatch/issues) \|
+[GitHub](https://github.com/pypa/bandersnatch) \|
+[PyPI](https://pypi.org/project/bandersnatch)
+
+`bandersnatch` is a PyPI mirroring client designed to efficiently
+create a complete mirror of the contents of PyPI. Organizations thus
+save bandwidth and latency on package downloads (especially in the
+context of automated tests) and to prevent heavily loading PyPI’s
+Content Delivery Network (CDN).
+Files can be served from a local directory or [AWS S3](https://aws.amazon.com/s3/).
+
+### build [¶](\#build "Link to this heading")
+
+[`Docs`](https://build.pypa.io/en/stable/index.html "(in build v1.4.0)") \|
+[Issues](https://github.com/pypa/build/issues) \|
+[GitHub](https://github.com/pypa/build) \|
+[PyPI](https://pypi.org/project/build)
+
+`build` is a [**PEP 517**](https://peps.python.org/pep-0517/) compatible Python package builder. It provides a CLI to
+build packages, as well as a Python API.
+
+### cibuildwheel [¶](\#cibuildwheel "Link to this heading")
+
+[Docs](https://cibuildwheel.readthedocs.io/) \|
+[Issues](https://github.com/pypa/cibuildwheel/issues) \|
+[GitHub](https://github.com/pypa/cibuildwheel) \|
+[PyPI](https://pypi.org/project/cibuildwheel) \|
+[Discussions](https://github.com/pypa/cibuildwheel/discussions) \|
+[Discord #cibuildwheel](https://discord.com/invite/pypa)
+
+`cibuildwheel` is a Python package that builds [wheels](../glossary/#term-Wheel) for all common
+platforms and Python versions on most CI systems. Also see [multibuild](#multibuild).
+
+### distlib [¶](\#distlib "Link to this heading")
+
+[Docs](https://distlib.readthedocs.io/en/latest/index.html "(in Distlib v0.4)") \|
+[Issues](https://github.com/pypa/distlib/issues) \|
+[GitHub](https://github.com/pypa/distlib) \|
+[PyPI](https://pypi.org/project/distlib)
+
+`distlib` is a library which implements low-level functions that
+relate to packaging and distribution of Python software. `distlib`
+implements several relevant PEPs (Python Enhancement Proposal
+standards) and is useful for developers of third-party packaging tools
+to make and upload binary and source [distributions](../glossary/#term-Distribution-Package), achieve interoperability, resolve
+dependencies, manage package resources, and do other similar
+functions.
+
+Unlike the stricter [packaging](#packaging) project (below), which
+specifically implements modern Python packaging interoperability
+standards, `distlib` also attempts to provide reasonable fallback
+behaviours when asked to handle legacy packages and metadata that
+predate the modern interoperability standards and fall into the subset
+of packages that are incompatible with those standards.
+
+### distutils [¶](\#distutils "Link to this heading")
+
+The original Python packaging system, added to the standard library in
+Python 2.0 and removed in 3.12.
+
+Due to the challenges of maintaining a packaging system
+where feature updates are tightly coupled to language runtime updates,
+direct usage of [distutils](#distutils) has been actively discouraged, with
+[Setuptools](#setuptools) being the preferred replacement. [Setuptools](#setuptools)
+not only provides features that plain [distutils](#distutils) doesn’t offer
+(such as dependency declarations and entry point declarations), it
+also provides a consistent build interface and feature set across all
+supported Python versions.
+
+Consequently, [distutils](#distutils) was deprecated in Python 3.10 by [**PEP 632**](https://peps.python.org/pep-0632/) and
+has been [removed](https://docs.python.org/3/whatsnew/3.12.html "(in Python v3.14)") from the standard library in
+Python 3.12. Setuptools bundles the standalone copy of distutils, and it is
+injected even on Python < 3.12 if you import setuptools first or use pip.
+
+### flit [¶](\#flit "Link to this heading")
+
+[Docs](https://flit.readthedocs.io/en/latest/) \|
+[Issues](https://github.com/pypa/flit/issues) \|
+[PyPI](https://pypi.org/project/flit)
+
+Flit provides a simple way to create and upload pure Python packages and
+modules to PyPI. It focuses on [making the easy things easy](https://flit.readthedocs.io/en/latest/rationale.html)
+for packaging. Flit can generate a configuration file to quickly set up a
+simple project, build source distributions and wheels, and upload them to PyPI.
+
+Flit uses `pyproject.toml` to configure a project. Flit does not rely on tools
+such as [Setuptools](#setuptools) to build distributions, or [twine](#twine) to upload them
+to PyPI. Flit requires Python 3, but you can use it to distribute modules for
+Python 2, so long as they can be imported on Python 3.
+
+The flit package is lifted by [Matthias Bussonnier](https://github.com/Carreau) since October 2023 on the [tidelift platform](https://tidelift.com/lifter/search/pypi/flit), and funds sent to the PSF and
+earmarked for PyPA usage.
+
+### hatch [¶](\#hatch "Link to this heading")
+
+[Docs](https://hatch.pypa.io/latest/) \|
+[GitHub](https://github.com/pypa/hatch) \|
+[PyPI](https://pypi.org/project/hatch)
+
+Hatch is a unified command-line tool meant to conveniently manage
+dependencies and environment isolation for Python developers. Python
+package developers use Hatch and its [build backend](../glossary/#term-Build-Backend) Hatchling to
+configure, version, specify dependencies for, and publish packages
+to PyPI. Its plugin system allows for easily extending functionality.
+
+### packaging [¶](\#packaging "Link to this heading")
+
+[Docs](https://packaging.pypa.io/en/latest/index.html "(in Packaging v26.1.dev2)") \|
+[Issues](https://github.com/pypa/packaging/issues) \|
+[GitHub](https://github.com/pypa/packaging) \|
+[PyPI](https://pypi.org/project/packaging)
+
+Core utilities for Python packaging used by [pip](#pip) and [Setuptools](#setuptools).
+
+The core utilities in the packaging library handle version handling,
+specifiers, markers, requirements, tags, and similar attributes and
+tasks for Python packages. Most Python users rely on this library
+without needing to explicitly call it; developers of the other Python
+packaging, distribution, and installation tools listed here often use
+its functionality to parse, discover, and otherwise handle dependency
+attributes.
+
+This project specifically focuses on implementing the modern Python
+packaging interoperability standards defined at
+[PyPA specifications](../specifications/#packaging-specifications), and will report errors for
+sufficiently old legacy packages that are incompatible with those
+standards. In contrast, the [distlib](#distlib) project is a more
+permissive library that attempts to provide a plausible reading of
+ambiguous metadata in cases where [packaging](#packaging) will instead report
+on error.
+
+### pip [¶](\#pip "Link to this heading")
+
+[Docs](https://pip.pypa.io/) \|
+[Issues](https://github.com/pypa/pip/issues) \|
+[GitHub](https://github.com/pypa/pip) \|
+[PyPI](https://pypi.org/project/pip/)
+
+The most popular tool for installing Python packages, and the one
+included with modern versions of Python.
+
+It provides the essential core features for finding, downloading, and
+installing packages from PyPI and other Python package indexes, and can be
+incorporated into a wide range of development workflows via its
+command-line interface (CLI).
+
+### Pipenv [¶](\#pipenv "Link to this heading")
+
+[Docs](https://pipenv.pypa.io/en/latest/index.html "(in pipenv v2026.0.3)") \|
+[Source](https://github.com/pypa/pipenv) \|
+[Issues](https://github.com/pypa/pipenv/issues) \|
+[PyPI](https://pypi.org/project/pipenv)
+
+Pipenv is a project that aims to bring the best of all packaging worlds to the
+Python world. It harnesses [Pipfile](#pipfile), [pip](#pip), and [virtualenv](#virtualenv)
+into one single toolchain. It can autoimport `requirements.txt` and also
+check for CVEs in [Pipfile](#pipfile) using [safety](https://pyup.io/safety).
+
+Pipenv aims to help users manage environments, dependencies, and
+imported packages on the command line. It also works well on Windows
+(which other tools often underserve), makes and checks file hashes,
+to ensure compliance with hash-locked dependency specifiers, and eases
+uninstallation of packages and dependencies.
+
+### Pipfile [¶](\#pipfile "Link to this heading")
+
+[Source](https://github.com/pypa/pipfile)
+
+`Pipfile` and its sister `Pipfile.lock` are a higher-level
+application-centric alternative to [pip](#pip)’s lower-level
+`requirements.txt` file.
+
+### pipx [¶](\#pipx "Link to this heading")
+
+[Docs](https://pipx.pypa.io/) \|
+[GitHub](https://github.com/pypa/pipx) \|
+[PyPI](https://pypi.org/project/pipx/)
+
+pipx is a tool to install and run Python command-line applications without
+causing dependency conflicts with other packages installed on the system.
+
+### Python Packaging User Guide [¶](\#python-packaging-user-guide "Link to this heading")
+
+[Docs](../) \|
+[Issues](https://github.com/pypa/packaging.python.org/issues) \|
+[GitHub](https://github.com/pypa/packaging.python.org)
+
+This guide!
+
+### readme\_renderer [¶](\#readme-renderer "Link to this heading")
+
+[GitHub and docs](https://github.com/pypa/readme_renderer/) \|
+[PyPI](https://pypi.org/project/readme-renderer/)
+
+`readme_renderer` is a library that package developers use to render
+their user documentation (README) files into HTML from markup
+languages such as Markdown or reStructuredText. Developers call it on
+its own or via [twine](#twine), as part of their release management
+process, to check that their package descriptions will properly
+display on PyPI.
+
+### Setuptools [¶](\#easy-install "Link to this heading")
+
+[Docs](https://setuptools.readthedocs.io/en/latest/) \|
+[Issues](https://github.com/pypa/setuptools/issues) \|
+[GitHub](https://github.com/pypa/setuptools) \|
+[PyPI](https://pypi.org/project/setuptools)
+
+Setuptools (which includes `easy_install`) is a collection of
+enhancements to the Python distutils that allow you to more easily
+build and distribute Python [distributions](../glossary/#term-Distribution-Package), especially ones that have dependencies on other packages.
+
+### trove-classifiers [¶](\#trove-classifiers "Link to this heading")
+
+[Issues](https://github.com/pypa/trove-classifiers/issues) \| [GitHub](https://github.com/pypa/trove-classifiers) \| [PyPI](https://pypi.org/project/trove-classifiers/)
+
+trove-classifiers is the canonical source for [classifiers on PyPI](https://pypi.org/classifiers/), which project maintainers use to
+[systematically describe their projects](../specifications/core-metadata/#core-metadata-classifier)
+so that users can better find projects that match their needs on the PyPI.
+
+The trove-classifiers package contains a list of valid classifiers and
+deprecated classifiers (which are paired with the classifiers that replace
+them). Use this package to validate classifiers used in packages intended for
+uploading to PyPI. As this list of classifiers is published as code, you
+can install and import it, giving you a more convenient workflow compared to
+referring to the [list published on PyPI](https://pypi.org/classifiers/). The
+[issue tracker](https://github.com/pypa/trove-classifiers/issues) for the
+project hosts discussions on proposed classifiers and requests for new
+classifiers.
+
+### twine [¶](\#twine "Link to this heading")
+
+[Docs](https://twine.readthedocs.io/en/latest/) \|
+[Issues](https://github.com/pypa/twine/issues) \|
+[GitHub](https://github.com/pypa/twine) \|
+[PyPI](https://pypi.org/project/twine)
+
+Twine is the primary tool developers use to upload packages to the
+Python Package Index or other Python package indexes. It is a
+command-line program that passes program files and metadata to a web
+API. Developers use it because it’s the official PyPI upload tool,
+it’s fast and secure, it’s maintained, and it reliably works.
+
+### virtualenv [¶](\#virtualenv "Link to this heading")
+
+[Docs](https://virtualenv.pypa.io/en/stable/index.html) \|
+[Issues](https://github.com/pypa/virtualenv/issues) \|
+[GitHub](https://github.com/pypa/virtualenv) \|
+[PyPI](https://pypi.org/project/virtualenv/)
+
+virtualenv is a tool for creating isolated Python [Virtual Environments](../glossary/#term-Virtual-Environment), like [venv](#venv). Unlike [venv](#venv), virtualenv can
+create virtual environments for other versions of Python, which it locates
+using the PATH environment variable. It also provides convenient features for
+configuring, maintaining, duplicating, and troubleshooting virtual environments.
+For more information, see the section on [Creating Virtual Environments](../tutorials/installing-packages/#creating-and-using-virtual-environments).
+
+### Warehouse [¶](\#warehouse "Link to this heading")
+
+[Docs](https://warehouse.pypa.io/) \|
+[Issues](https://github.com/pypa/warehouse/issues) \|
+[GitHub](https://github.com/pypa/warehouse)
+
+The current codebase powering the [Python Package Index\
+(PyPI)](../glossary/#term-Python-Package-Index-PyPI). It is hosted at [pypi.org](https://pypi.org/). The default
+source for [pip](#pip) downloads.
+
+### wheel [¶](\#wheel "Link to this heading")
+
+[Docs](https://wheel.readthedocs.io/en/latest/) \|
+[Issues](https://github.com/pypa/wheel/issues) \|
+[GitHub](https://github.com/pypa/wheel) \|
+[PyPI](https://pypi.org/project/wheel)
+
+Primarily, the wheel project offers the `bdist_wheel` [Setuptools](#setuptools) extension for
+creating [wheel distributions](../glossary/#term-Wheel). Additionally, it offers its own
+command line utility for creating and installing wheels.
+
+See also [auditwheel](https://github.com/pypa/auditwheel), a tool
+that package developers use to check and fix Python packages they are
+making in the binary wheel format. It provides functionality to
+discover dependencies, check metadata for compliance, and repair the
+wheel and metadata to properly link and include external shared
+libraries in a package.
+
+## Non-PyPA Projects [¶](\#non-pypa-projects "Link to this heading")
+
+### buildout [¶](\#buildout "Link to this heading")
+
+[Docs](http://www.buildout.org/en/latest/) \|
+[Issues](https://bugs.launchpad.net/zc.buildout) \|
+[PyPI](https://pypi.org/project/zc.buildout) \|
+[GitHub](https://github.com/buildout/buildout/)
+
+Buildout is a Python-based build system for creating, assembling and deploying
+applications from multiple parts, some of which may be non-Python-based. It
+lets you create a buildout configuration and reproduce the same software later.
+
+### conda [¶](\#conda "Link to this heading")
+
+[Docs](https://docs.conda.io/en/latest/index.html "(in conda-docs)")
+
+Conda is a package, dependency, and environment management system for any language — Python, R,
+Ruby, C/C++, Fortran, and more. It is written in Python and
+widely used in the Python scientific computing community, due to its support for non-Python
+compiled libraries and extensions. It is used as the basis of the [Anaconda](https://docs.anaconda.com/anaconda/) Python distribution from Anaconda, Inc. It was originally
+aimed at the scientific community, but can also be used on its own, or with the
+[miniconda](https://docs.conda.io/en/latest/miniconda.html "(in conda-docs)"), [miniforge](https://github.com/conda-forge/miniforge) or
+[pixi](https://pixi.sh/) systems. It is available for Windows, Mac and Linux systems.
+
+Conda is a completely separate tool from [pip](#pip), virtualenv and wheel, but provides
+many of their combined features, such as package management, virtual environment
+management and deployment of binary extensions and other binary code.
+
+Conda does not install packages from PyPI – it can only manage packages built specifically
+for conda, which can be made available on a “conda channel”, such as those hosted on
+[anaconda.org](https://anaconda.org), or a local (e.g. intranet) package server.
+In addition to the “default” channels managed by [Anaconda, Inc.](https://www.anaconda.com/), there are a wide variety of packages from the community supported
+[conda-forge project](https://conda-forge.org/)
+
+Note that [pip](#pip) can be installed into, and work side-by-side with conda
+for managing [distributions](../glossary/#term-Distribution-Package) from PyPI. It is also possible
+to build conda packages from Python source packages using tools such as
+[conda skeleton](https://docs.conda.io/projects/conda-build/en/latest/user-guide/tutorials/build-pkgs-skeleton.html): a tool to automatically make conda packages from Python packages available on PyPI.
+
+### devpi [¶](\#devpi "Link to this heading")
+
+[Docs](http://doc.devpi.net/latest/) \|
+[Issues](https://github.com/devpi/devpi/issues) \|
+[PyPI](https://pypi.org/project/devpi)
+
+devpi features a powerful PyPI-compatible server and PyPI proxy cache
+with a complementary command line tool to drive packaging, testing and
+release activities with Python. devpi also provides a browsable and
+searchable web interface.
+devpi supports mirroring PyPI, multiple
+[package indexes](../glossary/#term-Package-Index) with inheritance, syncing between
+these indexes, index replication and fail-over, and package upload.
+
+### dumb-pypi [¶](\#dumb-pypi "Link to this heading")
+
+[GitHub](https://github.com/chriskuehl/dumb-pypi) \|
+[PyPI](https://pypi.org/project/dumb-pypi)
+
+dumb-pypi is a simple [package index](../glossary/#term-Package-Index) static file site
+generator, which then must be hosted by a static file webserver to become the
+package index. It supports serving the hash, core-metadata, and yank-status.
+
+### enscons [¶](\#enscons "Link to this heading")
+
+[Source](https://github.com/dholth/enscons) \|
+[Issues](https://github.com/dholth/enscons/issues) \|
+[PyPI](https://pypi.org/project/enscons)
+
+Enscons is a Python packaging tool based on [SCons](https://scons.org/). It builds
+[pip](#pip)-compatible source distributions and wheels without using
+distutils or setuptools, including distributions with C
+extensions. Enscons has a different architecture and philosophy than
+[distutils](#distutils). Rather than adding build features to a Python
+packaging system, enscons adds Python packaging to a general purpose
+build system. Enscons helps you to build sdists that can be
+automatically built by [pip](#pip), and wheels that are independent of
+enscons.
+
+### Flask-Pypi-Proxy [¶](\#flask-pypi-proxy "Link to this heading")
+
+[Docs](https://flask-pypi-proxy.readthedocs.io) \|
+[GitHub](https://github.com/tzulberti/Flask-PyPi-Proxy) \|
+[PyPI](https://pypi.org/project/Flask-Pypi-Proxy/)
+
+Warning
+
+Not maintained, project archived
+
+Flask-Pypi-Proxy is a [package index](../glossary/#term-Package-Index) as a cached
+proxy for PyPI.
+
+### Hashdist [¶](\#hashdist "Link to this heading")
+
+[Docs](https://hashdist.readthedocs.io/en/latest/) \|
+[GitHub](https://github.com/hashdist/hashdist/)
+
+Hashdist is a library for building non-root software
+distributions. Hashdist is trying to be “the Debian of choice for
+cases where Debian technology doesn’t work”. The best way for
+Pythonistas to think about Hashdist may be a more powerful hybrid of
+[virtualenv](#virtualenv) and [buildout](#buildout). It is aimed at solving the
+problem of installing scientific software, and making package
+distribution stateless, cached, and branchable. It is used by some
+researchers but has been lacking in maintenance since 2016.
+
+### Maturin [¶](\#maturin "Link to this heading")
+
+[Docs](https://www.maturin.rs) \|
+[GitHub](https://github.com/PyO3/maturin)
+
+Maturin is a build backend for Rust extension modules, also written in
+Rust. It supports building wheels for python 3.7+ on Windows, Linux, macOS and
+FreeBSD, can upload them to PyPI and has basic PyPy and GraalPy support.
+
+### meson-python [¶](\#meson-python "Link to this heading")
+
+[Docs](https://meson-python.readthedocs.io/en/latest/) \|
+[GitHub](https://github.com/mesonbuild/meson-python)
+
+`meson-python` is a build backend that uses the [Meson](https://github.com/mesonbuild/meson) build system. It enables
+Python package authors to use [Meson](https://github.com/mesonbuild/meson) as the build system for their package. It
+supports a wide variety of languages, including C, and is able to fill the needs
+of most complex build configurations.
+
+### multibuild [¶](\#multibuild "Link to this heading")
+
+[GitHub](https://github.com/multi-build/multibuild)
+
+Multibuild is a set of CI scripts for building and testing Python [wheels](../glossary/#term-Wheel) for
+Linux, macOS, and (less flexibly) Windows. Also see [cibuildwheel](#cibuildwheel).
+
+### nginx\_pypi\_cache [¶](\#nginx-pypi-cache "Link to this heading")
+
+[GitHub](https://github.com/hauntsaninja/nginx_pypi_cache)
+
+nginx\_pypi\_cache is a [package index](../glossary/#term-Package-Index) caching proxy
+using [nginx](https://nginx.org/en/).
+
+### pdm [¶](\#pdm "Link to this heading")
+
+[Docs](https://pdm.fming.dev/) \|
+[GitHub](https://github.com/pdm-project/pdm/) \|
+[PyPI](https://pypi.org/project/pdm)
+
+PDM is a modern Python package manager. It uses [pyproject.toml](../glossary/#term-pyproject.toml) to store
+project metadata as defined in [**PEP 621**](https://peps.python.org/pep-0621/).
+
+### pex [¶](\#pex "Link to this heading")
+
+[Docs](https://pex.readthedocs.io/en/latest/) \|
+[GitHub](https://github.com/pantsbuild/pex/) \|
+[PyPI](https://pypi.org/project/pex)
+
+Pex is a tool for generating `.pex` (Python EXecutable)
+files, standalone Python environments in the spirit of [virtualenv](#virtualenv).
+PEX files are [zipapps](https://docs.python.org/3/library/zipapp.html "(in Python v3.14)") that
+make deployment of Python applications as simple as `cp`. A single PEX
+file can support multiple target platforms and can be created from standard
+[pip](#pip)-resolvable requirements, a lockfile generated with `pex3 lock ...`
+or even another PEX. PEX files can optionally have tools embedded that support
+turning the PEX file into a standard venv, graphing dependencies and more.
+
+### pip-tools [¶](\#pip-tools "Link to this heading")
+
+[Docs](https://pip-tools.readthedocs.io/en/latest/) \|
+[GitHub](https://github.com/jazzband/pip-tools/) \|
+[PyPI](https://pypi.org/project/pip-tools/)
+
+pip-tools is a suite of tools meant for Python system administrators
+and release managers who particularly want to keep their builds
+deterministic yet stay up to date with new versions of their
+dependencies. Users can specify particular release of their
+dependencies via hash, conveniently make a properly formatted list of
+requirements from information in other parts of their program, update
+all dependencies (a feature [pip](#pip) currently does not provide), and
+create layers of constraints for the program to obey.
+
+### pip2pi [¶](\#pip2pi "Link to this heading")
+
+[GitHub](https://github.com/wolever/pip2pi) \|
+[PyPI](https://pypi.org/project/pip2pi/)
+
+pip2pi is a [package index](../glossary/#term-Package-Index) server where specific
+packages are manually synchronised.
+
+### piwheels [¶](\#piwheels "Link to this heading")
+
+[Website](https://www.piwheels.org/) \|
+[Docs](https://piwheels.readthedocs.io/en/latest/index.html "(in Piwheels v0.23)") \|
+[GitHub](https://github.com/piwheels/piwheels/)
+
+piwheels is a website, and software underpinning it, that fetches
+source code distribution packages from PyPI and compiles them into
+binary wheels that are optimized for installation onto Raspberry Pi
+computers. Raspberry Pi OS pre-configures pip to use piwheels.org as
+an additional index to PyPI.
+
+### poetry [¶](\#poetry "Link to this heading")
+
+[Docs](https://python-poetry.org/) \|
+[GitHub](https://github.com/python-poetry/poetry) \|
+[PyPI](https://pypi.org/project/poetry/)
+
+poetry is a command-line tool to handle dependency installation and
+isolation as well as building and packaging of Python packages. It
+uses `pyproject.toml` and, instead of depending on the resolver
+functionality within [pip](#pip), provides its own dependency resolver.
+It attempts to speed users’ experience of installation and dependency
+resolution by locally caching metadata about dependencies.
+
+### proxpi [¶](\#proxpi "Link to this heading")
+
+[GitHub](https://github.com/EpicWink/proxpi) \|
+[PyPI](https://pypi.org/project/proxpi/)
+
+proxpi is a simple [package index](../glossary/#term-Package-Index) which proxies PyPI
+and other indexes with caching.
+
+### Pulp-python [¶](\#pulp-python "Link to this heading")
+
+[Docs](https://docs.pulpproject.org/pulp_python/) \|
+[GitHub](https://github.com/pulp/pulp_python) \|
+[PyPI](https://pypi.org/project/pulp-python/)
+
+Pulp-python is the Python [package index](../glossary/#term-Package-Index) plugin for
+[Pulp](https://pulpproject.org/). Pulp-python supports mirrors backed by
+local or [AWS S3](https://aws.amazon.com/s3/), package upload, and proxying to multiple package
+indexes.
+
+### PyPI Cloud [¶](\#pypi-cloud "Link to this heading")
+
+[Docs](https://pypicloud.readthedocs.io/) \|
+[GitHub](https://github.com/stevearc/pypicloud) \|
+[PyPI](https://pypi.org/project/pypicloud/)
+
+Warning
+
+Not maintained, project archived
+
+PyPI Cloud is a [package index](../glossary/#term-Package-Index) server, backed by
+[AWS S3](https://aws.amazon.com/s3/) or another cloud storage service, or local files. PyPI Cloud
+supports redirect/cached proxying for PyPI, as well as authentication and
+authorisation.
+
+### pypiprivate [¶](\#pypiprivate "Link to this heading")
+
+[GitHub](https://github.com/helpshift/pypiprivate) \|
+[PyPI](https://pypi.org/project/pypiprivate/)
+
+pypiprivate serves a local (or [AWS S3](https://aws.amazon.com/s3/)-hosted) directory of packages as a
+[package index](../glossary/#term-Package-Index).
+
+### pypiserver [¶](\#pypiserver "Link to this heading")
+
+[GitHub](https://github.com/pypiserver/pypiserver) \|
+[PyPI](https://pypi.org/project/pypiserver/)
+
+pypiserver is a minimalist application that serves as a private Python
+[package index](../glossary/#term-Package-Index) (from a local directory) within
+organizations, implementing a simple API and
+browser interface. You can upload private packages using standard
+upload tools, and users can download and install them with [pip](#pip),
+without publishing them publicly. Organizations who use pypiserver
+usually download packages both from pypiserver and from PyPI.
+
+### PyScaffold [¶](\#pyscaffold "Link to this heading")
+
+[Docs](https://pyscaffold.org) \|
+[GitHub](https://github.com/pyscaffold/pyscaffold) \|
+[PyPI](https://pypi.org/project/pyscaffold/)
+
+PyScaffold is a project generator for bootstrapping Python packages,
+ready to be shared on PyPI and installable via [pip](#pip).
+It relies on a set of sane default configurations for established tools
+(such as [Setuptools](#setuptools), [pytest](https://docs.pytest.org/en/stable/) and [Sphinx](https://www.sphinx-doc.org/en/master/)) to provide a productive
+environment so developers can start coding right away.
+PyScaffold can also be used with existing projects to make packaging
+easier.
+
+### pywharf [¶](\#pywharf "Link to this heading")
+
+[GitHub](https://github.com/pywharf/pywharf) \|
+[PyPI](https://pypi.org/project/pywharf)
+
+Warning
+
+Not maintained, project archived
+
+pywharf is a [package index](../glossary/#term-Package-Index) server, serving files
+locally or from [GitHub](https://github.com/).
+
+### scikit-build [¶](\#scikit-build "Link to this heading")
+
+[Docs](https://scikit-build.readthedocs.io/en/latest/) \|
+[GitHub](https://github.com/scikit-build/scikit-build/) \|
+[PyPI](https://pypi.org/project/scikit-build)
+
+Scikit-build is a [Setuptools](#setuptools) wrapper for CPython that builds
+C/C++/Fortran/Cython extensions It uses
+[cmake](https://pypi.org/project/cmake) (available on PyPI) to provide
+better support for additional compilers, build systems, cross compilation, and
+locating dependencies and their associated build requirements. To speed up and
+parallelize the build of large projects, the user can install [ninja](https://pypi.org/project/ninja) (also available on PyPI).
+
+### scikit-build-core [¶](\#scikit-build-core "Link to this heading")
+
+[Docs](https://scikit-build-core.readthedocs.io/en/latest/) \|
+[GitHub](https://github.com/scikit-build/scikit-build-core/) \|
+[PyPI](https://pypi.org/project/scikit-build-core)
+
+Scikit-build-core is a build backend for CPython C/C++/Fortran/Cython
+extensions. It enables users to write extensions with [cmake](https://pypi.org/project/cmake) (available on PyPI) to provide better
+support for additional compilers, build systems, cross compilation, and
+locating dependencies and their associated build requirements. CMake/Ninja
+are automatically downloaded from PyPI if not available on the system.
+
+### shiv [¶](\#shiv "Link to this heading")
+
+[Docs](https://shiv.readthedocs.io/en/latest/) \|
+[GitHub](https://github.com/linkedin/shiv) \|
+[PyPI](https://pypi.org/project/shiv/)
+
+shiv is a command line utility for building fully self contained
+Python zipapps as outlined in [**PEP 441**](https://peps.python.org/pep-0441/), but with all their
+dependencies included. Its primary goal is making distributing Python
+applications and command line tools fast & easy.
+
+### simpleindex [¶](\#simpleindex "Link to this heading")
+
+[GitHub](https://github.com/uranusjr/simpleindex) \|
+[PyPI](https://pypi.org/project/simpleindex/)
+
+simpleindex is a [package index](../glossary/#term-Package-Index) which routes URLs to
+multiple package indexes (including PyPI), serves local (or cloud-hosted,
+for example [AWS S3](https://aws.amazon.com/s3/), with a custom plugin) directories of packages, and
+supports custom plugins.
+
+### Spack [¶](\#spack "Link to this heading")
+
+[Docs](https://spack.readthedocs.io/en/latest/index.html "(in Spack v1.2)") \|
+[GitHub](https://github.com/spack/spack) \|
+[Paper](https://www.computer.org/csdl/proceedings-article/sc/2015/2807623/12OmNBf94Xq) \|
+[Slides](https://tgamblin.github.io/files/Gamblin-Spack-SC15-Talk.pdf)
+
+A flexible package manager designed to support multiple versions,
+configurations, platforms, and compilers. Spack is like Homebrew, but
+packages are written in Python and parameterized to allow easy
+swapping of compilers, library versions, build options,
+etc. Arbitrarily many versions of packages can coexist on the same
+system. Spack was designed for rapidly building high performance
+scientific applications on clusters and supercomputers.
+
+Spack is not in PyPI (yet), but it requires no installation and can be
+used immediately after cloning from GitHub.
+
+### zest.releaser [¶](\#zest-releaser "Link to this heading")
+
+[Docs](https://zestreleaser.readthedocs.io/en/latest/) \|
+[GitHub](https://github.com/zestsoftware/zest.releaser/) \|
+[PyPI](https://pypi.org/project/zest.releaser/)
+
+`zest.releaser` is a Python package release tool providing an
+abstraction layer on top of [twine](#twine). Python developers use
+`zest.releaser` to automate incrementing package version numbers,
+updating changelogs, tagging releases in source control, and uploading
+new packages to PyPI.
+
+## Standard Library Projects [¶](\#standard-library-projects "Link to this heading")
+
+### ensurepip [¶](\#ensurepip "Link to this heading")
+
+[Docs](https://docs.python.org/3/library/ensurepip.html) \|
+[Issues](https://bugs.python.org/)
+
+A package in the Python Standard Library that provides support for bootstrapping
+[pip](#pip) into an existing Python installation or virtual environment. In most
+cases, end users won’t use this module, but rather it will be used during the
+build of the Python distribution.
+
+### http.server [¶](\#http-server "Link to this heading")
+
+[Docs](https://docs.python.org/3/library/http.server.html "(in Python v3.14)") \|
+[Issues](https://github.com/python/cpython/issues)
+
+A package and command-line interface which can host a directory as a
+website, for example as a [package index](../glossary/#term-Package-Index) (see
+[Hosting your own simple repository](../guides/hosting-your-own-index/#hosting-your-own-simple-repository)).
+
+### venv [¶](\#venv "Link to this heading")
+
+[Docs](https://docs.python.org/3/library/venv.html) \|
+[Issues](https://github.com/python/cpython/issues)
+
+A package in the Python Standard Library (starting with Python 3.3) for
+creating [Virtual Environments](../glossary/#term-Virtual-Environment). For more
+information, see the section on [Creating Virtual Environments](../tutorials/installing-packages/#creating-and-using-virtual-environments).
+
+* * *

@@ -17,6 +17,7 @@ package iamclient
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	cloudresourcemanagerv1 "google.golang.org/api/cloudresourcemanager/v1"
 	iamv1 "google.golang.org/api/iam/v1"
@@ -75,6 +76,7 @@ func (c *IAMClientImpl) CreateServiceAccount(ctx context.Context, projectID, dis
 
 // AddIAMRoleBinding adds an IAM role binding to a Google Cloud Platform resource.
 func (c *IAMClientImpl) AddIAMRoleBinding(ctx context.Context, resourceID, role, member string) (*cloudresourcemanagerv1.Policy, error) {
+	resourceID = strings.TrimPrefix(resourceID, "projects/")
 	policy, err := c.crmService.Projects.GetIamPolicy(resourceID, &cloudresourcemanagerv1.GetIamPolicyRequest{}).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get iam policy: %v", err)
@@ -106,6 +108,7 @@ func (c *IAMClientImpl) ListServiceAccounts(ctx context.Context, projectID strin
 
 // GetIAMRoleBinding gets the IAM role bindings for a service account.
 func (c *IAMClientImpl) GetIAMRoleBinding(ctx context.Context, projectID, serviceAccountEmail string) (*RoleBindingList, error) {
+	projectID = strings.TrimPrefix(projectID, "projects/")
 	policy, err := c.crmService.Projects.GetIamPolicy(projectID, &cloudresourcemanagerv1.GetIamPolicyRequest{}).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get iam policy: %v", err)

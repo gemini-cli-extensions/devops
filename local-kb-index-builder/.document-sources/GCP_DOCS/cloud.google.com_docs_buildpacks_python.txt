@@ -1,0 +1,408 @@
+- [Home](https://docs.cloud.google.com/)
+- [Documentation](https://docs.cloud.google.com/docs)
+- [Application hosting](https://docs.cloud.google.com/docs/application-hosting)
+- [Buildpacks](https://docs.cloud.google.com/docs/buildpacks)
+- [Guides](https://docs.cloud.google.com/docs/buildpacks/overview)
+
+
+
+ Send feedback
+
+
+
+# Build a Python application    Stay organized with collections      Save and categorize content based on your preferences.
+
+Buildpacks support language-idiomatic configuration through environment
+variables.
+
+## Specify the Python version
+
+By default the Python Runtime buildpack uses the latest stable version of the Python interpreter. If your application requires a specific version, you can specify one by including a `.python-version` file in your application's root directory.
+
+```
+3.14
+
+```
+
+### Use `GOOGLE_PYTHON_VERSION`
+
+It is also possible to specify the Python version using the
+`GOOGLE_PYTHON_VERSION` environment variable.
+If both configurations are set, the `GOOGLE_PYTHON_VERSION` value takes
+precedence over the `.python-version` file. By default, when both the
+`.python-version` file and `GOOGLE_PYTHON_VERSION` environment variable are not
+specified, then the latest LTS version of Python is used.
+
+To configure the buildpack to use a [supported Python version](/docs/buildpacks/runtime-support#python) when deploying your app:
+
+```
+pack build sample-python --builder=gcr.io/buildpacks/builder \
+  --env GOOGLE_PYTHON_VERSION="3.14.x"
+
+```
+
+You can also use a `project.toml` project descriptor to encode
+the environment variable alongside your project files. See instructions on
+[building the application with environment variables](https://docs.cloud.google.com/docs/buildpacks/set-environment-variables#build_the_application_with_environment_variables)).
+
+## Specify dependencies
+
+Specify your application dependencies for [supported Python versions](/docs/buildpacks/runtime-support#python) using any of the following approaches:
+
+- Use a `requirements.txt` file in the root directory. This file must be in
+the same directory as the `main.py` file that contains your source code. The
+`requirements.txt` file contains one line per package. Each line contains
+the package name, and optionally, the requested version. To prevent your
+build from being affected by dependency version changes, consider pinning
+your dependency packages to a specific version.
+
+The following is an example `requirements.txt` file:
+
+
+
+
+```
+functions-framework
+requests==2.20.0
+numpy
+
+```
+
+- Use a `pyproject.toml` file to specify dependencies. If you manage your
+application dependencies in a `pyproject.toml` file instead of the
+`requirements.txt` file, the Python buildpack determines
+the package manager based on the configuration you specify in the
+`pyproject.toml` file. For more information, see [Deploy Python applications\
+with a `pyproject.toml` file](/docs/buildpacks/python#deploy-with-toml).
+
+If your application uses both the `pyproject.toml` file and the
+`requirements.txt` file, the `requirements.txt` file takes precedence.
+
+  - The following is an example `pyproject.toml` file:
+
+
+
+
+    ```
+    [project]
+    name = "demo-app"
+    version = "0.1.0"
+    description = ""
+    requires-python = ">=3.10"
+    dependencies = [
+        "flask>=3.1.1",
+        "gunicorn>=23.0.0",
+    ]
+
+    [build-system]
+    requires = ["setuptools>=61.0"]
+    build-backend = "setuptools.build_meta"
+
+    ```
+
+## Package manager
+
+If you manage your dependencies using a `requirements.txt file`, the default package
+manager varies based on the Python version you configure.
+
+If you use a `pyproject.toml` file to manage dependencies instead of a
+`requirements.txt` file, the Python buildpack determines the
+package manager based on your configuration settings in the `pyproject.toml`
+file. The buildpack supports pip, uv and Poetry package
+managers. For more information, see [Deploy Python applications with a\
+`pyproject.toml` file](/docs/buildpacks/python#deploy-with-toml).
+
+### Python 3.14 and later
+
+Starting from Python version 3.14 and later, the Python
+buildpack uses the [uv](https://docs.astral.sh/uv/)
+package manager as the default installer for the dependencies you specify
+in your `requirements.txt` file.
+
+To use [`pip`](http://pip.readthedocs.org/) as the package manager,
+configure the environment variable `GOOGLE_PYTHON_PACKAGE_MANAGER="pip"`.
+
+### Python 3.13 and earlier
+
+For Python version 3.13 and earlier, the Python
+buildpack uses the [pip](http://pip.readthedocs.org/)
+package manager to install dependencies you define in the
+[`requirements.txt`](http://pip.readthedocs.org/en/stable/user_guide/#requirements-files)
+file.
+
+To use [uv](https://docs.astral.sh/uv/) as the package manager,
+configure the environment variable `GOOGLE_PYTHON_PACKAGE_MANAGER="uv"`.
+
+### Configure pip
+
+It is possible to configure the behavior of pip [using environment variables](https://pip.pypa.io/en/stable/topics/configuration/):
+
+```
+pack build sample-python --builder=gcr.io/buildpacks/builder \
+  --env PIP_DEFAULT_TIMEOUT='60'
+
+```
+
+### Private dependencies from Artifact Registry
+
+An [Artifact Registry Python repository](/artifact-registry/docs/python/store-python)
+can host private dependencies for your Python function. When building an application on
+Cloud Build, the Python buildpack will automatically generate Artifact Registry
+credentials for the [Cloud Build service account](/build/docs/cloud-build-service-account).
+You only need to include the Artifact Registry URL in your `requirements.txt`
+without generating additional credentials. For example:
+
+```
+--extra-index-url REPOSITORY_URL
+sampleapp
+Flask==0.10.1
+google-cloud-storage
+
+```
+
+## Application entrypoint
+
+The following section describes the default entrypoint for the Python buildpack.
+
+### Entrypoint for Cloud Run source deploys
+
+This feature is only available if you [deploy your source code](/run/docs/deploying-source-code) to Cloud Run with the Python runtime. This feature
+isn't applicable if you are building your container image directly using
+`pack build` outside of the Cloud Run source deploy process.
+
+The [Python buildpack](/docs/buildpacks/python) supports
+modern web frameworks such as [FastAPI](https://fastapi.tiangolo.com/), [Gradio](https://www.gradio.app/), [Streamlit](https://streamlit.io/), and [Agent Development Kit (ADK)](https://google.github.io/adk-docs/) (Preview).
+
+#### Python version 3.12 and earlier
+
+If you're using Python version 3.12 and earlier, the Python
+buildpack defaults to using [Gunicorn](https://gunicorn.org/)
+as the WSGI HTTP server for your workload. The Python buildpack sets the default entrypoint to `gunicorn -b :8080 main:app`.
+
+#### Python version 3.13 and later
+
+For Python version 3.13 and later, the Python buildpack
+sets the default entrypoint for [Cloud Run source deploys](/run/docs/deploying-source-code) based on the web server or framework configuration in your
+`requirements.txt` file. This default setting applies only to Cloud Run
+service source deployments, not to Cloud Run functions.
+
+When you deploy a Cloud Run service from source using the Python runtime,
+the buildpack determines the Python version and the default
+entrypoint in the following ways:
+
+- If you don't specify a Python version in your source files,
+the Python buildpack sets the default to the [latest supported Python version](/docs/buildpacks/runtime-support#python). The buildpack determines the default entrypoint based on the web server or framework you've
+[configured in your `requirements.txt` file](#default-entrypoint).
+
+- If you don't specify a web server or a framework in your `requirements.txt` file, the Python buildpack defaults to using Gunicorn as the WSGI HTTP server for your workload. The Python buildpack sets the default entrypoint to `gunicorn -b :8080 main:app`.
+
+- The Python buildpack sets the default entrypoint
+based on the following order of precedence, as defined in the `requirements.txt`
+file:
+
+1. `gunicorn`
+2. `uvicorn`
+3. `fastapi[standard]`
+4. `gradio`
+5. `streamlit`
+6. `google-adk` (Preview)
+
+#### Configure the web server or framework
+
+For each common Python configurations in the `requirements.txt` file, the following table shows the default entrypoints when deploying to Cloud Run from source:
+
+Primary configurationDefault entrypointEnvironment variables`gunicorn``gunicorn -b :8080 main:app``numpy``gunicorn -b :8080 main:app``fastapi`
+
+`uvicorn``uvicorn main:app --host 0.0.0.0 --port 8080``fastapi[standard]``uvicorn main:app --host 0.0.0.0 --port 8080``uvicorn`
+
+`gunicorn``gunicorn -b :8080 main:app``gradio``python main.py``GRADIO_SERVER_NAME=0.0.0.0`
+
+`GRADIO_SERVER_PORT=8080``streamlit``streamlit run main.py --server.address 0.0.0.0 --server.port 8080``google-adk` (Preview)`adk api_server --host 0.0.0.0 --port 8080`
+
+To avoid deployment failures, use a [supported Python\
+version](/docs/buildpacks/runtime-support#python) in your source files, and
+specify a web server in your `requirements.txt` file.
+
+Alternatively, you can also specify the entrypoint by running the following source deploy command:
+
+```
+  gcloud run deploy SERVICE --source .  --set-build-env-vars GOOGLE_ENTRYPOINT="ENTRYPOINT"
+
+```
+
+Replace the following:
+
+- SERVICE: the name of the service you want to
+deploy to.
+- ENTRYPOINT: the default entrypoint you want to use for your source
+code.
+
+If you're unable to deploy your source code to Cloud Run or find errors
+in the logs, see the [Cloud Run troubleshooting guide](/run/docs/troubleshooting#source-deploy-errors).
+
+### Entrypoint for all other deployments
+
+The Python buildpack uses [Gunicorn](https://gunicorn.org/)
+as the default WSGI HTTP server for your workload. Apps built with the Python
+buildpack start the `gunicorn` process with default settings,
+similar to running:
+
+```
+gunicorn --bind :8080 main:app
+
+```
+
+### Customize the application entrypoint
+
+You can customize the applications start command by using a `Procfile` or an environment variable. You might need to do this to customize the [default entrypoint configurations](/docs/buildpacks/python#default-entrypoint).
+
+You can create a `Procfile` with your custom settings in the root directory.
+Example:
+
+```
+web: gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app
+
+```
+
+**Important:** When you override the Gunicorn defaults, you must include `gunicorn`
+as a package dependency in your project's `requirements.txt` file.
+
+Alternatively, you can use the `GOOGLE_ENTRYPOINT` environment variable with
+the `pack` command. Example:
+
+```
+pack build sample-python \
+  --builder gcr.io/buildpacks/builder
+  --env "GOOGLE_ENTRYPOINT='gunicorn --bind :$PORT main:app'"
+
+```
+
+## Environment Variables
+
+The Python buildpack supports the following environment variables to customize your container
+
+### `PIP_<key>`
+
+See pip [documentation](https://pip.pypa.io/en/stable/user_guide/#environment-variables).
+
+**Example:** `PIP_DEFAULT_TIMEOUT=60` sets `--default-timeout=60` for `pip` commands.
+
+## Deploy Python applications with a `pyproject.toml` file
+
+Python buildpacks support projects you configure
+with the `pyproject.toml` file. This feature lets you deploy
+applications you manage with Poetry, uv, or pip, directly to Cloud Run
+and Cloud Run functions. This feature isn't available in App Engine.
+
+The Python buildpack uses the `pyproject.toml` file only
+when there isn't a `requirements.txt` file present in your root directory. If your application uses both
+the `pyproject.toml` file and the `requirements.txt` file, then the `requirements.txt` file
+takes precedence.
+
+### Supported buildpacks configurations
+
+Python buildpacks supports the following configurations:
+
+- **pip buildpack**: Installs dependencies directly from
+`pyproject.toml` if it detects all the following conditions:
+
+  - A `pyproject.toml` file is present in the root directory and you don't
+    configure high-precedence tools such as a `poetry.lock` file, a `[tool.poetry]`
+    section, or a `uv.lock` file.
+
+  - You set the `GOOGLE_PYTHON_PACKAGE_MANAGER` environment variable to
+    `pip`.
+- **uv buildpack**: Supports Python projects you manage with
+[uv](https://docs.astral.sh/uv). This buildpack activates if it detects any
+of the following conditions:
+
+  - A `uv.lock` file and a `pyproject.toml` file are present in the project
+    root.
+  - A `pyproject.toml` file is present in the project root, and you set the
+    `GOOGLE_PYTHON_PACKAGE_MANAGER` environment variable to `uv`.
+  - A `pyproject.toml` file is present and you don't include other high-precedence
+    lock files such as `poetry.lock`, `uv.lock`, or configurations such as
+    `[tool.poetry]`, and you don't set the
+    `GOOGLE_PYTHON_PACKAGE_MANAGER` environment variable.
+- **Poetry buildpack**: Supports Python projects you manage
+with [Poetry](https://python-poetry.org/). This
+buildpack activates if it detects any of the following
+conditions:
+
+  - A `poetry.lock` file and a `pyproject.toml` file are present in the
+    project root.
+  - A `pyproject.toml` file is present in the project root and a
+    `[tool.poetry]` section is present in the `pyproject.toml` file.
+
+### Package manager precedence
+
+The Python buildpacks determines the default package manager based on the
+configuration in the following order of precedence:
+
+1. The highest precedence is given to the `requirements.txt` file. Only if this
+file is present, the Python buildpack uses the [default package\
+manager](#package-manager) to install dependencies at the build step. If
+a `requirements.txt` file isn't present, the detection process moves on to the next step.
+
+2. The buildpack then checks the `pyproject.toml` file for
+a `poetry.lock` file or a `[tool.poetry]` section. If found, the build process proceeds to use
+Poetry to install dependencies.
+
+3. If Poetry configuration isn't detected, the buildpack checks for a
+`uv.lock` file. If found, the build process proceeds to use uv to install dependencies.
+
+4. If lock files aren't present, the buildpack checks the
+`GOOGLE_PYTHON_PACKAGE_MANAGER` environment variable for a `pip` or `uv`
+configuration.
+
+5. Default. If you don't set an environment variable, and use only a `pyproject.toml`
+file without uv or Poetry, the buildpack defaults to using
+uv for all [supported Python versions](/docs/buildpacks/runtime-support#python).
+
+
+### Entrypoint with a `pyproject.toml` file
+
+When you deploy an application with a `pyproject.toml` file instead of using a
+`requirements.txt` file, the Python buildpack uses a different
+method to determine the entrypoint. For information about configuring an
+application entrypoint with a `requirements.txt` file, see [Application entrypoint](#entrypoint).
+
+The buildpack searches for an entrypoint in the following order of precedence:
+
+1. If a `Procfile` exists in your root directory, or you configure the
+`GOOGLE_ENTRYPOINT` environment variable, these configurations always
+override any entrypoint determined by `pyproject.toml` scripts.
+
+2. The Python buildpack utilizes the custom scripts you configure in
+the `[tool.poetry.scripts]` and the `[project.scripts]` sections. If you configure a [script](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#creating-executable-scripts) that includes `start`, this is your entrypoint.
+For example, `poetry run start` or `uv run start`.
+
+3. If you don't configure a `start` script, but you define another script,
+the script you define is the default entrypoint. For example, `poetry run mycmd`
+or `uv run mycmd`.
+
+
+Unlike `requirements.txt`-based builds, the Python buildpack
+doesn't automatically install `gunicorn` for `pyproject.toml` projects. To use
+`gunicorn` or any other server, you must explicitly add it to the dependencies in your `pyproject.toml` file.
+
+If you don't configure [custom\
+scripts](https://github.com/GoogleCloudPlatform/buildpacks/tree/main/builders/testdata/python/generic/pyproject_script) in the `pyproject.toml` file, the buildpacks attempts
+to detect common frameworks, such as `gunicorn`, `uvicorn` or `fastapi` from your
+`pyproject.toml` dependencies and [determines a default entrypoint](#entrypoint).
+
+
+
+ Send feedback
+
+
+
+Except as otherwise noted, the content of this page is licensed under the [Creative Commons Attribution 4.0 License](https://creativecommons.org/licenses/by/4.0/), and code samples are licensed under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0). For details, see the [Google Developers Site Policies](https://developers.google.com/site-policies). Java is a registered trademark of Oracle and/or its affiliates.
+
+Last updated 2026-01-13 UTC.
+
+
+Need to tell us more?
+
+
+\[\[\["Easy to understand","easyToUnderstand","thumb-up"\],\["Solved my problem","solvedMyProblem","thumb-up"\],\["Other","otherUp","thumb-up"\]\],\[\["Hard to understand","hardToUnderstand","thumb-down"\],\["Incorrect information or sample code","incorrectInformationOrSampleCode","thumb-down"\],\["Missing the information/samples I need","missingTheInformationSamplesINeed","thumb-down"\],\["Other","otherDown","thumb-down"\]\],\["Last updated 2026-01-13 UTC."\],\[\],\[\]\]

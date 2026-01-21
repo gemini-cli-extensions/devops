@@ -1,0 +1,83 @@
+# Using TestPyPI [¶](\#using-testpypi "Link to this heading")
+
+`TestPyPI` is a separate instance of the [Python Package Index (PyPI)](../../glossary/#term-Python-Package-Index-PyPI)
+that allows you to try out the distribution tools and process without worrying
+about affecting the real index. TestPyPI is hosted at
+[test.pypi.org](https://test.pypi.org)
+
+## Registering your account [¶](\#registering-your-account "Link to this heading")
+
+Because TestPyPI has a separate database from the live PyPI, you’ll need a
+separate user account specifically for TestPyPI. Go to
+[https://test.pypi.org/account/register/](https://test.pypi.org/account/register/) to register your account.
+
+Note
+
+The database for TestPyPI may be periodically pruned, so it is not
+unusual for user accounts to be deleted.
+
+## Using TestPyPI with Twine [¶](\#using-testpypi-with-twine "Link to this heading")
+
+You can upload your distributions to TestPyPI using [twine](../../key_projects/#twine) by specifying
+the `--repository` flag:
+
+```
+twine upload --repository testpypi dist/*
+
+```
+
+You can see if your package has successfully uploaded by navigating to the URL
+`https://test.pypi.org/project/<sampleproject>` where `sampleproject` is
+the name of your project that you uploaded. It may take a minute or two for
+your project to appear on the site.
+
+## Using TestPyPI with pip [¶](\#using-testpypi-with-pip "Link to this heading")
+
+You can tell [pip](../../key_projects/#pip) to download packages from TestPyPI instead of PyPI by
+specifying the `--index-url` flag:
+
+Unix/macOS
+
+```
+python3 -m pip install --index-url https://test.pypi.org/simple/ your-package
+
+```
+
+Windows
+
+```
+py -m pip install --index-url https://test.pypi.org/simple/ your-package
+
+```
+
+If you want to allow pip to also download packages from PyPI, you can
+specify `--extra-index-url` to point to PyPI. This is useful when the package
+you’re testing has dependencies:
+
+Unix/macOS
+
+```
+python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ your-package
+
+```
+
+Windows
+
+```
+py -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ your-package
+
+```
+
+## Setting up TestPyPI in `.pypirc` [¶](\#setting-up-testpypi-in-pypirc "Link to this heading")
+
+If you want to avoid being prompted for your username and password every time,
+you can configure TestPyPI in your `$HOME/.pypirc`:
+
+```
+[testpypi]
+username = __token__
+password = <your TestPyPI API Token>
+
+```
+
+For more details, see the [specification](../../specifications/pypirc/#pypirc) for `.pypirc`.

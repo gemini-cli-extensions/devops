@@ -1,0 +1,289 @@
+# Packaging namespace packages [¶](\#packaging-namespace-packages "Link to this heading")
+
+Namespace packages allow you to split the sub-packages and modules within a
+single [package](../../glossary/#term-Import-Package) across multiple, separate
+[distribution packages](../../glossary/#term-Distribution-Package) (referred to as
+**distributions** in this document to avoid ambiguity). For example, if you
+have the following package structure:
+
+```
+mynamespace/
+    __init__.py
+    subpackage_a/
+        __init__.py
+        ...
+    subpackage_b/
+        __init__.py
+        ...
+    module_b.py
+pyproject.toml
+
+```
+
+And you use this package in your code like so:
+
+```
+from mynamespace import subpackage_a
+from mynamespace import subpackage_b
+
+```
+
+Then you can break these sub-packages into two separate distributions:
+
+```
+mynamespace-subpackage-a/
+    pyproject.toml
+    src/
+        mynamespace/
+            subpackage_a/
+                __init__.py
+
+mynamespace-subpackage-b/
+    pyproject.toml
+    src/
+        mynamespace/
+            subpackage_b/
+                __init__.py
+            module_b.py
+
+```
+
+Each sub-package can now be separately installed, used, and versioned.
+
+Namespace packages can be useful for a large collection of loosely-related
+packages (such as a large corpus of client libraries for multiple products from
+a single company). However, namespace packages come with several caveats and
+are not appropriate in all cases. A simple alternative is to use a prefix on
+all of your distributions such as `import mynamespace_subpackage_a` (you
+could even use `import mynamespace_subpackage_a as subpackage_a` to keep the
+import object short).
+
+## Creating a namespace package [¶](\#creating-a-namespace-package "Link to this heading")
+
+There are currently two different approaches to creating namespace packages,
+from which the latter is discouraged:
+
+1. Use [native namespace packages](#native-namespace-packages). This type of namespace package is defined
+   in [**PEP 420**](https://peps.python.org/pep-0420/) and is available in Python 3.3 and later. This is recommended if
+   packages in your namespace only ever need to support Python 3 and
+   installation via `pip`.
+
+2. Use [legacy namespace packages](#legacy-namespace-packages). This comprises [pkgutil-style namespace packages](#pkgutil-style-namespace-packages)
+   and [pkg\_resources-style namespace packages](#pkg-resources-style-namespace-packages).
+
+
+### Native namespace packages [¶](\#native-namespace-packages "Link to this heading")
+
+Python 3.3 added **implicit** namespace packages from [**PEP 420**](https://peps.python.org/pep-0420/). All that is
+required to create a native namespace package is that you just omit
+`__init__.py` from the namespace package directory. An example file
+structure (following [src-layout](https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#src-layout "(in setuptools v80.10.0)")):
+
+```
+mynamespace-subpackage-a/
+    pyproject.toml # AND/OR setup.py, setup.cfg
+    src/
+        mynamespace/ # namespace package
+            # No __init__.py here.
+            subpackage_a/
+                # Regular import packages have an __init__.py.
+                __init__.py
+                module.py
+
+```
+
+It is extremely important that every distribution that uses the namespace
+package omits the `__init__.py` or uses a pkgutil-style
+`__init__.py`. If any distribution does not, it will cause the namespace
+logic to fail and the other sub-packages will not be importable.
+
+The `src-layout` directory structure allows automatic discovery of packages
+by most [build backends](../../glossary/#term-Build-Backend). See [src layout vs flat layout](../../discussions/src-layout-vs-flat-layout/#src-layout-vs-flat-layout)
+for more information. If however you want to manage exclusions or inclusions of packages
+yourself, this is possible to be configured in the top-level `pyproject.toml`:
+
+```
+[build-system]
+...
+
+[tool.setuptools.packages.find]
+where = ["src/"]
+include = ["mynamespace.subpackage_a"]
+
+[project]
+name = "mynamespace-subpackage-a"
+...
+
+```
+
+The same can be accomplished with a `setup.cfg`:
+
+```
+[options]
+package_dir =
+    =src
+packages = find_namespace:
+
+[options.packages.find]
+where = src
+
+```
+
+Or `setup.py`:
+
+```
+from setuptools import setup, find_namespace_packages
+
+setup(
+    name='mynamespace-subpackage-a',
+    ...
+    packages=find_namespace_packages(where='src/', include=['mynamespace.subpackage_a']),
+    package_dir={'': 'src'},
+)
+
+```
+
+[Setuptools](../../key_projects/#setuptools) will search the directory structure for implicit namespace
+packages by default.
+
+A complete working example of two native namespace packages can be found in
+the [native namespace package example project](https://github.com/pypa/sample-namespace-packages/tree/master/native).
+
+Note
+
+Because native and pkgutil-style namespace packages are largely
+compatible, you can use native namespace packages in the distributions that
+only support Python 3 and pkgutil-style namespace packages in the
+distributions that need to support Python 2 and 3.
+
+### Legacy namespace packages [¶](\#legacy-namespace-packages "Link to this heading")
+
+These two methods, that were used to create namespace packages prior to [**PEP 420**](https://peps.python.org/pep-0420/),
+are now considered to be obsolete and should not be used unless you need compatibility
+with packages already using this method. Also, [pkg\_resources](https://setuptools.pypa.io/en/latest/pkg_resources.html "(in setuptools v80.10.0)")
+has been deprecated.
+
+To migrate an existing package, all packages sharing the namespace must be migrated simultaneously.
+
+Warning
+
+While native namespace packages and pkgutil-style namespace
+packages are largely compatible, pkg\_resources-style namespace packages
+are not compatible with the other methods. It’s inadvisable to use
+different methods in different distributions that provide packages to the
+same namespace.
+
+#### pkgutil-style namespace packages [¶](\#pkgutil-style-namespace-packages "Link to this heading")
+
+Python 2.3 introduced the [pkgutil](https://docs.python.org/3/library/pkgutil.html "(in Python v3.14)") module and the
+[`pkgutil.extend_path()`](https://docs.python.org/3/library/pkgutil.html#pkgutil.extend_path "(in Python v3.14)") function. This can be used to declare namespace
+packages that need to be compatible with both Python 2.3+ and Python 3. This
+is the recommended approach for the highest level of compatibility.
+
+To create a pkgutil-style namespace package, you need to provide an
+`__init__.py` file for the namespace package:
+
+```
+mynamespace-subpackage-a/
+    src/
+        pyproject.toml # AND/OR setup.cfg, setup.py
+        mynamespace/
+            __init__.py  # Namespace package __init__.py
+            subpackage_a/
+                __init__.py  # Regular package __init__.py
+                module.py
+
+```
+
+The `__init__.py` file for the namespace package needs to contain
+the following:
+
+```
+__path__ = __import__('pkgutil').extend_path(__path__, __name__)
+
+```
+
+**Every** distribution that uses the namespace package must include such
+an `__init__.py`. If any distribution does not, it will cause the
+namespace logic to fail and the other sub-packages will not be importable. Any
+additional code in `__init__.py` will be inaccessible.
+
+A complete working example of two pkgutil-style namespace packages can be found
+in the [pkgutil namespace example project](https://github.com/pypa/sample-namespace-packages/tree/master/pkgutil).
+
+#### pkg\_resources-style namespace packages [¶](\#pkg-resources-style-namespace-packages "Link to this heading")
+
+[Setuptools](https://setuptools.pypa.io/en/latest/index.html "(in setuptools v80.10.0)") provides the [pkg\_resources.declare\_namespace](https://setuptools.readthedocs.io/en/latest/pkg_resources.html#namespace-package-support) function and
+the `namespace_packages` argument to `setup()`. Together
+these can be used to declare namespace packages. While this approach is no
+longer recommended, it is widely present in most existing namespace packages.
+If you are creating a new distribution within an existing namespace package that
+uses this method then it’s recommended to continue using this as the different
+methods are not cross-compatible and it’s not advisable to try to migrate an
+existing package.
+
+To create a pkg\_resources-style namespace package, you need to provide an
+`__init__.py` file for the namespace package:
+
+```
+mynamespace-subpackage-a/
+    src/
+        pyproject.toml # AND/OR setup.cfg, setup.py
+        mynamespace/
+            __init__.py  # Namespace package __init__.py
+            subpackage_a/
+                __init__.py  # Regular package __init__.py
+                module.py
+
+```
+
+The `__init__.py` file for the namespace package needs to contain
+the following:
+
+```
+__import__('pkg_resources').declare_namespace(__name__)
+
+```
+
+**Every** distribution that uses the namespace package must include such an
+`__init__.py`. If any distribution does not, it will cause the
+namespace logic to fail and the other sub-packages will not be importable. Any
+additional code in `__init__.py` will be inaccessible.
+
+Note
+
+Some older recommendations advise the following in the namespace
+package `__init__.py`:
+
+```
+try:
+    __import__('pkg_resources').declare_namespace(__name__)
+except ImportError:
+    __path__ = __import__('pkgutil').extend_path(__path__, __name__)
+
+```
+
+The idea behind this was that in the rare case that setuptools isn’t
+available packages would fall-back to the pkgutil-style packages. This
+isn’t advisable because pkgutil and pkg\_resources-style namespace packages
+are not cross-compatible. If the presence of setuptools is a concern
+then the package should just explicitly depend on setuptools via
+`install_requires`.
+
+Finally, every distribution must provide the `namespace_packages` argument
+to `setup()` in `setup.py`. For example:
+
+```
+from setuptools import find_packages, setup
+
+setup(
+    name='mynamespace-subpackage-a',
+    ...
+    packages=find_packages()
+    namespace_packages=['mynamespace']
+)
+
+```
+
+A complete working example of two pkg\_resources-style namespace packages can be found
+in the [pkg\_resources namespace example project](https://github.com/pypa/sample-namespace-packages/tree/master/pkg_resources).

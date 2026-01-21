@@ -1,0 +1,4 @@
+# Hosting [¶](\#hosting "Link to this heading")
+
+- [Package index mirrors and caches](../index-mirrors-and-caches/)
+- [Hosting your own simple repository](../hosting-your-own-index/)

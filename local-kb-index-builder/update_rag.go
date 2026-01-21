@@ -40,9 +40,9 @@ func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir 
 	dirPath := strings.Split(dir, "/")
 	if len(dirPath) > 1 {
 		//sourcePath = strings.Join(dirPath[len(dirPath)-1], "/")
-		sourcePath =  dirPath[len(dirPath)-1]
+		sourcePath = dirPath[len(dirPath)-1]
 	}
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -75,13 +75,17 @@ func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir 
 				doc := chromem.Document{
 					ID:       chunkId,
 					Content:  string(chunk),
-					Metadata: map[string]string{"source":  strings.ReplaceAll(path,dir,sourcePath)},
+					Metadata: map[string]string{"source": strings.ReplaceAll(path, dir, sourcePath)},
 				}
 				docs = append(docs, doc)
 			}
 		}
 		return nil
 	})
+	if err != nil {
+		log.Printf("Unable to walk filepath: %v", err)
+		return
+	}
 
 	if len(docs) > 0 {
 		threads := 5

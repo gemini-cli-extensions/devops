@@ -1,0 +1,184 @@
+# Tool recommendations [¶](\#tool-recommendations "Link to this heading")
+
+The Python packaging landscape consists of many different tools. For many tasks,
+the [Python Packaging Authority](../../glossary/#term-Python-Packaging-Authority-PyPA)
+(PyPA, the working group which encompasses many packaging tools and
+maintains this guide) purposefully does not make a blanket recommendation; for
+example, the reason there are many build backends is that the landscape was
+opened up in order to enable the development of new backends serving certain users’
+needs better than the previously unique backend, setuptools. This guide does
+point to some tools that are widely recognized, and also makes some
+recommendations of tools that you should _not_ use because they are deprecated
+or insecure.
+
+## Virtual environments [¶](\#virtual-environments "Link to this heading")
+
+The standard tools to create and use virtual environments manually are
+[virtualenv](../../key_projects/#virtualenv) (PyPA project) and [venv](https://docs.python.org/3/library/venv.html "(in Python v3.14)") (part of
+the Python standard library, though missing some features of virtualenv).
+
+## Installing packages [¶](\#installing-packages "Link to this heading")
+
+[pip](../../key_projects/#pip) is the standard tool to install packages from [PyPI](../../glossary/#term-Python-Package-Index-PyPI). You may want to read pip’s recommendations for
+[secure installs](https://pip.pypa.io/en/latest/topics/secure-installs/ "(in pip v26.0)"). Pip is available by default
+in most Python installations through the standard library package
+[ensurepip](https://docs.python.org/3/library/ensurepip.html "(in Python v3.14)").
+
+Alternatively, consider [pipx](../../key_projects/#pipx) for the specific use case of installing Python
+applications that are distributed through PyPI and run from the command line.
+Pipx is a wrapper around pip and venv that installs each
+application into a dedicated virtual environment. This avoids conflicts between
+the dependencies of different applications, and also with system-wide applications
+making use of the same Python interpreter (especially on Linux).
+
+For scientific software specifically, consider [conda](../../key_projects/#conda) or [Spack](../../key_projects/#spack).
+
+Todo
+
+Write a “pip vs. Conda” comparison, here or in a new discussion.
+
+Do **not** use `easy_install` (part of [Setuptools](../../key_projects/#setuptools)), which is deprecated
+in favor of pip (see [pip vs easy\_install](../../discussions/pip-vs-easy-install/#pip-vs-easy-install) for details). Likewise, do
+**not** use `python setup.py install` or `python setup.py develop`, which
+are also deprecated (see [Is setup.py deprecated?](../../discussions/setup-py-deprecated/#setup-py-deprecated) for background and
+[How to modernize a setup.py based project?](../modernize-setup-py-project/#modernize-setup-py-project) for migration advice).
+
+## Lock files [¶](\#lock-files "Link to this heading")
+
+[pip-tools](../../key_projects/#pip-tools) and [Pipenv](../../key_projects/#pipenv) are two recognized tools to create lock
+files, which contain the exact versions of all packages installed into an
+environment, for reproducibility purposes.
+
+## Build backends [¶](\#build-backends "Link to this heading")
+
+Important
+
+Please, remember: this document does not seek to steer the reader towards
+a particular tool, only to enumerate common tools. Different use cases often
+need specialized workflows.
+
+Popular [build backends](../../glossary/#term-Build-Backend) for pure-Python packages include,
+in alphabetical order:
+
+- [Flit-core](https://flit.pypa.io/en/stable/pyproject_toml.html "(in Flit v3.12.0)") – developed with but separate from [flit](../../key_projects/#flit).
+  A minimal and opinionated build backend. It does not support plugins.
+
+- [Hatchling](https://pypi.org/project/hatchling/) – developed with but separate from [hatch](../../key_projects/#hatch). Supports plugins.
+
+- [PDM-backend](https://backend.pdm-project.org) – developed with but separate from [pdm](../../key_projects/#pdm). Supports plugins.
+
+- [Poetry-core](https://pypi.org/project/poetry-core/) – developed with but separate from [poetry](../../key_projects/#poetry). Supports
+  plugins.
+
+  Unlike other backends on this list, Poetry-core does not support the standard
+  [\[project\] table](../writing-pyproject-toml/#writing-pyproject-toml) (it uses a different format,
+  in the `[tool.poetry]` table).
+
+- [Setuptools](../../key_projects/#setuptools), which used to be the only build backend. Supports plugins.
+
+
+
+  Caution
+
+
+
+  If you use setuptools, please be aware that some features that predate
+  standardisation efforts are now deprecated and only _temporarily kept_
+  for compatibility.
+
+
+
+  In particular, do **not** use direct `python setup.py` invocations. On the
+  other hand, configuring setuptools with a `setup.py` file is still fully
+  supported, although it is recommended to use the modern [\[project\] table\
+  in pyproject.toml](../writing-pyproject-toml/#writing-pyproject-toml) (or `setup.cfg`) whenever possible and keep
+  `setup.py` only if programmatic configuration is needed. See
+  [Is setup.py deprecated?](../../discussions/setup-py-deprecated/#setup-py-deprecated).
+
+
+
+  Other examples of deprecated features you should **not** use include the
+  `setup_requires` argument to `setup()` (use the [\[build-system\] table](../writing-pyproject-toml/#pyproject-guide-build-system-table) in `pyproject.toml` instead), and
+  the `easy_install` command (cf. [pip vs easy\_install](../../discussions/pip-vs-easy-install/#pip-vs-easy-install)).
+
+
+Do **not** use [distutils](../../key_projects/#distutils), which is deprecated, and has been removed from
+the standard library in Python 3.12, although it still remains available from
+setuptools.
+
+### Build backends for extension modules [¶](\#build-backends-for-extension-modules "Link to this heading")
+
+For packages with [extension modules](../../glossary/#term-Extension-Module), it is best to use
+a build system with dedicated support for the language the extension is written in,
+for example:
+
+- [Setuptools](../../key_projects/#setuptools) – natively supports C and C++ (with third-party plugins for Go and Rust),
+
+- [meson-python](../../key_projects/#meson-python) – C, C++, Fortran, Rust, and other languages supported by Meson,
+
+- [scikit-build-core](../../key_projects/#scikit-build-core) – C, C++, Fortran, and other languages supported by CMake,
+
+- [Maturin](../../key_projects/#maturin) – Rust, via Cargo.
+
+
+## Building distributions [¶](\#building-distributions "Link to this heading")
+
+The standard tool to build [source distributions](../../glossary/#term-Source-Distribution-or-sdist) and [wheels](../../glossary/#term-Wheel) for uploading to PyPI is [build](../../key_projects/#build). It
+will invoke whichever build backend you [declared](../writing-pyproject-toml/#pyproject-guide-build-system-table) in `pyproject.toml`.
+
+Do **not** use `python setup.py sdist` and `python setup.py bdist_wheel` for
+this task. All direct invocations of `setup.py` are [deprecated](../../discussions/setup-py-deprecated/#setup-py-deprecated).
+
+If you have [extension modules](../../glossary/#term-Extension-Module) and want to distribute
+wheels for multiple platforms, use [cibuildwheel](../../key_projects/#cibuildwheel) as part of your CI setup
+to build distributable wheels.
+
+## Uploading to PyPI [¶](\#uploading-to-pypi "Link to this heading")
+
+For projects hosted on or published via supported CI/CD platforms, it is
+recommended to use the [Trusted Publishing](../publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/#trusted-publishing), which
+allows the package to be securely uploaded to PyPI from a CI/CD workflow
+without a manually configured API token.
+
+As of November 2024, PyPI supports the following platforms as Trusted Publishing
+providers:
+
+- GitHub Actions (on `https://github.com`)
+
+- GitLab CI/CD (on `https://gitlab.com`)
+
+- ActiveState
+
+- Google Cloud
+
+
+The other available method is to upload the package manually using [twine](../../key_projects/#twine).
+
+Danger
+
+**Never** use `python setup.py upload` for this task. In addition to being
+[deprecated](../../discussions/setup-py-deprecated/#setup-py-deprecated), it is insecure.
+
+## Workflow tools [¶](\#workflow-tools "Link to this heading")
+
+These tools are environment managers that automatically manage virtual
+environments for a project. They also act as “task runners”, allowing you to
+define and invoke tasks such as running tests, compiling documentation,
+regenerating some files, etc. Some of them provide shortcuts for building
+distributions and uploading to PyPI, and some support lock files for
+applications. They often call the tools mentioned above under the hood. In
+alphabetical order:
+
+- [flit](../../key_projects/#flit),
+
+- [hatch](../../key_projects/#hatch),
+
+- [nox](https://nox.thea.codes/en/latest/index.html "(in Nox v2025.11.12)"),
+
+- [pdm](../../key_projects/#pdm),
+
+- [Pipenv](../../key_projects/#pipenv),
+
+- [poetry](../../key_projects/#poetry),
+
+- [tox](https://tox.wiki/en/latest/index.html "(in Project name not set v4.34)").

@@ -1,0 +1,85 @@
+- [Home](https://docs.cloud.google.com/)
+- [Documentation](https://docs.cloud.google.com/docs)
+- [Application hosting](https://docs.cloud.google.com/docs/application-hosting)
+- [Buildpacks](https://docs.cloud.google.com/docs/buildpacks)
+- [Guides](https://docs.cloud.google.com/docs/buildpacks/overview)
+
+
+
+ Send feedback
+
+
+
+# Base images    Stay organized with collections      Save and categorize content based on your preferences.
+
+A base image is the starting point for most container-based development workflows.
+Developers start with a base image and layer on top of it the necessary libraries,
+binaries, and configuration files used to run their application. Google Cloud's buildpacks
+publishes base images with multiple configurations of the available system packages and languages.
+
+Security and maintenance updates to these base images are made available through
+routine updates. Google Cloud's buildpacks applies these updates automatically or
+lets you manually update, depending on the environment and your configuration.
+For example, Cloud Run functions supports [automatic updates](/run/docs/configuring/services/automatic-base-image-updates).
+
+Base images are hosted in every region where Artifact Registry is available.
+You can customize the base image path by replacing the first portion of the URI
+with your region of choice:
+
+`REGION-docker.pkg.dev/serverless-runtimes/STACK/runtimes/RUNTIME_ID`
+
+Replace:
+
+- REGION with the preferred region, for example `us-central1`.
+- STACK with the preferred operating system stack, for example `google-24`.
+- RUNTIME\_ID with the runtime ID used by your function, for example `python313`.
+
+For example, buildpacks references the Node.js 24 base image using the `google-24` stack,
+hosted in `us-central1` with the following URL:
+`us-central1-docker.pkg.dev/serverless-runtimes/google-24/runtimes/nodejs24`.
+
+### Node.js
+
+RuntimeGenerationEnvironmentRuntime IDNode.js 242nd genUbuntu 24.04nodejs24Node.js 221st gen, 2nd genUbuntu 22.04nodejs22Node.js 201st gen, 2nd genUbuntu 22.04nodejs20Node.js 181st gen, 2nd genUbuntu 22.04nodejs18Node.js 161st gen, 2nd genUbuntu 18.04nodejs16Node.js 141st gen, 2nd genUbuntu 18.04nodejs14Node.js 121st gen, 2nd genUbuntu 18.04nodejs12Node.js 101st gen, 2nd genUbuntu 18.04nodejs10Node.js 81st gen, 2nd genUbuntu 18.04nodejs8Node.js 61st gen, 2nd genUbuntu 18.04nodejs6
+
+### Python
+
+RuntimeGenerationEnvironmentRuntime IDPython 3.142nd genUbuntu 24.04python314Python 3.132nd genUbuntu 22.04python313Python 3.121st gen, 2nd genUbuntu 22.04python312Python 3.111st gen, 2nd genUbuntu 22.04python311Python 3.101st gen, 2nd genUbuntu 22.04python310Python 3.91st gen, 2nd genUbuntu 18.04python39Python 3.81st gen, 2nd genUbuntu 18.04python38Python 3.71st genUbuntu 18.04python37
+
+### Go
+
+RuntimeGenerationEnvironmentRuntime IDGo 1.252nd genUbuntu 22.04go125Go 1.242nd genUbuntu 22.04go124Go 1.232nd genUbuntu 22.04go123Go 1.222nd genUbuntu 22.04go122Go 1.211st gen, 2nd genUbuntu 22.04go121Go 1.201st gen, 2nd genUbuntu 22.04go120Go 1.191st gen, 2nd genUbuntu 22.04go119Go 1.181st gen, 2nd genUbuntu 22.04go118Go 1.161st gen, 2nd genUbuntu 18.04go116Go 1.131st gen, 2nd genUbuntu 18.04go113Go 1.111st gen, 2nd genUbuntu 18.04go111**Note:** Go's [release policy](https://go.dev/doc/devel/release#policy) states
+that each major Go release is supported until there are two newer major releases. Key dates
+might not be available until newer versions of Go are made publicly available.
+
+### Java
+
+RuntimeGenerationEnvironmentRuntime IDJava 252nd genUbuntu 24.04java25Java 212nd genUbuntu 22.04java21Java 171st gen, 2nd genUbuntu 22.04java17Java 111st gen, 2nd genUbuntu 18.04java11
+
+### Ruby
+
+RuntimeGenerationEnvironmentRuntime IDRuby 3.42nd genUbuntu 22.04ruby34Ruby 3.31st gen, 2nd genUbuntu 22.04ruby33Ruby 3.21st gen, 2nd genUbuntu 22.04ruby32Ruby 3.01st gen, 2nd genUbuntu 18.04ruby30Ruby 2.71st gen, 2nd genUbuntu 18.04ruby27Ruby 2.61st gen, 2nd genUbuntu 18.04ruby26
+
+### PHP
+
+RuntimeEnvironmentGenerationRuntime IDPHP 8.42nd genUbuntu 22.04php84PHP 8.32nd genUbuntu 22.04php83PHP 8.21st gen, 2nd genUbuntu 22.04php82PHP 8.11st gen, 2nd genUbuntu 18.04php81PHP 7.41st gen, 2nd genUbuntu 18.04php74
+
+### .NET Core
+
+RuntimeGenerationEnvironmentRuntime ID.NET Core 82nd genUbuntu 22.04dotnet8.NET Core 61st gen, 2nd genUbuntu 22.04dotnet6.NET Core 31st gen, 2nd genUbuntu 18.04dotnet3
+
+
+
+ Send feedback
+
+
+
+Except as otherwise noted, the content of this page is licensed under the [Creative Commons Attribution 4.0 License](https://creativecommons.org/licenses/by/4.0/), and code samples are licensed under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0). For details, see the [Google Developers Site Policies](https://developers.google.com/site-policies). Java is a registered trademark of Oracle and/or its affiliates.
+
+Last updated 2026-01-13 UTC.
+
+
+Need to tell us more?
+
+
+\[\[\["Easy to understand","easyToUnderstand","thumb-up"\],\["Solved my problem","solvedMyProblem","thumb-up"\],\["Other","otherUp","thumb-up"\]\],\[\["Hard to understand","hardToUnderstand","thumb-down"\],\["Incorrect information or sample code","incorrectInformationOrSampleCode","thumb-down"\],\["Missing the information/samples I need","missingTheInformationSamplesINeed","thumb-down"\],\["Other","otherDown","thumb-down"\]\],\["Last updated 2026-01-13 UTC."\],\[\],\[\]\]

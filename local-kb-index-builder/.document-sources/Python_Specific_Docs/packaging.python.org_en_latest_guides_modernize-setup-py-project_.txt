@@ -1,0 +1,244 @@
+# How to modernize a `setup.py` based project? [¶](\#how-to-modernize-a-setup-py-based-project "Link to this heading")
+
+## Should `pyproject.toml` be added? [¶](\#should-pyproject-toml-be-added "Link to this heading")
+
+A [pyproject.toml](../../glossary/#term-pyproject.toml) file is strongly recommended.
+The presence of a `pyproject.toml` file itself does not bring much. [\[1\]](#id2)
+What is actually strongly recommended is the `[build-system]` table in `pyproject.toml`.
+
+\[ [1](#id1)\]
+
+Note that it has influence on the build isolation feature of pip,
+see below.
+
+## Should `setup.py` be deleted? [¶](\#should-setup-py-be-deleted "Link to this heading")
+
+No, `setup.py` can exist in a modern [Setuptools](../../key_projects/#setuptools) based project.
+The [setup.py](../../glossary/#term-setup.py) file is a valid configuration file for setuptools
+that happens to be written in Python.
+However, the following commands are deprecated and **MUST NOT** be run anymore,
+and their recommended replacement commands should be used instead:
+
+Deprecated
+
+Recommendation
+
+`python setup.py install`
+
+`python -m pip install .`
+
+`python setup.py develop`
+
+`python -m pip install --editable .`
+
+`python setup.py sdist`
+
+`python -m build`
+
+`python setup.py bdist_wheel`
+
+For more details:
+
+- [Is setup.py deprecated?](../../discussions/setup-py-deprecated/#setup-py-deprecated)
+
+
+## Where to start? [¶](\#where-to-start "Link to this heading")
+
+The [project](../../glossary/#term-Project) must contain a `pyproject.toml` file at the root of its source tree
+that contains a `[build-system]` table like so:
+
+```
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+```
+
+This is the standardized method of letting [build frontends](../../glossary/#term-Build-Frontend) know
+that [Setuptools](../../key_projects/#setuptools) is the [build backend](../../glossary/#term-Build-Backend) for this project.
+
+Note that the presence of a `pyproject.toml` file (even if empty)
+triggers [pip](../../key_projects/#pip) to change its default behavior to use _build isolation_.
+
+For more details:
+
+- [Packaging and distributing projects](../distributing-packages-using-setuptools/#distributing-packages)
+
+- [Declaring build system dependencies: the \[build-system\] table](../../specifications/pyproject-toml/#pyproject-build-system-table)
+
+- [Build System Interface](https://pip.pypa.io/en/latest/reference/build-system/ "(in pip v26.0)")
+
+
+## How to handle additional build-time dependencies? [¶](\#how-to-handle-additional-build-time-dependencies "Link to this heading")
+
+On top of setuptools itself,
+if `setup.py` depends on other third-party libraries (outside of Python’s standard library),
+those must be listed in the `requires` list of the `[build-system]` table,
+so that the build frontend knows to install them
+when building the [distributions](../../glossary/#term-Distribution-Package).
+
+For example, a `setup.py` file such as this:
+
+```
+import setuptools
+import some_build_toolkit  # comes from the `some-build-toolkit` library
+
+def get_version():
+    version = some_build_toolkit.compute_version()
+    return version
+
+setuptools.setup(
+    name="my-project",
+    version=get_version(),
+)
+
+```
+
+requires a `pyproject.toml` file like this ( `setup.py` stays unchanged):
+
+```
+[build-system]
+requires = [
+    "setuptools",
+    "some-build-toolkit",
+]
+build-backend = "setuptools.build_meta"
+
+```
+
+For more details:
+
+- [Declaring build system dependencies: the \[build-system\] table](../../specifications/pyproject-toml/#pyproject-build-system-table)
+
+
+## What is the build isolation feature? [¶](\#what-is-the-build-isolation-feature "Link to this heading")
+
+Build frontends typically create an ephemeral virtual environment
+where they install only the build dependencies (and their dependencies)
+that are listed under `build-system.requires`
+and trigger the build in that environment.
+
+For some projects this isolation is unwanted and it can be deactivated as follows:
+
+- `python -m build --no-isolation`
+
+- `python -m pip install --no-build-isolation`
+
+
+For more details:
+
+- [Build System Interface](https://pip.pypa.io/en/latest/reference/build-system/ "(in pip v26.0)")
+
+
+## How to handle packaging metadata? [¶](\#how-to-handle-packaging-metadata "Link to this heading")
+
+All static metadata can optionally be moved to a `[project]` table in `pyproject.toml`.
+
+For example, a `setup.py` file such as this:
+
+```
+import setuptools
+
+setuptools.setup(
+    name="my-project",
+    version="1.2.3",
+)
+
+```
+
+can be entirely replaced by a `pyproject.toml` file like this:
+
+```
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "my-project"
+version = "1.2.3"
+
+```
+
+Read [Declaring project metadata: the \[project\] table](../../specifications/pyproject-toml/#pyproject-project-table) for the full specification
+of the content allowed in the `[project]` table.
+
+## How to handle dynamic metadata? [¶](\#how-to-handle-dynamic-metadata "Link to this heading")
+
+If some packaging metadata fields are not static
+they need to be listed as `dynamic` in this `[project]` table.
+
+For example, a `setup.py` file such as this:
+
+```
+import setuptools
+import some_build_toolkit
+
+def get_version():
+    version = some_build_toolkit.compute_version()
+    return version
+
+setuptools.setup(
+    name="my-project",
+    version=get_version(),
+)
+
+```
+
+can be modernized as follows:
+
+```
+[build-system]
+requires = [
+    "setuptools",
+    "some-build-toolkit",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "my-project"
+dynamic = ["version"]
+
+```
+
+```
+import setuptools
+import some_build_toolkit
+
+def get_version():
+    version = some_build_toolkit.compute_version()
+    return version
+
+setuptools.setup(
+    version=get_version(),
+)
+
+```
+
+For more details:
+
+- [dynamic](../../specifications/pyproject-toml/#declaring-project-metadata-dynamic)
+
+
+## What if something that can not be changed expects a `setup.py` file? [¶](\#what-if-something-that-can-not-be-changed-expects-a-setup-py-file "Link to this heading")
+
+For example, a process exists that can not be changed easily
+and it needs to execute a command such as `python setup.py --name`.
+
+It is perfectly fine to leave a `setup.py` file in the project source tree
+even after all its content has been moved to `pyproject.toml`.
+This file can be as minimalistic as this:
+
+```
+import setuptools
+
+setuptools.setup()
+
+```
+
+## Where to read more about this? [¶](\#where-to-read-more-about-this "Link to this heading")
+
+- [pyproject.toml specification](../../specifications/pyproject-toml/#pyproject-toml-spec)
+
+- [Build System Interface](https://pip.pypa.io/en/latest/reference/build-system/ "(in pip v26.0)")
+
+- [Build System Support](https://setuptools.pypa.io/en/latest/build_meta.html "(in setuptools v80.10.0)")

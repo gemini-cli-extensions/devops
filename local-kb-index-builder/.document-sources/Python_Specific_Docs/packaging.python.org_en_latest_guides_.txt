@@ -1,0 +1,30 @@
+# Guides [¶](\#guides "Link to this heading")
+
+**Guides** are focused on accomplishing a specific task and assume that you are
+already familiar with the basics of Python packaging. If you’re looking for an
+introduction to packaging, see [Tutorials](../tutorials/).
+
+- [Installation](section-install/)
+  - [Install packages in a virtual environment using pip and venv](installing-using-pip-and-virtual-environments/)
+  - [Installing packages using virtualenv](installing-using-virtualenv/)
+  - [Installing stand alone command line tools](installing-stand-alone-command-line-tools/)
+  - [Installing pip/setuptools/wheel with Linux Package Managers](installing-using-linux-tools/)
+  - [Installing scientific packages](installing-scientific-packages/)
+- [Building and Publishing](section-build-and-publish/)
+  - [Writing your `pyproject.toml`](writing-pyproject-toml/)
+  - [Packaging and distributing projects](distributing-packages-using-setuptools/)
+  - [Dropping support for older Python versions](dropping-older-python-versions/)
+  - [Packaging binary extensions](packaging-binary-extensions/)
+  - [Packaging namespace packages](packaging-namespace-packages/)
+  - [Creating and packaging command-line tools](creating-command-line-tools/)
+  - [Creating and discovering plugins](creating-and-discovering-plugins/)
+  - [Using TestPyPI](using-testpypi/)
+  - [Making a PyPI-friendly README](making-a-pypi-friendly-readme/)
+  - [Publishing package distribution releases using GitHub Actions CI/CD workflows](publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/)
+  - [How to modernize a `setup.py` based project?](modernize-setup-py-project/)
+  - [Licensing examples and user scenarios](licensing-examples-and-user-scenarios/)
+- [Hosting](section-hosting/)
+  - [Package index mirrors and caches](index-mirrors-and-caches/)
+  - [Hosting your own simple repository](hosting-your-own-index/)
+- [Tool recommendations](tool-recommendations/)
+- [Analyzing PyPI package downloads](analyzing-pypi-package-downloads/)
