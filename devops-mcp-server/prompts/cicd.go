@@ -17,7 +17,6 @@ package prompts
 import (
 	"context"
 	_ "embed"
-	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -28,13 +27,16 @@ var promptCICDText string
 // Helps design and implement GCP CI/CD pipelines.
 func DesignPrompt(ctx context.Context, server *mcp.Server) {
 	promptHandler := func(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+		if req.Params.Arguments["query"] != "" {
+			promptCICDText += promptCICDText + "\n The user's incoming query: %s"
+		}
 		return &mcp.GetPromptResult{
 			Description: "Helps design and implement GCP CI/CD pipelines.",
 			Messages: []*mcp.PromptMessage{
 				{
 					Role: "user",
 					Content: &mcp.TextContent{
-						Text: fmt.Sprintf(promptCICDText, req.Params.Arguments["query"]),
+						Text: promptCICDText,
 					},
 				},
 			},
@@ -48,8 +50,8 @@ func DesignPrompt(ctx context.Context, server *mcp.Server) {
 		Arguments: []*mcp.PromptArgument{
 			{
 				Name:        "query",
-				Description: "CICD pipeline description",
-				Required:    true,
+				Description: "Optional, CICD pipeline description",
+				Required:    false,
 			},
 		},
 	}

@@ -22,13 +22,13 @@ import (
 	"strconv"
 
 	chromem "github.com/philippgille/chromem-go"
-	"github.com/tmc/langchaingo/textsplitter"
+	// "github.com/tmc/langchaingo/textsplitter"
 )
 
 func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir string) {
 	var docs []chromem.Document
 	log.Printf("Uploading directory %s to collection: %v", dir, collection.Name)
-	splitter := textsplitter.NewMarkdownTextSplitter()
+	// splitter := textsplitter.NewMarkdownTextSplitter()
 
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -47,11 +47,12 @@ func addDirectoryToRag(ctx context.Context, collection *chromem.Collection, dir 
 				return nil
 			}
 			//split contents to chunks
-			chunks, err := splitter.SplitText(string(content))
-			if err != nil {
-				log.Printf("Error chunking file %s: %v", path, err)
-				return nil
-			}
+			// chunks, err := splitter.SplitText(string(content))
+			// if err != nil {
+			// 	log.Printf("Error chunking file %s: %v", path, err)
+			// 	return nil
+			// }
+			chunks := []string{string(content)}
 			for index, chunk := range chunks {
 				chunkId := path + "_" + strconv.Itoa(index)
 				_, err := collection.GetByID(ctx, chunkId)

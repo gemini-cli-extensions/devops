@@ -84,24 +84,6 @@ func loadRAG(ctx context.Context) (RagClient, error) {
 	return ragClient, nil // Success
 }
 
-// contextKey is a private type to use as a key for context values.
-type contextKey string
-
-const (
-	ragClientKey contextKey = "ragClient"
-)
-
-// ClientFrom returns the RagClient stored in the context, if any.
-func ClientFrom(ctx context.Context) (RagClient, bool) {
-	client, ok := ctx.Value(ragClientKey).(RagClient)
-	return client, ok
-}
-
-// ContextWithClient returns a new context with the provided RagClient.
-func ContextWithClient(ctx context.Context, client RagClient) context.Context {
-	return context.WithValue(ctx, ragClientKey, client)
-}
-
 // NewClient creates a new Client.
 func NewClient(ctx context.Context) (RagClient, error) {
 	return loadRAG(ctx)
@@ -110,7 +92,8 @@ func NewClient(ctx context.Context) (RagClient, error) {
 func (r *RagClientImpl) QueryPatterns(ctx context.Context, query string) (string, error) {
 	results, err := r.Pattern.Query(ctx, query, 2, nil, nil)
 	if err != nil {
-		log.Fatalf("Unable to Query collection pattern: %v", err)
+		log.Fatalf("Unable to Query collection patterns: %v", err)
+		return "", err
 	}
 	cleanResults := make([]Result, len(results))
 	for i, r := range results {
@@ -133,6 +116,7 @@ func (r *RagClientImpl) Queryknowledge(ctx context.Context, query string) (strin
 	results, err := r.Knowledge.Query(ctx, query, 2, nil, nil)
 	if err != nil {
 		log.Fatalf("Unable to Query collection knowledge: %v", err)
+		return "", err
 	}
 	cleanResults := make([]Result, len(results))
 	for i, r := range results {

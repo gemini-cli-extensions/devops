@@ -83,8 +83,8 @@ type CreateTriggerArgs struct {
 	ProjectID      string `json:"project_id" jsonschema:"The Google Cloud project ID."`
 	Location       string `json:"location" jsonschema:"The Google Cloud location for the trigger."`
 	TriggerID      string `json:"trigger_id" jsonschema:"The ID of the trigger."`
-	RepoLink       string `json:"repo_link" jsonschema:"The Developer Connect repository link."`
-	ServiceAccount string `json:"service_account" jsonschema:"The service account to use for the build."`
+	RepoLink       string `json:"repo_link" jsonschema:"The Developer Connect repository link, use dev connect setup repo to create a connect and repo link"`
+	ServiceAccount string `json:"service_account" jsonschema:"The service account to use for the build. E.g. serviceAccount:123-compute@developer.gserviceaccount.com"`
 	Branch         string `json:"branch,omitempty" jsonschema:"Create builds on push to branch. Should be regex e.g. '^main$'"`
 	Tag            string `json:"tag,omitempty" jsonschema:"Create builds on new tag push. Should be regex e.g. '^nightly$'"`
 }
@@ -116,7 +116,7 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 		if err != nil {
 			return "", fmt.Errorf("unable to resolve project id to number: %w", err)
 		}
-		resolvedSA = fmt.Sprintf("%d-compute@developer.gserviceaccount.com", projectNumber)
+		resolvedSA = fmt.Sprintf("serviceAccount:%d-compute@developer.gserviceaccount.com", projectNumber)
 	}
 
 	roles := []string{"roles/developerconnect.tokenAccessor"}

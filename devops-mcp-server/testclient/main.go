@@ -56,15 +56,13 @@ func main() {
 
 	// 4. Define the arguments for the tool
 	args := map[string]any{
-		"project_id":    "ishamirulinda-sdlc",
-		"location":      "us-central1",
-		"repository_id": "my-test-repo1",
-		"format":        "DOCKER",
+		"root":               "/usr/local/google/home/yesh/cicd-agent/",
+		"ignore_directories": []string{"/usr/local/google/home/yesh/cicd-agent/.venv/", "/usr/local/google/home/yesh/cicd-agent/.git/", "/usr/local/google/home/yesh/cicd-agent/devops-mcp-server/.venv/"},
 	}
 
 	// 5. Create the CallToolRequest
 	var req mcp.CallToolRequest
-	req.Params.Name = "artifactregistry.create_repository"
+	req.Params.Name = "osv.scan_secrets"
 	req.Params.Arguments = args
 
 	fmt.Println("Calling tool 'devops/artifactregistry.create_repository' using mark3labs client...")

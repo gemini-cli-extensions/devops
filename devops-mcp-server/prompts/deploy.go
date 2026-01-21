@@ -17,7 +17,6 @@ package prompts
 import (
 	"context"
 	_ "embed"
-	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -28,13 +27,16 @@ var promptDeployText string
 // Helps deploy applications to GCP.
 func DeployPrompt(ctx context.Context, server *mcp.Server) {
 	promptHandler := func(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+		if req.Params.Arguments["query"] != "" {
+			promptCICDText += promptCICDText + "\n The user's incoming query: %s"
+		}
 		return &mcp.GetPromptResult{
 			Description: "Helps deploy applications to GCP.",
 			Messages: []*mcp.PromptMessage{
 				{
 					Role: "user",
 					Content: &mcp.TextContent{
-						Text: fmt.Sprintf(promptDeployText, req.Params.Arguments["query"]),
+						Text: promptDeployText,
 					},
 				},
 			},
@@ -48,7 +50,7 @@ func DeployPrompt(ctx context.Context, server *mcp.Server) {
 		Arguments: []*mcp.PromptArgument{
 			{
 				Name:        "query",
-				Description: "application to deploy, as explained by the user",
+				Description: "Optional, description of what and how to deploy.",
 				Required:    false,
 			},
 		},
