@@ -35,7 +35,8 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 
 	ctx := context.Background()
 	projectID := "test-project"
-	serviceAccount := "test-sa@example.com"
+	serviceAccount := "serviceAccount:test-sa@example.com"
+	serviceAccountWOPrefix := "test-sa@example.com"
 
 	t.Run("with service account", func(t *testing.T) {
 		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/developerconnect.tokenAccessor", serviceAccount).Return(nil, nil)
@@ -45,9 +46,17 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 		assert.Equal(t, serviceAccount, resolvedSA)
 	})
 
+	t.Run("with service account, no prefix", func(t *testing.T) {
+		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/developerconnect.tokenAccessor", serviceAccount).Return(nil, nil)
+
+		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccountWOPrefix, mockRMClient, mockIAMClient)
+		assert.NoError(t, err)
+		assert.Equal(t, serviceAccount, resolvedSA)
+	})
+
 	t.Run("without service account", func(t *testing.T) {
 		projectNumber := int64(12345)
-		expectedSA := fmt.Sprintf("%d-compute@developer.gserviceaccount.com", projectNumber)
+		expectedSA := fmt.Sprintf("serviceAccount:%d-compute@developer.gserviceaccount.com", projectNumber)
 
 		mockRMClient.EXPECT().ToProjectNumber(ctx, projectID).Return(projectNumber, nil)
 		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/developerconnect.tokenAccessor", expectedSA).Return(nil, nil)
