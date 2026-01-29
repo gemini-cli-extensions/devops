@@ -2,6 +2,20 @@
 
 This server provides a local interface to interact with Google Cloud services through the Gemini CLI.
 
+## Capabilities
+
+The Google Cloud DevOps MCP Server provides a suite of tools for:
+
+*   **Artifact Registry:** Setting up and managing repositories.
+*   **Cloud Build:** Managing and running build triggers.
+*   **Cloud Run:** Deploying and managing services from images or source.
+*   **Cloud Storage:** Managing buckets and uploading source code.
+*   **Developer Connect:** Establishing connections to git repositories.
+*   **Security:** Scanning for secrets using OSV.
+*   **Search/RAG:** Querying common CI/CD patterns and knowledge snippets.
+
+For a full list of available tools and their arguments, see the [Tool Reference](REFERENCE.md).
+
 ## Prerequisites
 
 *   **Google Cloud SDK:** Install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) and authenticate with your Google account.
@@ -12,28 +26,14 @@ This server provides a local interface to interact with Google Cloud services th
 
 ## Running the Server
 
-There are three ways to run the MCP server:
+### 1. Using stdio (Recommended for local use)
 
-### 1. Using stdio
+This method is recommended for local development and integration with Gemini CLI.
 
-This method is recommended for local development and testing.
-
-**Prerequisites:**
-
-*   **Python 3.12**
-*   **pip**
-
-
-**Make the `start.sh` script executable:**
+**Build the server:**
 
 ```bash
-chmod +x ./start.sh
-```
-
-**To run the MCP server, use the `start.sh` script.**
-
-```bash
-./start.sh
+go build -o devops-mcp-server
 ```
 
 **Gemini CLI Configuration:**
@@ -44,37 +44,26 @@ Update your Gemini CLI `settings.json` to include the following:
 {
   "mcpServers": {
     "devops": {
-      "command": "./start.sh",
-      "cwd": "/path/to/server",
+      "command": "/path/to/devops-mcp-server",
+      "cwd": "/path/to/server-directory"
     }
   }
 }
 ```
 
-Replace `/path/to/your/server` with the absolute path to the `start.sh` script.
+Replace `/path/to/devops-mcp-server` with the absolute path to the built binary and `/path/to/server-directory` with the project root.
 
-### 2. Using streamable HTTP and Docker
+### 2. Using streamable HTTP
 
-This method is recommended for a more robust setup.
+You can also run the server as an HTTP service.
 
-**Prerequisites:**
-
-*   **Docker**
-
-**Build the Docker container:**
+**Run the server:**
 
 ```bash
-docker build -t devops-mcp-server . 
-```
-
-**Run the Docker container:**
-```bash
-docker run -v ~/.config/gcloud:/root/.config/gcloud -e GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json -p 9000:9000 devops-mcp-server --transport http
+go run . -http :9000
 ```
 
 **Gemini CLI Configuration:**
-
-Note that the server needs to be running in this case for Gemini CLI to connect to it.
 
 Update your Gemini CLI `settings.json` to include the following:
 
@@ -87,35 +76,3 @@ Update your Gemini CLI `settings.json` to include the following:
   }
 }
 ```
-
-### 3. Using stdio and Docker
-
-This method uses a Docker container to run the server and communicates with it using stdio.
-
-**Prerequisites:**
-
-*   **Docker**
-
-**Make the `docker-start.sh` script executable:**
-
-```bash
-chmod +x ./docker-start.sh
-```
-
-**Gemini CLI Configuration:**
-
-Update your Gemini CLI `settings.json` to include the following:
-
-```json
-{
-  "mcpServers": {
-    "devops": {
-      "command": "./docker-start.sh",
-      "cwd": "path/to/server",
-      "timeout": 150000
-    }
-  }
-}
-```
-
-Replace `/path/to/your/server` with the absolute path to the `docker-start.sh` script.
