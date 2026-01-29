@@ -60,8 +60,9 @@ func addListBucketsTool(server *mcp.Server, csClient cloudstorageclient.CloudSto
 
 type UploadSourceArgs struct {
 	ProjectID      string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location       string `json:"location,omitempty" jsonschema:"The location where the bucket must be created. Optional. Defaults to us"`
 	BucketName     string `json:"bucket_name,omitempty" jsonschema:"The name of the bucket. Optional."`
-	DestinationDir string `json:"destination_dir" jsonschema:"The name of the destination directory."`
+	DestinationDir string `json:"destination_dir,omitempty" jsonschema:"The name of the destination directory. Optional. Leave empty to upload to the root. "`
 	SourcePath     string `json:"source_path" jsonschema:"The path to the source directory."`
 }
 
@@ -73,6 +74,10 @@ func addUploadSourceTool(server *mcp.Server, csClient cloudstorageclient.CloudSt
 			args.BucketName = fmt.Sprintf("%s-%s", args.ProjectID, csClient.GenerateUUID())
 		}
 
+		if args.Location == "" {
+			args.Location = "us" // default to us region
+		}
+
 		// Check if bucket exists, and create bucket if it does not.
 		err := csClient.CheckBucketExists(ctx, args.BucketName)
 		if err != nil {
@@ -80,7 +85,7 @@ func addUploadSourceTool(server *mcp.Server, csClient cloudstorageclient.CloudSt
 				// An unexpected error occurred while checking for the bucket
 				return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to check if bucket exists: %w", err)
 			}
-			err = csClient.CreateBucket(ctx, args.ProjectID, args.BucketName)
+			err = csClient.CreateBucket(ctx, args.ProjectID, args.Location, args.BucketName)
 			if err != nil {
 				return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to create bucket: %w", err)
 			}
@@ -92,7 +97,7 @@ func addUploadSourceTool(server *mcp.Server, csClient cloudstorageclient.CloudSt
 		}
 
 		// Upload all files in source path to destination directory in bucket.
-		return &mcp.CallToolResult{}, map[string]any{"bucketName": args.BucketName}, filepath.Walk(args.SourcePath, func(path string, info os.FileInfo, err error) error {
+		return &mcp.CallToolResult{}, map[string]any{"bucketName": args.BucketName, "message": "Construct the URL e.g. index.html in the root directory will be https://storage.googleapis.com/{bucketName}/index.html"}, filepath.Walk(args.SourcePath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return fmt.Errorf("failed to access source path: %w", err)
 			}

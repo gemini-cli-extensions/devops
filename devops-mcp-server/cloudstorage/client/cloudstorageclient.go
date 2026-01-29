@@ -54,7 +54,7 @@ type CloudStorageClient interface {
 	// CheckBucketExists checks if a GCS bucket exists.
 	CheckBucketExists(ctx context.Context, bucketName string) error
 	// CreateBucket creates a new GCS bucket.
-	CreateBucket(ctx context.Context, projectID, bucketName string) error
+	CreateBucket(ctx context.Context, projectID, region, bucketName string) error
 	// UploadFile uploads a file to a GCS bucket.
 	UploadFile(ctx context.Context, bucketName, objectName string, file *os.File) error
 	// CheckObjectExists checks if an object exists in a GCS bucket.
@@ -74,7 +74,6 @@ func NewCloudStorageClient(ctx context.Context) (CloudStorageClient, error) {
 	}
 	return &CloudStorageClientImpl{v1client: c}, nil
 }
-
 
 // CloudStorageClientImpl is a client for interacting with the Cloud Storage API.
 type CloudStorageClientImpl struct {
@@ -114,12 +113,15 @@ func (c *CloudStorageClientImpl) CheckBucketExists(ctx context.Context, bucketNa
 }
 
 // CreateBucket creates a new GCS bucket.
-func (c *CloudStorageClientImpl) CreateBucket(ctx context.Context, projectID, bucketName string) error {
+func (c *CloudStorageClientImpl) CreateBucket(ctx context.Context, projectID, region, bucketName string) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	bucket := c.v1client.Bucket(bucketName)
-	if err := bucket.Create(ctx, projectID, nil); err != nil {
+	attrs := &cloudstorage.BucketAttrs{
+		Location: region, // e.g., "us-central1"
+	}
+	if err := bucket.Create(ctx, projectID, attrs); err != nil {
 		return err
 	}
 
