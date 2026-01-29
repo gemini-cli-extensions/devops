@@ -17,6 +17,7 @@ package cloudbuild
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -85,7 +86,7 @@ type CreateTriggerArgs struct {
 	Location       string `json:"location" jsonschema:"The Google Cloud location for the trigger."`
 	TriggerID      string `json:"trigger_id" jsonschema:"The ID of the trigger."`
 	RepoLink       string `json:"repo_link" jsonschema:"The Developer Connect repository link, use dev connect setup repo to create a connect and repo link"`
-	ServiceAccount string `json:"service_account" jsonschema:"The service account to use for the build. E.g. serviceAccount:123-compute@developer.gserviceaccount.com"`
+	ServiceAccount string `json:"service_account,omitempty" jsonschema:"The service account to use for the build. E.g. serviceAccount:123-compute@developer.gserviceaccount.com optional"`
 	Branch         string `json:"branch,omitempty" jsonschema:"Create builds on push to branch. Should be regex e.g. '^main$'"`
 	Tag            string `json:"tag,omitempty" jsonschema:"Create builds on new tag push. Should be regex e.g. '^nightly$'"`
 }
@@ -94,6 +95,9 @@ var createTriggerToolFunc func(ctx context.Context, req *mcp.CallToolRequest, ar
 
 func addCreateTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient, iamClient iamclient.IAMClient, rmClient resourcemanagerclient.ResourcemanagerClient) {
 	createTriggerToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateTriggerArgs) (*mcp.CallToolResult, any, error) {
+		if args.ServiceAccount != "" && !IsValidServiceAccount(args.ServiceAccount) {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("service account needs to be of the form serviceAccount:[a-z0-9-]+@developer.gserviceaccount.com")
+		}
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, args.ProjectID, args.ServiceAccount, rmClient, iamClient)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to grant necessary permissions for the Cloud build service account: %w", err)
@@ -132,4 +136,14 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 		}
 	}
 	return resolvedSA, nil
+}
+
+// IsValidServiceAccount checks if the string follows the specific GCP service account format.
+func IsValidServiceAccount(sa string) bool {
+	// Pattern breakdown:
+	// ^serviceAccount:           Must start with this prefix
+	// [a-z0-9-]+                 Account name: lowercase letters, numbers, or hyphens
+	// @developer\.gserviceaccount\.com$ Must end with this exact domain
+	var re = regexp.MustCompile(`^serviceAccount:[a-z0-9-]+@developer\.gserviceaccount\.com$`)
+	return re.MatchString(sa)
 }
