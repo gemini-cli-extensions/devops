@@ -1,36 +1,123 @@
-# Gemini CLI DevOps Extension
+# Gemini CLI Extension for DevOps
 
-The DevOps extension provides Gemini powered AI assisted [CI/CD](https://en.wikipedia.org/wiki/CI/CD). It supports deployment to Cloud Run and Cloud Storage as well as creation of a robust CI/CD pipeline. Extension also sets up infrastructure for this pipeline. The generated pipelines follow best practices for CI/CD including testing and security best practices.
+The DevOps extension for Gemini CLI automates Continuous Integration and Continuous Delivery (CI/CD) workflows using AI. It simplifies deployment to Google Cloud services, such as Cloud Run and Cloud Storage, and generates secure CI/CD pipelines compliant with testing and security best practices.
 
 
-## 📋 Features
+> [!CAUTION]    
+>
+> *   **EXPERIMENTAL PROJECT - Use with extreme care:**
+>     This project is currently experimental. Features, commands, and functionality are subject to change and may contain bugs.
+>
+> *   **Do not use this extension in production environments or with business-critical Google Cloud projects:** You are responsible for any changes made to your cloud resources. Always carefully review and validate any generated configurations or commands before execution.
+>
+> *   **Review all outputs and understand the [Security Considerations](#security-considerations) below before use:** as this extension can modify your Google Cloud (GCP) resources.
 
-- **Simple code deployment**: Use `/deploy` command to deploy your code base to Google Cloud. The extension will leverage Gemini's advance capabilities to determine if your code requires Cloud Run (fro dynamic apps) or Cloud Storage (for static websites). Before deployment, it will scan your workspace for secrets, keys and password to avoid unintentional leaks.
-- **AI-powered CI/CD pipeline**: Design and implement a robust and secure CI/CD pipeline in seconds. Collaborate with Gemini to design a pipeline that suites your needs. This will also setup required Google Cloud infrastructure. 
-- **Interact with Google Cloud from Gemini CLI**: The DevOps extension offers tools to and commands to interact with Google Cloud's CI/CD services. You can run builds, check CVEs, SBOM, pull build logs into Gemini to help you investigate build failures.
-- **Build complex release flows**: DevOps extension helps you build complex Cloud Deploy release pipelines in seconds based on simple questions.
-- **DevOps MCP Server**: The extension brings power of MCP and integrates Gemini CLI with Google Cloud services for CI/CD (Cloud Build, Artifact Registry, Artifact Analysis, Cloud Deploy, Developer Connect).
+## 📋 Key Features
 
+-   **Intelligent Code Deployment**: Use the `/devops:deploy` command to deploy your codebase. The extension leverages Gemini to analyze your project and recommend the best Google Cloud service: Cloud Run for dynamic applications or Cloud Storage for static websites. Includes pre-deployment scanning for secrets, keys, and passwords to prevent accidental leaks.
+-   **AI-Powered CI/CD Pipeline Design**: Generate secure and robust CI/CD pipelines in moments with `/devops:design`. Collaborate with Gemini to tailor the pipeline to your specific needs, including automatic setup of the required Google Cloud infrastructure.
+-   **Interactive GCP Management**: The extension provides commands and tools to interact directly with Google Cloud's CI/CD services (Cloud Build, Artifact Registry, Artifact Analysis, Cloud Deploy, Developer Connect) from within Gemini CLI. Run builds, check for vulnerabilities (CVEs), view SBOMs, and pull build logs to investigate failures.
+-   **Simplified Complex Release Flows**: Build sophisticated Cloud Deploy release pipelines quickly, guided by simple, interactive questions.
+-   **Integrated DevOps MCP Server**: The extension includes a local Model Context Protocol (MCP) server, seamlessly integrating Gemini CLI with Google Cloud CI/CD services.
 
 ## ⚙️ Installation
 
-Install the DevOps extension by running the following command from your terminal *(requires Gemini CLI v0.8.0 or newer)*:
+To install the DevOps extension, run the following command in your terminal:
 
 ```bash
 gemini extensions install https://github.com/gemini-cli-extensions/devops
 ```
 
+*To install development build add `--ref=nightly --pre-release` flags.*
+
 ## ✅ Prerequisites
 
-- Authenticate with Google Cloud: `gcloud auth application-default login`
-- Have the `gcloud` CLI installed and in your PATH.
+*   [Gemini CLI](https://github.com/google-gemini/gemini-cli): Version **v0.15.0 or newer** must be installed.
+*   Gemini CLI Authentication: Ensure you have configured [Authentication Options](https://github.com/google-gemini/gemini-cli/tree/main?tab=readme-ov-file#-authentication-options).
+*   `gcloud` CLI: The Google Cloud CLI must be [installed](https://cloud.google.com/sdk/docs/install) and available in your system's PATH.
+*   Google Cloud Project: You need a Google Cloud project with the necessary APIs enabled. Depending on your usage, the extension may require:
+    *   Cloud Build API
+    *   Artifact Registry API
+    *   Artifact Analysis API
+    *   Developer Connect API
+    *   Cloud Run API
+    *   Cloud Storage API
+*   Application Default Credentials (ADC): Ensure [Application Default Credentials](https://cloud.google.com/docs/authentication/gcloud) are configured in your environment. You can set this up by running:
+    ```bash
+    gcloud auth login
+    gcloud auth application-default login
+    ```
+
+## 🔒 Security Considerations
+
+> [!WARNING]
+> **Important Security Information:**
+>
+> This DevOps extension connects Gemini CLI to a local MCP server, granting it the ability to access and modify your Google Cloud data based on your Application Default Credentials.
+>
+> *   **LLM Hallucinations & Unintended Actions:** LLMs can produce incorrect or unexpected outputs ("hallucinate"). Since this extension allows Gemini to call tools that modify cloud resources, hallucinations can lead to unintended actions on your GCP project. **Always meticulously verify all generated configurations and commands before execution.**
+> *   **Authentication and Permissions (ADC):** The extension uses your local ADC, inheriting its permissions. Be aware of the scope of these permissions, as Gemini CLI can potentially read, modify, and delete GCP resources.
+> *   **Pipeline Service Account Permissions:** CI/CD pipelines generated by `/devops:design` run using a GCP service account. Carefully vet the IAM roles and permissions assigned to this service account to prevent overly broad access.
+> *   **Indirect Prompt Injection Risk:** Be cautious when providing input to the language model, especially from untrusted sources, due to the risk of indirect prompt injection.
+> *   **Untrusted Inputs:** Never include untrusted inputs (e.g., files, documents, emails from unverified sources) in the model's context. Such inputs could contain hidden instructions to hijack your session.
+> *   **Untrusted Tools:** Only use this extension with the official tools it provides.
+> *   **Review Actions:** Always carefully review any actions proposed or taken by Gemini CLI on your behalf.
+> *   **Least Privilege:** We strongly recommend adhering to the principle of least privilege for both your ADC and any service accounts used by pipelines. Learn more about [setting up ADC for local development](https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment) and [service account impersonation](https://cloud.google.com/docs/authentication/use-service-account-impersonation).
 
 ## ☕ Usage
-[TODO]
 
+#### `/devops:deploy`
+Analyzes your local workspace to recommend and guide you through deploying to the most suitable Google Cloud service. It suggests Cloud Storage for static websites and Cloud Run for dynamic applications. Includes a pre-deployment scan for secrets to help prevent leaks.
 
-## Resources
+#### `/devops:design`
+Launches an AI-assisted process to design and generate a CI/CD pipeline configuration (`cloudbuild.yaml`) tailored to your project, including the necessary Google Cloud infrastructure.
 
-- [Gemini CLI extensions](https://geminicli.com/extensions/about/): Documentation about using extensions in Gemini CLI
-- [GitHub issues](https://github.com/gemini-cli-extensions/devops/issues): Report bugs or request features
+**Design Process:**
 
+1.  **Requirement Gathering:** Gemini inspects your current workspace and asks clarifying questions to understand your application type, build process, testing strategies, and deployment objectives.
+2.  **Infrastructure Setup:** Based on the requirements, Gemini guides you through setting up the required GCP resources. This may include:
+    *   Creating or configuring Artifact Registry repositories.
+    *   Establishing connections to your Git repository (e.g., GitHub) using Developer Connect.
+    *   Setting up or advising on necessary IAM service accounts and permissions for the Cloud Build service.
+3.  **Pipeline Configuration Generation:** Gemini generates a `cloudbuild.yaml` file defining the pipeline stages (e.g., source checkout, build, test, artifact push). The configuration uses Cloud Build's script mode for clarity and ease of editing.
+4.  **Validation & Testing:** The extension will attempt to validate the generated pipeline configuration, potentially by submitting an initial test build using `gcloud builds submit`.
+5.  **Review & Refinement:** You can review the generated configuration and infrastructure setup and provide feedback to Gemini for adjustments.
+
+The goal is to produce a functional, production-ready CI/CD pipeline configuration with all the necessary GCP prerequisites in place.
+
+### 🛠️ Supported MCP Tools
+
+The extension exposes the following tools to Gemini CLI, enabling interaction with Google Cloud services:
+
+#### CI/CD Service Tools
+*   `artifactregistry.setup_repository`: Creates a new Artifact Registry repository. Optionally grants Artifact Registry Writer permissions to a specified service account.
+*   `cloudbuild.create_trigger`: Creates a new Cloud Build trigger.
+*   `cloudbuild.list_triggers`: Lists all Cloud Build triggers in a given project and location.
+*   `cloudbuild.run_trigger`: Manually runs an existing Cloud Build trigger.
+*   `devconnect.add_git_repo_link`: Creates a Developer Connect Git repository link under an existing connection.
+*   `devconnect.setup_connection`: Sets up a new Developer Connect connection (e.g., to GitHub).
+
+#### Deployment Tools
+*   `cloudrun.deploy_to_cloud_run_from_image`: Deploys a container image to Cloud Run, creating a new service or updating an existing one.
+*   `cloudrun.deploy_to_cloud_run_from_source`: Deploys to Cloud Run directly from source code, typically using Cloud Build and BuildPacks.
+*   `cloudrun.list_services`: Lists Cloud Run services in a specified project and location.
+*   `cloudstorage.list_buckets`: Lists Cloud Storage buckets in a specified project.
+*   `cloudstorage.upload_source`: Uploads files from the local workspace to a GCS bucket. Can create a new public bucket if specified.
+*   `osv.scan_secrets`: Scans a specified directory for potential secrets and keys using OSV-Scanner.
+
+#### Knowledge Retrieval Tools
+*   `bm25.query_knowledge`: Retrieves relevant snippets from the extension's knowledge base to answer questions.
+*   `bm25.search_common_cicd_patterns`: Finds common CI/CD pipeline patterns and best practices.
+
+## 📚 Resources
+
+-   [Gemini CLI Extensions Documentation](https://geminicli.com/extensions/about/): Learn more about how extensions work in Gemini CLI.
+-   [GitHub Issues](https://github.com/gemini-cli-extensions/devops/issues): Report bugs, request features, or provide feedback.
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](./docs/CONTRIBUTING.md) and [Code of Conduct](./docs/CODE_OF_CONDUCT.md) for details on how to get started.
+
+## 📝 License
+
+This project is licensed under the Apache 2.0 License - see the [LICENSE](./LICENSE) file for details.

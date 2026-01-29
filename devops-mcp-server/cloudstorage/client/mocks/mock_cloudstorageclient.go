@@ -26,7 +26,7 @@ type MockCloudStorageClient struct {
 	GenerateUUIDFunc       func() string
 	ListBucketsFunc        func(ctx context.Context, projectID string) ([]string, error)
 	CheckBucketExistsFunc  func(ctx context.Context, bucketName string) error
-	CreateBucketFunc       func(ctx context.Context, projectID, bucketName string) error
+	CreateBucketFunc       func(ctx context.Context, projectID, region, bucketName string) error
 	UploadFileFunc         func(ctx context.Context, bucketName, objectName string, file *os.File) error
 	CheckObjectExistsFunc  func(ctx context.Context, bucketName, objectName string) error
 	GetBucketIamPolicyFunc func(ctx context.Context, bucketName string) (*iam.Policy, error)
@@ -69,8 +69,8 @@ func (m *MockCloudStorageClient) CheckBucketExists(ctx context.Context, bucketNa
 }
 
 // CreateBucket mocks the CreateBucket method.
-func (m *MockCloudStorageClient) CreateBucket(ctx context.Context, projectID, bucketName string) error {
-	return m.CreateBucketFunc(ctx, projectID, bucketName)
+func (m *MockCloudStorageClient) CreateBucket(ctx context.Context, projectID, region, bucketName string) error {
+	return m.CreateBucketFunc(ctx, projectID, region, bucketName)
 }
 
 // UploadFile mocks the UploadFile method.

@@ -4,7 +4,7 @@ This document outlines the standard procedure for automatically generating a `cl
 
 ---
 
-## ## When to Generate a `cloudbuild.yaml`
+## When to Generate a `cloudbuild.yaml`
 
 The core principle is to be non-destructive and idempotent. The generation process should only be triggered under one specific condition:
 
@@ -14,7 +14,7 @@ If a `cloudbuild.yaml` file is already present, it should be treated as the sour
 
 ---
 
-## ## Step 1: Discovering the Application Archetype
+## Step 1: Discovering the Application Archetype
 
 Before a `cloudbuild.yaml` can be generated, the application's archetype must be identified. This is done by inspecting the local filesystem for common project files. This discovery step is crucial for tailoring the build steps (e.g., linting, testing) to the specific language or framework.
 
@@ -28,7 +28,7 @@ The following mapping should be used:
 
 ---
 
-## ## Step 2: Generating the Default CI Pipeline
+## Step 2: Generating the Default CI Pipeline
 
 If no `cloudbuild.yaml` exists, a new one should be generated with a standard, four-step CI sequence. These steps must be tailored to the discovered application archetype.
 
@@ -39,7 +39,7 @@ If no `cloudbuild.yaml` exists, a new one should be generated with a standard, f
 
 ---
 
-## ## Key Best Practices and Configuration
+## Key Best Practices and Configuration
 
 When generating the `cloudbuild.yaml`, several best practices must be included to ensure security and efficiency.
 
@@ -49,7 +49,7 @@ When generating the `cloudbuild.yaml`, several best practices must be included t
 
 ---
 
-## ## Example: Python Application
+## Example: Python Application
 
 Here is a complete, best-practice `cloudbuild.yaml` generated for a Python application that uses `pytest` for testing.
 

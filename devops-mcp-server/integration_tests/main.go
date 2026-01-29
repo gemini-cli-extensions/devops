@@ -200,7 +200,7 @@ func testSetupRepository(ctx context.Context, arClient artifactregistryclient.Ar
 // Helper function to check if public GCS buckets can be created in the GCP_PROJECT_ID provided.
 func canCreatePublicBuckets(ctx context.Context, projectID string, csClient cloudstorageclient.CloudStorageClient) bool {
 	bucketName := fmt.Sprintf("%s-probe-%d", projectID, time.Now().UnixNano())
-	err := csClient.CreateBucket(ctx, projectID, bucketName)
+	err := csClient.CreateBucket(ctx, projectID, "us", bucketName)
 
 	// Clean up probe bucket
 	defer func() {
@@ -265,7 +265,7 @@ func testListBuckets(ctx context.Context, csClient cloudstorageclient.CloudStora
 
 	// Create buckets for the test
 	for _, bucket := range bucketNames {
-		err = csClient.CreateBucket(ctx, projectID, bucket)
+		err = csClient.CreateBucket(ctx, projectID, "us", bucket)
 		if err != nil {
 			log.Fatalf("Failed to create bucket: %v", err)
 		}

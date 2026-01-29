@@ -181,7 +181,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
 					return storage.ErrBucketNotExist
 				}
-				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
+				csMock.CreateBucketFunc = func(ctx context.Context, p, r, b string) error {
 					return nil
 				}
 				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
@@ -208,7 +208,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
 					return storage.ErrBucketNotExist
 				}
-				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
+				csMock.CreateBucketFunc = func(ctx context.Context, p, r, b string) error {
 					return nil
 				}
 				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
@@ -252,7 +252,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
 					return storage.ErrBucketNotExist
 				}
-				csMock.CreateBucketFunc = func(ctx context.Context, p, b string) error {
+				csMock.CreateBucketFunc = func(ctx context.Context, p, r, b string) error {
 					return errors.New("create error")
 				}
 			},
