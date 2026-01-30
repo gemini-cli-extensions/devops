@@ -127,6 +127,10 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 		resolvedSA = fmt.Sprintf("serviceAccount:%d-compute@developer.gserviceaccount.com", projectNumber)
 	}
 
+	// If the serviceAccount prefix is not there, add it.
+	if !strings.HasPrefix(resolvedSA, "serviceAccount:") {
+		resolvedSA = fmt.Sprintf("serviceAccount:%s", resolvedSA)
+	}
 	roles := []string{"roles/developerconnect.tokenAccessor"}
 	for _, r := range roles {
 		_, err := iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, resolvedSA)
