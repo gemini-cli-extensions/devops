@@ -65,7 +65,7 @@ These rules apply to all workflows.
 *  **Google Cloud**: If gcloud is installed use `gcloud config list` to get the default *project* and  *region*.
 *  **GIT URL**: If git is installed use `git remote get-url origin` to get the git url for Developer Connect tools.
 *  **Deployment Target:** If the user does not specify a deployment target, use **Cloud Run**.
-*  **Dockerfile:** If there is a in the project use it, otherwise create one. Use `bm25.query_knowledge` MCP tool to get the best practices for creating a Dockerfile.
+*  **Dockerfile:** If there is a Dockerfile in the project use it, otherwise create one. Use `bm25.query_knowledge` MCP tool to get the best practices for creating a Dockerfile.
 
 ## **User Prompt**
 **If `{{args}}` is NOT empty:** Augment the context with {{args}}
