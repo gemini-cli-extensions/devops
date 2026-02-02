@@ -22,6 +22,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -30,7 +31,7 @@ import (
 var (
 	httpAddr  = flag.String("http", "", "if set, use streamable HTTP at this address, instead of stdin/stdout. e.g. localhost:8080")
 	pprofAddr = flag.String("pprof", "", "if set, host the pprof debugging server at this address")
-	logFile   = "/tmp/devops-mcp-server.log"
+	logFile   = filepath.Join(os.TempDir(), "devops-mcp-server.log")
 )
 
 func main() {
