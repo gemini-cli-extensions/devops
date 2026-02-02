@@ -12,24 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Nightly Release
+name: Release
 
 on:
-    schedule:
-        - cron: "0 0 * * *" # Runs daily at midnight UTC
-    workflow_dispatch: # Allows manual triggering of the workflow
+    release:
+        types: [created]
+    workflow_dispatch:
+        inputs:
+            tag_name:
+                description: 'The tag of the release to upload assets to (e.g. v0.1.0)'
+                required: true
+                type: string
 
 permissions:
     contents: write
-
-env:
-    RELEASE: nightly
 
 jobs:
     prep-release:
         uses: ./.github/workflows/prep-release.yaml
         with:
-            release: nightly
+            release: ${{ github.event.release.tag_name || inputs.tag_name }}
 
     build-release:
         needs: prep-release
@@ -40,8 +42,6 @@ jobs:
         env:
             RELEASE_DIR: "${{ github.workspace }}/release"
             DIST_DIR: "${{ github.workspace }}/dist"
-            ACTIONS_RUNNER_DEBUG: true
-            ACTIONS_STEP_DEBUG: true
         strategy:
             matrix:
                 platform:
@@ -75,17 +75,17 @@ jobs:
             - name: prep-release
               env:
                   BIN_FILE: "${{ matrix.platform.bin_file }}"
+                  TAG_NAME: ${{ github.event.release.tag_name || inputs.tag_name }}
               run: |
                   mkdir -p "${RELEASE_DIR}"
 
-                  # Generate version suffix
-                  TIMESTAMP=$(date +'%Y%m%d-%H%M')
-                  SHORT_SHA=$(git rev-parse --short HEAD)
-                  VERSION_SUFFIX="-${TIMESTAMP}-${SHORT_SHA}"
-
+                  # Extract version from tag (v1.2.3 -> 1.2.3)
+                  VERSION="${TAG_NAME#v}"
+                  
                   command_exp='.mcpServers."devops-mcp".command = "${extensionPath}${/}'
                   command_exp="${command_exp}${BIN_FILE}\""
-                  command_exp="${command_exp} | .version += \"${VERSION_SUFFIX}\""
+                  command_exp="${command_exp} | .version = \"${VERSION}\""
+                  
                   jq "${command_exp}" < ../gemini-extension.json >"${RELEASE_DIR}/gemini-extension.json"
 
                   cp ../README.md "${RELEASE_DIR}/"
@@ -143,7 +143,8 @@ jobs:
               id: upload-assets
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  TAG_NAME: ${{ github.event.release.tag_name || inputs.tag_name }}
               run: |
                   gh release upload --clobber \
-                    ${{ env.RELEASE }} \
+                    ${TAG_NAME} \
                     artifacts/*/*
