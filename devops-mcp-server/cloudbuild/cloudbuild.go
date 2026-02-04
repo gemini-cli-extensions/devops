@@ -16,6 +16,7 @@ package cloudbuild
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -25,6 +26,8 @@ import (
 	cloudbuildclient "devops-mcp-server/cloudbuild/client"
 	iamclient "devops-mcp-server/iam/client"
 	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
+
+	cloudbuildpb "cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
 )
 
 // Handler holds the clients for the cloudbuild service.
@@ -164,7 +167,8 @@ type GetBuildInfoArgs struct {
 type StartBuildArgs struct {
 	ProjectID string                 `json:"project_id" jsonschema:"The Google Cloud project ID."`
 	Location  string                 `json:"location" jsonschema:"The Google Cloud location for the build."`
-	source   map[string]interface{} `json:"source" jsonschema:"The Cloud Build source configuration as a map."`
+	Bucket   string                 `json:"bucket" jsonschema:"The Cloud Storage bucket where the source is located."`
+	Object   string                 `json:"object" jsonschema:"The Cloud Storage object (file) where the source is located."`
 }
 
 func addListBuildsTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
@@ -190,20 +194,16 @@ func addGetBuildInfoTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuil
 }
 
 func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
-	type StartBuildArgs struct {
-		ProjectID string                 `json:"project_id" jsonschema:"The Google Cloud project ID."`
-		Location  string                 `json:"location" jsonschema:"The Google Cloud location for the build."`
-		Build     map[string]interface{} `json:"build" jsonschema:"The Cloud Build configuration as a map."`
-	}
 	startBuildToolFunc := func(ctx context.Context, req *mcp.CallToolRequest, args StartBuildArgs) (*mcp.CallToolResult, any, error) {
 		// Convert map to cloudbuildpb.Build
-		source := &cloudbuildpb.RepoSource{}
-		err := mcp.DecodeMapToProto(args.Source, source)
-		if err != nil {
-			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to decode source map to proto: %w", err)
+		source:= &cloudbuildpb.Source{
+			StorageSource: &cloudbuildpb.StorageSource{
+				Bucket: args.Bucket,
+				Object: args.Object,
+			},
 		}
-
-		res, err := cbClient.StartBuild(ctx, args.ProjectID, args.Location, source)
+		
+		res, err := cbClient.StartBuild(ctx, args.ProjectID, source)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to start build: %w", err)
 		}

@@ -54,22 +54,8 @@ type CloudBuildClient interface {
 	RunBuildTrigger(ctx context.Context, projectID, location, triggerID, branch, tag, commitSha string) (*cloudbuild.RunBuildTriggerOperation, error)
 	ListBuilds(ctx context.Context, projectID, location string) ([]*cloudbuildpb.Build, error)
 	GetBuildInfo(ctx context.Context, projectID, location, buildID string) (*cloudbuildpb.Build, error)
-	StartBuild(ctx context.Context, projectID, location string, source *cloudbuildpb.RepoSource) (*cloudbuildpb.Build, error)
+	StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuildpb.CreateBuildOperation, error)
 }
-
-// Exec interface for running commands.
-type Exec interface {
-	Command(name string, arg ...string) *exec.Cmd
-}
-
-type execer struct{}
-
-func (e *execer) Command(name string, arg ...string) *exec.Cmd {
-	return exec.Command(name, arg...)
-}
-
-var defaultExecer Exec = &execer{}
-
 
 type BuildInfo struct {
 	BuildDetails *cloudbuildpb.Build
@@ -98,7 +84,6 @@ func NewCloudBuildClient(ctx context.Context) (CloudBuildClient, error) {
 	return &CloudBuildClientImpl{
 		v1client: c, 
 		legacyClient: c2,
-		execer: defaultExecer,
 		loggingClient: loggingClient,
 		}, nil
 }
@@ -107,7 +92,6 @@ func NewCloudBuildClient(ctx context.Context) (CloudBuildClient, error) {
 type CloudBuildClientImpl struct {
 	v1client     *cloudbuild.Client
 	legacyClient *build.Service
-	execer       Exec
 	loggingClient *logging.Client
 }
 
@@ -268,14 +252,14 @@ func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, loca
 	return info, nil
 }
 
-func (c *CloudBuildClientImpl) StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuildpb.Build, error) {
+func (c *CloudBuildClientImpl) StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuildpb.CreateBuildOperation, error) {
 	req := &cloudbuildpb.CreateBuildRequest{
 		Parent: fmt.Sprintf("projects/%s/locations/global", projectID),
 		Build:  &cloudbuildpb.Build{Source: source},
 	}
-	createdBuild, err := c.v1client.CreateBuild(ctx, req)
+	ops, err := c.v1client.CreateBuild(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start build: %v", err)
 	}
-	return createdBuild, nil
+	return ops, nil
 }
