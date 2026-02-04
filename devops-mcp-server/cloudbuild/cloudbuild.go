@@ -175,7 +175,7 @@ func addListBuildsTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildC
 		}
 		return &mcp.CallToolResult{}, map[string]any{"builds": res}, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.list_builds", Description: "Lists all Cloud Builds in a given location."}, listBuildsToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.list_builds", Description: "Lists all Cloud Builds in a given location and project."}, listBuildsToolFunc)
 }
 
 func addGetBuildInfoTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
@@ -209,5 +209,5 @@ func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildC
 		}
 		return &mcp.CallToolResult{}, res, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.start_build", Description: "Starts a new Cloud Build with the given configuration."}, startBuildToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.start_build", Description: "Starts a new Cloud Build with the given source locally."}, startBuildToolFunc)
 }

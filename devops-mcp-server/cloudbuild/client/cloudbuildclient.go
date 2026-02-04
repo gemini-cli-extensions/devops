@@ -20,9 +20,10 @@ import (
 	"strings"
 
 	cloudbuild "cloud.google.com/go/cloudbuild/apiv1/v2"
+	logging "cloud.google.com/go/logging/apiv2"
 	cloudbuildpb "cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
 
-	build "google.golang.org/api/cloudbuild/v1"
+	build "google.golang.org/api/cloudbuilsd/v1"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -89,7 +90,17 @@ func NewCloudBuildClient(ctx context.Context) (CloudBuildClient, error) {
 		return nil, fmt.Errorf("failed to create Cloud Build service: %v", err)
 	}
 
-	return &CloudBuildClientImpl{v1client: c, legacyClient: c2, execer: defaultExecer}, nil
+	loggingClient, err := logging.NewClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Logging client: %v", err)
+	}
+
+	return &CloudBuildClientImpl{
+		v1client: c, 
+		legacyClient: c2,
+		execer: defaultExecer,
+		loggingClient: loggingClient,
+		}, nil
 }
 
 // CloudBuildClientImpl is an implementation of the CloudBuildClient interface.
@@ -97,6 +108,7 @@ type CloudBuildClientImpl struct {
 	v1client     *cloudbuild.Client
 	legacyClient *build.Service
 	execer       Exec
+	loggingClient *logging.Client
 }
 
 // CreateCloudBuildTrigger creates a new build trigger.
@@ -236,13 +248,23 @@ func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, loca
 		return BuildInfo{}, fmt.Errorf("failed to get build info: %w", err)
 	}
 	info := BuildInfo{BuildDetails: build}
-	args2:= []string{"builds", "log", buildID, "--project", projectID, "--region", location, "--format", "text"}
-	cmd = c.execer.Command("gcloud", args2...)
-	out, err = cmd.CombinedOutput()
-	if err != nil {
-		return BuildInfo{}, fmt.Errorf("failed to get build logs: %w, output: %s", err, out)
+	logReq := &logging.ListLogEntriesRequest{
+		ResourceNames: []string{fmt.Sprintf("projects/%s", projectID)},
+		Filter:        fmt.Sprintf(`resource.type="build" AND resource.labels.build_id="%s" AND logName="projects/%s/logs/cloudbuild"`, buildID, projectID),
 	}
-	info.Logs = string(out)
+	it := c.loggingClient.ListLogEntries(ctx, logReq)
+	var logs []string
+	for {
+		entry, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return BuildInfo{}, fmt.Errorf("failed to list log entries: %w", err)
+		}
+		logs = append(logs, entry.TextPayload)
+	}
+	info.Logs = strings.Join(logs, "\n")
 	return info, nil
 }
 
