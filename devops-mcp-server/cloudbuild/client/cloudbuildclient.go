@@ -21,11 +21,12 @@ import (
 
 	cloudbuild "cloud.google.com/go/cloudbuild/apiv1/v2"
 	logging "cloud.google.com/go/logging/apiv2"
-	cloudbuildpb "cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
-
 	build "google.golang.org/api/cloudbuild/v1"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	
+	cloudbuildpb "cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
+	loggingpb "cloud.google.com/go/logging/apiv2/loggingpb"
 )
 
 // contextKey is a private type to use as a key for context values.
@@ -53,8 +54,8 @@ type CloudBuildClient interface {
 	ListBuildTriggers(ctx context.Context, projectID, location string) ([]*cloudbuildpb.BuildTrigger, error)
 	RunBuildTrigger(ctx context.Context, projectID, location, triggerID, branch, tag, commitSha string) (*cloudbuild.RunBuildTriggerOperation, error)
 	ListBuilds(ctx context.Context, projectID, location string) ([]*cloudbuildpb.Build, error)
-	GetBuildInfo(ctx context.Context, projectID, location, buildID string) (*cloudbuildpb.Build, error)
-	StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuildpb.CreateBuildOperation, error)
+	GetBuildInfo(ctx context.Context, projectID, location, buildID string) (BuildInfo, error)
+	StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuild.CreateBuildOperation, error)
 }
 
 type BuildInfo struct {
@@ -232,7 +233,7 @@ func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, loca
 		return BuildInfo{}, fmt.Errorf("failed to get build info: %w", err)
 	}
 	info := BuildInfo{BuildDetails: build}
-	logReq := &logging.ListLogEntriesRequest{
+	logReq := &loggingpb.ListLogEntriesRequest{
 		ResourceNames: []string{fmt.Sprintf("projects/%s", projectID)},
 		Filter:        fmt.Sprintf(`resource.type="build" AND resource.labels.build_id="%s" AND logName="projects/%s/logs/cloudbuild"`, buildID, projectID),
 	}
@@ -252,7 +253,7 @@ func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, loca
 	return info, nil
 }
 
-func (c *CloudBuildClientImpl) StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuildpb.CreateBuildOperation, error) {
+func (c *CloudBuildClientImpl) StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuild.CreateBuildOperation, error) {
 	req := &cloudbuildpb.CreateBuildRequest{
 		Parent: fmt.Sprintf("projects/%s/locations/global", projectID),
 		Build:  &cloudbuildpb.Build{Source: source},

@@ -194,9 +194,8 @@ func addGetBuildInfoTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuil
 
 func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
 	startBuildToolFunc := func(ctx context.Context, req *mcp.CallToolRequest, args StartBuildArgs) (*mcp.CallToolResult, any, error) {
-		// Convert map to cloudbuildpb.Build
-		source:= &cloudbuildpb.Source{
-			StorageSource: &cloudbuildpb.StorageSource{
+		source:= &cloudbuild.Source{
+			StorageSource: &cloudbuild.StorageSource{
 				Bucket: args.Bucket,
 				Object: args.Object,
 			},
