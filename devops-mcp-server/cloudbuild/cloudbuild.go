@@ -39,6 +39,9 @@ func (h *Handler) Register(server *mcp.Server) {
 	addCreateTriggerTool(server, h.CbClient, h.IClient, h.RClient)
 	addRunTriggerTool(server, h.CbClient)
 	addListTriggersTool(server, h.CbClient)
+	addListBuildsTool(server, h.CbClient)
+	addGetBuildInfoTool(server, h.CbClient)
+	addStartBuildTool(server, h.CbClient)
 }
 
 type RunTriggerArgs struct {
@@ -145,4 +148,66 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 func IsValidServiceAccount(sa string) bool {
 	var saRegex = regexp.MustCompile(`^serviceAccount:[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com$`)
 	return saRegex.MatchString(sa)
+}
+
+type ListBuildsArgs struct {
+	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location  string `json:"location" jsonschema:"The Google Cloud location for the builds."`
+}
+
+type GetBuildInfoArgs struct {
+	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location  string `json:"location" jsonschema:"The Google Cloud location for the build."`
+	BuildID   string `json:"build_id" jsonschema:"The ID of the build."`
+}
+
+type StartBuildArgs struct {
+	ProjectID string                 `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location  string                 `json:"location" jsonschema:"The Google Cloud location for the build."`
+	source   map[string]interface{} `json:"source" jsonschema:"The Cloud Build source configuration as a map."`
+}
+
+func addListBuildsTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
+	listBuildsToolFunc := func(ctx context.Context, req *mcp.CallToolRequest, args ListBuildsArgs) (*mcp.CallToolResult, any, error) {
+		res, err := cbClient.ListBuilds(ctx, args.ProjectID, args.Location)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to list builds: %w", err)
+		}
+		return &mcp.CallToolResult{}, map[string]any{"builds": res}, nil
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.list_builds", Description: "Lists all Cloud Builds in a given location."}, listBuildsToolFunc)
+}
+
+func addGetBuildInfoTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
+	getBuildInfoToolFunc := func(ctx context.Context, req *mcp.CallToolRequest, args GetBuildInfoArgs) (*mcp.CallToolResult, any, error) {
+		res, err := cbClient.GetBuildInfo(ctx, args.ProjectID, args.Location, args.BuildID)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to get build info: %w", err)
+		}
+		return &mcp.CallToolResult{}, res, nil
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.get_build_info", Description: "Gets information about a specific Cloud Build."}, getBuildInfoToolFunc)
+}
+
+func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
+	type StartBuildArgs struct {
+		ProjectID string                 `json:"project_id" jsonschema:"The Google Cloud project ID."`
+		Location  string                 `json:"location" jsonschema:"The Google Cloud location for the build."`
+		Build     map[string]interface{} `json:"build" jsonschema:"The Cloud Build configuration as a map."`
+	}
+	startBuildToolFunc := func(ctx context.Context, req *mcp.CallToolRequest, args StartBuildArgs) (*mcp.CallToolResult, any, error) {
+		// Convert map to cloudbuildpb.Build
+		source := &cloudbuildpb.RepoSource{}
+		err := mcp.DecodeMapToProto(args.Source, source)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to decode source map to proto: %w", err)
+		}
+
+		res, err := cbClient.StartBuild(ctx, args.ProjectID, args.Location, source)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to start build: %w", err)
+		}
+		return &mcp.CallToolResult{}, res, nil
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.start_build", Description: "Starts a new Cloud Build with the given configuration."}, startBuildToolFunc)
 }

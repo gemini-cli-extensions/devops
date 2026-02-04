@@ -51,7 +51,31 @@ type CloudBuildClient interface {
 	GetLatestBuildForTrigger(ctx context.Context, projectID, location, triggerID string) (*cloudbuildpb.Build, error)
 	ListBuildTriggers(ctx context.Context, projectID, location string) ([]*cloudbuildpb.BuildTrigger, error)
 	RunBuildTrigger(ctx context.Context, projectID, location, triggerID, branch, tag, commitSha string) (*cloudbuild.RunBuildTriggerOperation, error)
+	ListBuilds(ctx context.Context, projectID, location string) ([]*cloudbuildpb.Build, error)
+	GetBuildInfo(ctx context.Context, projectID, location, buildID string) (*cloudbuildpb.Build, error)
+	StartBuild(ctx context.Context, projectID, location string, source *cloudbuildpb.RepoSource) (*cloudbuildpb.Build, error)
 }
+
+// Exec interface for running commands.
+type Exec interface {
+	Command(name string, arg ...string) *exec.Cmd
+}
+
+type execer struct{}
+
+func (e *execer) Command(name string, arg ...string) *exec.Cmd {
+	return exec.Command(name, arg...)
+}
+
+var defaultExecer Exec = &execer{}
+
+
+type BuildInfo struct {
+	BuildDetails *cloudbuildpb.Build
+	Logs string
+}
+
+
 
 // NewCloudBuildClient creates a new Cloud Build client.
 func NewCloudBuildClient(ctx context.Context) (CloudBuildClient, error) {
@@ -65,13 +89,14 @@ func NewCloudBuildClient(ctx context.Context) (CloudBuildClient, error) {
 		return nil, fmt.Errorf("failed to create Cloud Build service: %v", err)
 	}
 
-	return &CloudBuildClientImpl{v1client: c, legacyClient: c2}, nil
+	return &CloudBuildClientImpl{v1client: c, legacyClient: c2, execer: defaultExecer}, nil
 }
 
 // CloudBuildClientImpl is an implementation of the CloudBuildClient interface.
 type CloudBuildClientImpl struct {
 	v1client     *cloudbuild.Client
 	legacyClient *build.Service
+	execer       Exec
 }
 
 // CreateCloudBuildTrigger creates a new build trigger.
@@ -180,4 +205,55 @@ func (c *CloudBuildClientImpl) RunBuildTrigger(ctx context.Context, projectID, l
 		return nil, fmt.Errorf("failed to run build trigger: %v", err)
 	}
 	return op, nil
+}
+
+
+func (c *CloudBuildClientImpl) ListBuilds(ctx context.Context, projectID, location string) ([]*cloudbuildpb.Build, error) {
+	req := &cloudbuildpb.ListBuildsRequest{
+		Parent: fmt.Sprintf("projects/%s/locations/%s", projectID, location),
+	}
+	it := c.v1client.ListBuilds(ctx, req)
+	var builds []*cloudbuildpb.Build
+	for {
+		build, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to list builds: %v", err)
+		}
+		builds = append(builds, build)
+	}
+	return builds, nil
+}
+
+func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, location, buildID string) (BuildInfo, error) {
+	req := &cloudbuildpb.GetBuildRequest{
+		Name: fmt.Sprintf("projects/%s/locations/%s/builds/%s", projectID, location, buildID),
+	}
+	build, err := c.v1client.GetBuild(ctx, req)
+	if err != nil {
+		return BuildInfo{}, fmt.Errorf("failed to get build info: %w", err)
+	}
+	info := BuildInfo{BuildDetails: build}
+	args2:= []string{"builds", "log", buildID, "--project", projectID, "--region", location, "--format", "text"}
+	cmd = c.execer.Command("gcloud", args2...)
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		return BuildInfo{}, fmt.Errorf("failed to get build logs: %w, output: %s", err, out)
+	}
+	info.Logs = string(out)
+	return info, nil
+}
+
+func (c *CloudBuildClientImpl) StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuildpb.Build, error) {
+	req := &cloudbuildpb.CreateBuildRequest{
+		Parent: fmt.Sprintf("projects/%s/locations/global", projectID),
+		Build:  &cloudbuildpb.Build{Source: source},
+	}
+	createdBuild, err := c.v1client.CreateBuild(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start build: %v", err)
+	}
+	return createdBuild, nil
 }
