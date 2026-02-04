@@ -23,7 +23,7 @@ import (
 	logging "cloud.google.com/go/logging/apiv2"
 	cloudbuildpb "cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
 
-	build "google.golang.org/api/cloudbuilsd/v1"
+	build "google.golang.org/api/cloudbuild/v1"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
