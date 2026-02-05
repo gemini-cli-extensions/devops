@@ -22,11 +22,11 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	cloudbuild "cloud.google.com/go/cloudbuild/apiv1/v2"
+
 	cloudbuildclient "devops-mcp-server/cloudbuild/client"
 	iamclient "devops-mcp-server/iam/client"
 	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
-
-	cloudbuildpb "cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
 )
 
 // Handler holds the clients for the cloudbuild service.

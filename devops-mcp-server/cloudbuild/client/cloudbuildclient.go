@@ -247,7 +247,7 @@ func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, loca
 		if err != nil {
 			return BuildInfo{}, fmt.Errorf("failed to list log entries: %w", err)
 		}
-		logs = append(logs, entry.TextPayload)
+		logs = append(logs, entry.Payload.(string))
 	}
 	info.Logs = strings.Join(logs, "\n")
 	return info, nil
