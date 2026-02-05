@@ -247,7 +247,18 @@ func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, loca
 		if err != nil {
 			return BuildInfo{}, fmt.Errorf("failed to list log entries: %w", err)
 		}
-		logs = append(logs, entry.Payload.(string))
+		var logMessage string
+		switch payload := entry.Payload.(type) {
+			case *loggingpb.LogEntry_TextPayload:
+				logMessage = payload.TextPayload
+			case *loggingpb.LogEntry_JsonPayload:
+				logMessage = fmt.Sprintf("%v", payload.JsonPayload)
+			case *loggingpb.LogEntry_ProtoPayload:
+				logMessage = fmt.Sprintf("%v", payload.ProtoPayload)
+			default:
+				return BuildInfo{}, fmt.Errorf("unknown log entry payload type")
+			}
+		logs = append(logs, logMessage)
 	}
 	info.Logs = strings.Join(logs, "\n")
 	return info, nil

@@ -22,7 +22,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	cloudbuild "cloud.google.com/go/cloudbuild/apiv1/v2"
+	cloudbuild  "google.golang.org/api/cloudbuild/v1"
 
 	cloudbuildclient "devops-mcp-server/cloudbuild/client"
 	iamclient "devops-mcp-server/iam/client"
