@@ -36,6 +36,7 @@ func (h *Handler) Register(server *mcp.Server) {
 	addListServicesTool(server, h.CrClient)
 	addDeployToCloudRunFromImageTool(server, h.CrClient)
 	addDeployToCloudRunFromSourceTool(server, h.CrClient)
+	addGetServiceStatus(server, h.CrClient)
 }
 
 type ListServicesArgs struct {
@@ -133,4 +134,20 @@ func addDeployToCloudRunFromSourceTool(server *mcp.Server, crClient cloudrunclie
 		return &mcp.CallToolResult{}, service, nil
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.deploy_to_cloud_run_from_source", Description: "Creates a new Cloud Run service or updates an existing one from source. This tool may take a couple minutes to finish running."}, deployToCloudRunFromSourceToolFunc)
+}
+
+type GetServiceStatusArgs struct{
+	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location  string `json:"location" jsonschema:"The Google Cloud location."`
+	ServiceName string `json: service_name jsonschema:"The Cloud Run service name"`
+}
+
+func addGetServiceStatusTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
+	getServiceStatusToolFunc = func(ctx context.Context, req* mcp.CallToolRequest, args GetServiceStatusArgs){
+	state, err := crClient.GetServiceStatus(ctx, args.ProjectID, args.Location, args.ServiceName)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to get service state: %w", err)
+		}
+	return &mcp.CallToolResult{}, state, nil	
+	}
 }
