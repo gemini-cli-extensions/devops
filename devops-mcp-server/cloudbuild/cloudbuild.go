@@ -22,11 +22,11 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	cloudbuild  "google.golang.org/api/cloudbuild/v1"
-
 	cloudbuildclient "devops-mcp-server/cloudbuild/client"
 	iamclient "devops-mcp-server/iam/client"
 	resourcemanagerclient "devops-mcp-server/resourcemanager/client"
+
+	cloudbuildpb "cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
 )
 
 // Handler holds the clients for the cloudbuild service.
@@ -194,8 +194,8 @@ func addGetBuildInfoTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuil
 
 func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
 	startBuildToolFunc := func(ctx context.Context, req *mcp.CallToolRequest, args StartBuildArgs) (*mcp.CallToolResult, any, error) {
-		source:= &cloudbuild.Source{
-			StorageSource: &cloudbuild.StorageSource{
+		source:= &cloudbuildpb.Source{
+			StorageSource: &cloudbuildpb.StorageSource{
 				Bucket: args.Bucket,
 				Object: args.Object,
 			},
