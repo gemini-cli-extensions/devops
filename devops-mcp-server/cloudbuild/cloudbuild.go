@@ -194,13 +194,14 @@ func addGetBuildInfoTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuil
 
 func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
 	startBuildToolFunc := func(ctx context.Context, req *mcp.CallToolRequest, args StartBuildArgs) (*mcp.CallToolResult, any, error) {
-		source:= &cloudbuildpb.Source_StorageSource{
-			StorageSource: &cloudbuildpb.StorageSource{
-				Bucket: args.Bucket,
-				Object: args.Object,
+		source:= &cloudbuildpb.Source{
+			Source: &cloudbuildpb.Source_StorageSource{
+				StorageSource: &cloudbuildpb.StorageSource{
+					Bucket: args.Bucket,
+					Object: args.Object,
+				},
 			},
 		}
-		
 		res, err := cbClient.StartBuild(ctx, args.ProjectID, source)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to start build: %w", err)
