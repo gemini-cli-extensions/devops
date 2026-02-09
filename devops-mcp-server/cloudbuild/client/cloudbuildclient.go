@@ -55,15 +55,13 @@ type CloudBuildClient interface {
 	RunBuildTrigger(ctx context.Context, projectID, location, triggerID, branch, tag, commitSha string) (*cloudbuild.RunBuildTriggerOperation, error)
 	ListBuilds(ctx context.Context, projectID, location string) ([]*cloudbuildpb.Build, error)
 	GetBuildInfo(ctx context.Context, projectID, location, buildID string) (BuildInfo, error)
-	StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuild.CreateBuildOperation, error)
+	StartBuild(ctx context.Context, projectID, location string, source *cloudbuildpb.Source) (*cloudbuild.CreateBuildOperation, error)
 }
 
 type BuildInfo struct {
 	BuildDetails *cloudbuildpb.Build
 	Logs string
 }
-
-
 
 // NewCloudBuildClient creates a new Cloud Build client.
 func NewCloudBuildClient(ctx context.Context) (CloudBuildClient, error) {
@@ -83,10 +81,10 @@ func NewCloudBuildClient(ctx context.Context) (CloudBuildClient, error) {
 	}
 
 	return &CloudBuildClientImpl{
-		v1client: c, 
-		legacyClient: c2,
+		v1client:      c,
+		legacyClient:  c2,
 		loggingClient: loggingClient,
-		}, nil
+	}, nil
 }
 
 // CloudBuildClientImpl is an implementation of the CloudBuildClient interface.
@@ -252,7 +250,12 @@ func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, loca
 			case *loggingpb.LogEntry_TextPayload:
 				logMessage = payload.TextPayload
 			case *loggingpb.LogEntry_JsonPayload:
-				logMessage = fmt.Sprintf("%v", payload.JsonPayload)
+				jsonBytes, err := protojson.Marshal(payload.JsonPayload)
+				if err != nil {
+					logMessage = fmt.Sprintf("failed to marshal json payload to string: %v", err)
+				} else {
+					logMessage = string(jsonBytes)
+				}
 			case *loggingpb.LogEntry_ProtoPayload:
 				logMessage = fmt.Sprintf("%v", payload.ProtoPayload)
 			default:
@@ -264,9 +267,9 @@ func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, loca
 	return info, nil
 }
 
-func (c *CloudBuildClientImpl) StartBuild(ctx context.Context, projectID string, source *cloudbuildpb.Source) (*cloudbuild.CreateBuildOperation, error) {
+func (c *CloudBuildClientImpl) StartBuild(ctx context.Context, projectID, location string, source *cloudbuildpb.Source) (*cloudbuild.CreateBuildOperation, error) {
 	req := &cloudbuildpb.CreateBuildRequest{
-		Parent: fmt.Sprintf("projects/%s/locations/global", projectID),
+		Parent: fmt.Sprintf("projects/%s/locations/%s", projectID, location),
 		Build:  &cloudbuildpb.Build{Source: source},
 	}
 	ops, err := c.v1client.CreateBuild(ctx, req)

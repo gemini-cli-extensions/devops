@@ -208,5 +208,5 @@ func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildC
 		}
 		return &mcp.CallToolResult{}, res, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.start_build", Description: "Starts a new Cloud Build with the given source locally."}, startBuildToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.start_build", Description: "Starts a new Cloud Build from a source in Google Cloud Storage."}, startBuildToolFunc)
 }
