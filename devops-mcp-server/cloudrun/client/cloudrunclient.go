@@ -47,7 +47,7 @@ func ContextWithClient(ctx context.Context, client CloudRunClient) context.Conte
 // CloudRunClient is an interface for interacting with the Cloud Run API.
 type CloudRunClient interface {
 	GetService(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Service, error)
-	GetStatus(ctx context.Context, projectID, location, serviceName string) (State, error)
+	GetStatus(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Condition_State, error)
 	ListServices(ctx context.Context, projectID, location string) ([]*cloudrunpb.Service, error)
 	CreateService(ctx context.Context, projectID, location, serviceName, imageURL string, port int32) (*cloudrunpb.Service, error)
 	UpdateService(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error)
@@ -146,12 +146,12 @@ func (c *CloudRunClientImpl) GetService(ctx context.Context, projectID, location
 }
 
 func (c *CloudRunClientImpl) GetStatus(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Condition_State, error) {
-	service, err:= c.GetService(ctx, projectID, location, serviceName)
-	if err!=nil {
+	service, err := c.GetService(ctx, projectID, location, serviceName)
+	if err != nil {
 		return nil, fmt.Errorf("failed to get service: %w", err)
 	}
-	terminalCondition:= service.GetTerminalCondition()
-	return terminalCondition.State, nil
+	terminalCondition := service.GetTerminalCondition()
+	return &terminalCondition.State, nil
 }
 
 func (c *CloudRunClientImpl) GetRevision(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {

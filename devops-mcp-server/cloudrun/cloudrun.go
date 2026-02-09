@@ -139,7 +139,7 @@ func addDeployToCloudRunFromSourceTool(server *mcp.Server, crClient cloudrunclie
 type GetServiceStatusArgs struct{
 	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
 	Location  string `json:"location" jsonschema:"The Google Cloud location."`
-	ServiceName string `json: service_name jsonschema:"The Cloud Run service name"`
+	ServiceName string `json:"service_name" jsonschema:"The Cloud Run service name"`
 }
 
 func addGetServiceStatusTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
