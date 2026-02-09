@@ -202,7 +202,7 @@ func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildC
 				},
 			},
 		}
-		res, err := cbClient.StartBuild(ctx, args.ProjectID, source)
+		res, err := cbClient.StartBuild(ctx, args.ProjectID, args.Location, source)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to start build: %w", err)
 		}
