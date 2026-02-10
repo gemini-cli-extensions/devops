@@ -150,4 +150,5 @@ func addGetServiceStatusTool(server *mcp.Server, crClient cloudrunclient.CloudRu
 		}
 	return &mcp.CallToolResult{}, state, nil	
 	}
+	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.service_status", Description: "Gets the current status of a Cloud Run service."}, getServiceStatusToolFunc)
 }
