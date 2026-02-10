@@ -145,7 +145,7 @@ type GetServiceStatusArgs struct{
 var getServiceStatusToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args GetServiceStatusArgs) (*mcp.CallToolResult, any, error)
 
 func addGetServiceStatusTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
-	getServiceStatusToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args GetServiceStatusArgs){
+	getServiceStatusToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args GetServiceStatusArgs) (*mcp.CallToolResult, any, error) {
 	state, err := crClient.GetServiceStatus(ctx, args.ProjectID, args.Location, args.ServiceName)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to get service state: %w", err)
