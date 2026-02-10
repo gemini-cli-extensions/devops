@@ -151,6 +151,9 @@ func (c *CloudRunClientImpl) GetServiceStatus(ctx context.Context, projectID, lo
 		return nil, fmt.Errorf("failed to get service: %w", err)
 	}
 	terminalCondition := service.GetTerminalCondition()
+	if terminalCondition == nil {
+		return nil, fmt.Errorf("service %q does not have a terminal condition", service.Name)
+	}
 	return &terminalCondition.State, nil
 }
 

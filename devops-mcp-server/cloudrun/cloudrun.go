@@ -146,11 +146,11 @@ var getServiceStatusToolFunc func(ctx context.Context, req *mcp.CallToolRequest,
 
 func addGetServiceStatusTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
 	getServiceStatusToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args GetServiceStatusArgs) (*mcp.CallToolResult, any, error) {
-	state, err := crClient.GetServiceStatus(ctx, args.ProjectID, args.Location, args.ServiceName)
+		state, err := crClient.GetServiceStatus(ctx, args.ProjectID, args.Location, args.ServiceName)
 		if err != nil {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to get service state: %w", err)
 		}
-	return &mcp.CallToolResult{}, state, nil	
+		return &mcp.CallToolResult{}, state, nil
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.service_status", Description: "Gets the current status of a Cloud Run service."}, getServiceStatusToolFunc)
 }
