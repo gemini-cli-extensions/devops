@@ -36,7 +36,7 @@ func (h *Handler) Register(server *mcp.Server) {
 	addListServicesTool(server, h.CrClient)
 	addDeployToCloudRunFromImageTool(server, h.CrClient)
 	addDeployToCloudRunFromSourceTool(server, h.CrClient)
-	addGetServiceStatus(server, h.CrClient)
+	addGetServiceStatusTool(server, h.CrClient)
 }
 
 type ListServicesArgs struct {
