@@ -40,6 +40,8 @@ func NewClient(ctx context.Context) (ResourcemanagerClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource manager client: %v", err)
 	}
+	defer rmClient.Close()
+
 	return &ResourcemanagerClientImpl{projectsClient: rmClient}, nil
 }
 

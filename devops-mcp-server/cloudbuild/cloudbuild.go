@@ -95,9 +95,6 @@ var createTriggerToolFunc func(ctx context.Context, req *mcp.CallToolRequest, ar
 
 func addCreateTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient, iamClient iamclient.IAMClient, rmClient resourcemanagerclient.ResourcemanagerClient) {
 	createTriggerToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateTriggerArgs) (*mcp.CallToolResult, any, error) {
-		if args.ServiceAccount != "" && !strings.HasPrefix(args.ServiceAccount, "serviceAccount:") {
-			args.ServiceAccount = fmt.Sprintf("serviceAccount:%s", args.ServiceAccount)
-		}
 		if args.ServiceAccount != "" && !IsValidServiceAccount(args.ServiceAccount) {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("service account needs to be of the form serviceAccount:name@project-id.iam.gserviceaccount.com")
 		}
@@ -143,6 +140,6 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 
 // IsValidServiceAccount checks if the string follows the specific GCP service account format.
 func IsValidServiceAccount(sa string) bool {
-	var saRegex = regexp.MustCompile(`^serviceAccount:[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com$`)
+	var saRegex = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])@[a-z0-9-]+\.iam\.gserviceaccount\.com$`)
 	return saRegex.MatchString(sa)
 }
