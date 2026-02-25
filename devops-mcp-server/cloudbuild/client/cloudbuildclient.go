@@ -275,7 +275,7 @@ func (c *CloudBuildClientImpl) StartBuild(ctx context.Context, projectID, locati
 	}
 	ops, err := c.v1client.CreateBuild(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to start build: %v", err)
+return nil, fmt.Errorf("failed to start build: %w", err)
 	}
 	return ops, nil
 }
