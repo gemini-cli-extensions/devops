@@ -216,7 +216,7 @@ func (c *CloudBuildClientImpl) ListBuilds(ctx context.Context, projectID, locati
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("failed to list builds: %v", err)
+return nil, fmt.Errorf("failed to list builds: %w", err)
 		}
 		builds = append(builds, build)
 	}
