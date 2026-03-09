@@ -1,7 +1,7 @@
 ---
 name: cloud-deploy-pipelines
 description: >
-  Design Cloud Deploy delivery pipelines and manage releases when deploying applications to Cloud Run and Google Kubernetes Engine (GKE). Use when users want to deploy their applications to multiple environments (e.g. dev and prod), leverage deployment strategies (i.e. canary), or enable automatic rollbacks when there are issues with the rollout. Should also be used if the user is already using Cloud Deploy and wants to create releases, promote releases across environments, or debug release failures.
+  Design Cloud Deploy delivery pipelines and manage releases when deploying applications to Cloud Run and Google Kubernetes Engine (GKE). Use when users want to deploy their applications to multiple environments (e.g. dev and prod), leverage deployment strategies (i.e. canary), or  rollback (manually or automatically) when there are issues deploying their application.
 ---
 
 # Cloud Deploy Pipelines
@@ -32,9 +32,9 @@ This workflow provides steps for designing a Cloud Deploy `DeliveryPipeline`.
 
 ### Step 1: Define the target environments
 
-1. Identify the number of environments (e.g., dev, staging, production).
+1. Identify the number of deployment environments (e.g., dev, staging, production).
 2. Identify if promotions should require user approval.
-3. Define each of the environments as Cloud Deploy `Target` resources in a `clouddeploy.yaml` file. 
+3. Define each of the deployment environments as Cloud Deploy `Target` resources in a `clouddeploy.yaml` file. 
     - Use `references/configure-targets.md` as a reference when generating the resource YAML.
     - Use the application name provided by the user when naming the Cloud Deploy `Target` resources. For example, if the user wants to deploy an application named "hello-world" to a test and production environment then use "hello-world-test" and "hello-world-prod" as the `Target` IDs.
 
@@ -48,8 +48,8 @@ This workflow provides steps for designing a Cloud Deploy `DeliveryPipeline`.
 ### Step 3: Define automations
 
 1. Identify whether the user wants to automatically rollback if any failures occur during the rollout.
-2. **If the user specified multiple environments in the previous step** 
-  - Identify if they want automatic promotions between environments.
+2. **If the user specified multiple deployment environments in the previous step** 
+  - Identify if they want automatic promotions between deployment environments.
 3. **If the user specified a canary deployment strategy in the previous step** 
   - Identify if they want to automatically advance the rollout through the phases after a wait period.
 4. Define the Cloud Deploy `Automation` resources in the `clouddeploy.yaml` file.
