@@ -109,7 +109,7 @@ Follow this standard to ensure compatibility with Antigravity (AGY) discovery an
 
    - ❌ Service Account Keys: Never generate or store .json keys. Use Workload Identity Federation or the default metadata server.
 
-   - ❌ Default VPC: Always delete or ignore the default network in production projects.
+   - ❌ Hardcoded IDs: Never hardcode Project IDs. Use variables or a `data "google_project"` source.
 
    - ❌ Broad Scopes: Avoid cloud-platform scopes for GKE nodes; use fine-grained IAM roles instead.
 
