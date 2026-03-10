@@ -1,0 +1,121 @@
+---
+name: terraform-gcp-skill
+description: "Provision and manage Google Cloud infrastructure using Terraform and OpenTofu. Use when users want to architect production-grade landing zones (Shared VPCs, Projects, Folders), deploy core cloud services (GKE, Cloud Run, Cloud SQL), and enforce infrastructure-as-code best practices. Leverages GCS-backed state management, automated validation protocols, and Google’s Cloud Foundation Fabric patterns to ensure secure, idempotent, and scalable infrastructure deployments across multiple environments."
+version: "1.0.0"
+---
+
+# Terraform GCP Skill
+
+This skill provides expert-level guidance for architecting, deploying, and managing GCP infrastructure using Terraform.
+
+## 🎯 When to Use This Skill
+- Designing GCP Landing Zones (Projects, Folders, Shared VPCs).
+- Provisioning Google Cloud resources (GKE, Cloud Run, Cloud SQL, Spanner).
+- Setting up remote state management via **GCS Backend**.
+- Implementing IAM least-privilege via Terraform.
+- Troubleshooting `terraform plan` discrepancies in GCP.
+
+## 🏗️ Core Architecture: GCS Backend & State
+**Always** use a GCS backend for state. Local state is strictly for local prototyping and must never be committed.
+
+### Standard Backend Configuration
+```hcl
+terraform {
+  backend "gcs" {
+    bucket  = "tf-state-${var.project_id}"
+    prefix  = "terraform/state/${var.environment}"
+  }
+}
+```
+
+Note: The GCS bucket must have Object Versioning enabled to allow recovery from accidental state corruption or overlapping writes.
+
+## 🛠️ Execution Protocol (Safety First)
+The Agent must follow this lifecycle for every infrastructure change to ensure idempotency and prevent production outages:
+
+1. Initialize (`terraform init`):
+
+   - Verify backend connectivity.
+
+   - Ensure provider plugins are downloaded and versions are locked in `.terraform.lock.hcl`.
+
+2. Validate (`terraform validate` & `tflint`):
+
+   - Check for internal HCL consistency.
+
+   - Run `tflint` with the Google plugin to catch cloud-specific deprecated fields or non-optimal configurations.
+
+3. Plan (`terraform plan -out=tfplan`):
+
+   - Generate a speculative execution plan.
+
+   - Mandatory Step: The Agent must summarize the plan for the user, specifically highlighting any Destroy actions.
+
+4. Apply (`terraform apply tfplan`):
+
+   - Strict Constraint: Only execute the application after the user provides explicit manual confirmation.
+
+## 🔍 Live Provider Documentation Lookup
+To prevent hallucinations regarding new fields or deprecated attributes, the Agent must verify the grounded truth of the provider schema.
+
+Schema Inspection via CLI
+The primary command for retrieving the machine-readable schema of the currently initialized providers is:
+
+```bash
+$ terraform providers schema -json
+```
+
+
+## 🛡️ GCP-Specific Standards
+1. Resource Naming & "This" Pattern
+To maintain a clean module interface, use the this identifier for singleton resources (the primary resource the module is named after).
+
+    ```hcl
+    resource "google_compute_network" "this" {
+    name                    = "${var.prefix}-vpc"
+    auto_create_subnetworks = false
+    }
+    ```
+
+2. IAM Management
+
+   - Avoid google_project_iam_policy: This resource is authoritative and replaces the entire IAM policy for the project. It is the #1 cause of accidental lockouts.
+
+   - Prefer google_project_iam_member: This is additive and allows multiple tools or modules to manage permissions for the same project safely.
+
+3. Networking & Security
+   - Shared VPC: Always distinguish between Host projects (where the network lives) and Service projects (where resources consume the network).
+
+   - Private Google Access: Subnets should always have private_ip_google_access = true so internal VMs can reach Google APIs (like GCS or BigQuery) without an External IP.
+
+   - Workload Identity: Prefer GKE Workload Identity over static Service Account JSON keys.
+
+## 📂 Directory Structure
+Follow this standard to ensure compatibility with Antigravity (AGY) discovery:
+
+```
+.
+├── environments/
+│   ├── prod/            # Production composition (using backend-prod.hcl)
+│   └── dev/             # Development composition (using backend-dev.hcl)
+├── modules/
+│   ├── gke-cluster/     # Reusable GKE module
+│   └── cloud-sql/       # Reusable SQL module
+├── main.tf              # Entry point / Provider config
+├── variables.tf         # Typed variables (always with descriptions)
+├── outputs.tf           # Resource IDs and connection endpoints
+└── versions.tf          # Provider version pinning (e.g., ~> 5.0)
+```
+## ⚠️ Anti-Patterns (Do NOT do these)
+   - ❌ Hardcoded IDs: Never hardcode Project IDs. Use variables or data "google_project" sources.
+
+   - ❌ Service Account Keys: Never generate or store .json keys. Use Workload Identity Federation or the default metadata server.
+
+   - ❌ Default VPC: Always delete or ignore the default network in production projects.
+
+   - ❌ Broad Scopes: Avoid cloud-platform scopes for GKE nodes; use fine-grained IAM roles instead.
+
+## 🧪 Testing Strategy
+   - Static Analysis: Use checkov, trivy, or terrascan to catch insecure GCP configurations (e.g., public GCS buckets).
+
+   - Integration Testing: Use terraform test (v1.6+) to assert that GCP labels and network tags are correctly applied to resources before full deployment.
