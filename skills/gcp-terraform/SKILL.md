@@ -79,9 +79,11 @@ To maintain a clean module interface, use the main identifier for singleton reso
 
 2. IAM Management
    - Avoid google_project_iam_policy: This resource is authoritative and replaces the entire IAM policy for the project. It is the #1 cause of accidental lockouts.
-   - Prefer google_project_iam_member: This is additive and allows multiple tools or modules to manage permissions for the same project safely.
+   - Avoid `google_project_iam_policy`: This resource is authoritative for the entire project and is a common cause of accidental lockouts.
 
-3. Networking & Security
+   - Prefer `google_project_iam_member` or `google_project_iam_binding`:
+     - `google_project_iam_member` is additive and safely grants a role to a single member.
+     - `google_project_iam_binding` is authoritative for a single role. It's useful for managing all members of a role, but be aware it overwrites existing members for that role.
    - Shared VPC: Always distinguish between Host projects (where the network lives) and Service projects (where resources consume the network).
    - Private Google Access: Subnets should always have private_ip_google_access = true.
    - Workload Identity: Prefer GKE Workload Identity over static Service Account JSON keys.
