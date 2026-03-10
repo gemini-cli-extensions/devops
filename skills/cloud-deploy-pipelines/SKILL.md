@@ -92,6 +92,8 @@ In order to manage releases, a `DeliveryPipeline` MUST already be defined and co
 
 ### Create a release
 
+**Use case**: The user wants to deploy a new version of their application.
+
 **Required Context**: Before creating a `Release`, you **MUST** know whether the users runtime manifests are using a placeholder for the container image and the value of the placeholder. This is **CRITICAL** for build artifact substitution in Cloud Deploy. Check the users runtime manifests or ask the user directly. See examples in `references/basic-cloudrun-manifests.md` and `references/basic-k8s-manifests.md`.
 
 Run the following command to create a `Release` for the `DeliveryPipeline`:
@@ -112,6 +114,8 @@ Reference documenation for `gcloud deploy releases create`: https://docs.cloud.g
 
 ### Promote a release
 
+**Use case**: The user wants to promote the application to the next target environment in the `DeliveryPipeline` progression sequence.
+
 Run the following command to promote a `Release` to the next target in the `DeliveryPipeline` progression sequence:
 
 ```bash
@@ -122,7 +126,9 @@ Reference documentation for `gcloud deploy releases promote`: https://docs.cloud
 
 ### Monitor a release
 
-Monitoring a release across a delivery pipeline consists of checking the status of both the `Release` resource and its child `Rollout` resource(s). Always ensure that the `Release` has completed successfully before checking the status of the `Rollout`.
+**Use case**: Monitor the status of a release across a `DeliveryPipeline`.
+
+Monitoring a release across a `DeliveryPipeline` consists of checking the status of both the `Release` resource and its child `Rollout` resource(s). Always ensure that the `Release` has completed successfully before checking the status of the `Rollout`.
 
 ### Troubleshoot
 
