@@ -7,6 +7,7 @@ require (
 	cloud.google.com/go/auth v0.17.0
 	cloud.google.com/go/cloudbuild v1.23.1
 	cloud.google.com/go/iam v1.5.3
+	cloud.google.com/go/logging v1.13.0
 	cloud.google.com/go/resourcemanager v1.10.7
 	cloud.google.com/go/run v1.12.1
 	cloud.google.com/go/storage v1.57.0
@@ -73,7 +74,7 @@ require (
 	github.com/diskfs/go-diskfs v1.7.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/djherbis/times v1.6.0 // indirect
-	github.com/docker/cli v28.2.2+incompatible // indirect
+	github.com/docker/cli v29.2.0+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v28.3.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.3 // indirect
