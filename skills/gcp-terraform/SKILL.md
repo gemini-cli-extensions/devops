@@ -1,6 +1,6 @@
 ---
 name: terraform-gcp-skill
-description: "Provision and manage Google Cloud infrastructure using Terraform and OpenTofu. Use when users want to architect production-grade landing zones (Shared VPCs, Projects, Folders), deploy core cloud services (GKE, Cloud Run, Cloud SQL), and enforce infrastructure-as-code best practices. Leverages GCS-backed state management, automated validation protocols, and Google’s Cloud Foundation Fabric patterns to ensure secure, idempotent, and scalable infrastructure deployments across multiple environments."
+description: "Architect, provision, and troubleshoot production-grade Google Cloud infrastructure using Terraform and OpenTofu. Use to design landing zones (Shared VPCs, Folders), deploy core services (GKE, Cloud Run, Cloud SQL), implement IAM least-privilege, and manage GCS-backed state. Enforces Google’s Cloud Foundation Fabric patterns and rigorous validation protocols to ensure secure, idempotent, and scalable deployments across environments."
 version: "1.0.0"
 ---
 
@@ -67,44 +67,40 @@ $ terraform providers schema -json
 
 
 ## 🛡️ GCP-Specific Standards
-1. Resource Naming & "This" Pattern
-To maintain a clean module interface, use the this identifier for singleton resources (the primary resource the module is named after).
+1. Resource Naming & "Main" Pattern
+To maintain a clean module interface, use the main identifier for singleton resources (the primary resource the module is named after). Use underscores for identifiers and hyphens for names.
 
     ```hcl
-    resource "google_compute_network" "this" {
-    name                    = "${var.prefix}-vpc"
-    auto_create_subnetworks = false
+    resource "google_compute_network" "main" {
+      name                    = "${var.prefix}-vpc"
+      auto_create_subnetworks = false
     }
     ```
 
 2. IAM Management
-
    - Avoid google_project_iam_policy: This resource is authoritative and replaces the entire IAM policy for the project. It is the #1 cause of accidental lockouts.
-
    - Prefer google_project_iam_member: This is additive and allows multiple tools or modules to manage permissions for the same project safely.
 
 3. Networking & Security
    - Shared VPC: Always distinguish between Host projects (where the network lives) and Service projects (where resources consume the network).
-
-   - Private Google Access: Subnets should always have private_ip_google_access = true so internal VMs can reach Google APIs (like GCS or BigQuery) without an External IP.
-
+   - Private Google Access: Subnets should always have private_ip_google_access = true.
    - Workload Identity: Prefer GKE Workload Identity over static Service Account JSON keys.
 
 ## 📂 Directory Structure
-Follow this standard to ensure compatibility with Antigravity (AGY) discovery:
+Follow this standard to ensure compatibility with Antigravity (AGY) discovery and Google best practices:
 
 ```
 .
-├── environments/
-│   ├── prod/            # Production composition (using backend-prod.hcl)
-│   └── dev/             # Development composition (using backend-dev.hcl)
-├── modules/
-│   ├── gke-cluster/     # Reusable GKE module
-│   └── cloud-sql/       # Reusable SQL module
-├── main.tf              # Entry point / Provider config
-├── variables.tf         # Typed variables (always with descriptions)
-├── outputs.tf           # Resource IDs and connection endpoints
-└── versions.tf          # Provider version pinning (e.g., ~> 5.0)
+├── main.tf              # Entry point / Resource definitions
+├── variables.tf         # Typed variables with units and descriptions
+├── outputs.tf           # Resource ID outputs (no direct input pass-through)
+├── versions.tf          # Provider version pinning
+├── network.tf           # (Optional) Grouped networking resources
+├── examples/            # Example usage for modules
+├── files/               # Static files (startup scripts, etc.)
+├── templates/           # .tftpl templates
+├── scripts/             # Scripts called by Terraform
+└── helpers/             # Scripts NOT called by Terraform
 ```
 ## ⚠️ Anti-Patterns (Do NOT do these)
    - ❌ Hardcoded IDs: Never hardcode Project IDs. Use variables or data "google_project" sources.
