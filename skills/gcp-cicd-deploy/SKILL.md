@@ -94,7 +94,7 @@ First, analyze the user's application to determine the type of application. Proc
 ### **Defaults**
 *  **Google Cloud**: If gcloud is installed use `gcloud config list` to get the default *project* and  *region*.
 *  **Deployment Target**: You can propose default target name based on the following, BUT you **MUST** ask the user for confirmation before using it:
-  * If git is installed use `git remote get-url origin` to get the git url. From URL used repositoru name as default target name.
+  * If git is installed use `git remote get-url origin` to get the git url. From URL used repository name as default target name.
   * If git is not installed, use the name of the current directory as the default target name.
 
 ## **User Prompt**
