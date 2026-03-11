@@ -65,7 +65,7 @@ jobs:
                           goarch: "amd64",
                           bin_file: "devops-mcp-server.exe",
                           archive: "win32.x64.devops.zip",
-                          archive_cmd: 'zip -j "${ARCHIVE_PATH}" "${RELEASE_DIR}"/*',
+                          archive_cmd: 'cd "${RELEASE_DIR}" && zip -r "${ARCHIVE_PATH}" .',
                       }
         steps:
             - uses: actions/checkout@v4
@@ -89,7 +89,9 @@ jobs:
                   jq "${command_exp}" < ../gemini-extension.json >"${RELEASE_DIR}/gemini-extension.json"
 
                   cp ../README.md "${RELEASE_DIR}/"
+                  cp ../LICENSE "${RELEASE_DIR}/"
                   cp -r ../commands "${RELEASE_DIR}/"
+                  cp -r ../skills "${RELEASE_DIR}/"
 
             - name: Set up Go
               uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
