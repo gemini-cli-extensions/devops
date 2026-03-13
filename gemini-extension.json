@@ -1,6 +1,6 @@
 {
   "name": "devops",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The DevOps extension provides Gemini powered AI assisted CI/CD. It supports deployment to Cloud Run and Cloud Storage as well as creation of a robust CI/CD pipeline.",
   "mcpServers": {
     "devops-mcp": {

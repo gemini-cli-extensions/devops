@@ -33,7 +33,7 @@ USER appuser
 ## 3. Multi-Stage Builds (The Gold Standard)
 
 Multi-stage builds allow you to use a heavy image (with compilers and build tools) for the build process and a tiny image (just the runtime) for the final production container.
-
+Always use multi stage builds when possible.
 ### Why use Multi-Stage?
 
 1. **Drastic Size Reduction:** Your final image won't contain compilers, header files, or build caches.
