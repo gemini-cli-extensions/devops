@@ -79,8 +79,16 @@ jobs:
               run: |
                   mkdir -p "${RELEASE_DIR}"
 
-                  # Extract version from tag (v1.2.3 -> 1.2.3)
-                  VERSION="${TAG_NAME#v}"
+                  # Prioritize TAG based versioning if it matches v[0-9].[0-9].[0-9]
+                  if [[ "${TAG_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    VERSION="${TAG_NAME#v}"
+                    echo "Using version from tag: ${VERSION}"
+                  else
+                    VERSION=$(cat ../VERSION)
+                    echo "Using version from VERSION file: ${VERSION}"
+                  fi
+                  
+                  echo "VERSION=${VERSION}" >> $GITHUB_ENV
                   
                   command_exp='.mcpServers."devops-mcp".command = "${extensionPath}${/}'
                   command_exp="${command_exp}${BIN_FILE}\""
@@ -107,7 +115,7 @@ jobs:
                   export GOARCH=${{ matrix.platform.goarch }}
 
                   output_path="${RELEASE_DIR}/${{ matrix.platform.bin_file }}"
-                  go build -o "${output_path}"
+                  go build -ldflags "-X main.version=${{ env.VERSION }}" -o "${output_path}"
 
             - name: Create release assets
               id: archive

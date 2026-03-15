@@ -78,14 +78,18 @@ jobs:
               run: |
                   mkdir -p "${RELEASE_DIR}"
 
+                  # Read base version from VERSION file at the root
+                  BASE_VERSION=$(cat ../VERSION)
+
                   # Generate version suffix
                   TIMESTAMP=$(date +'%Y%m%d-%H%M')
                   SHORT_SHA=$(git rev-parse --short HEAD)
-                  VERSION_SUFFIX="-${TIMESTAMP}-${SHORT_SHA}"
+                  FULL_VERSION="${BASE_VERSION}-${TIMESTAMP}-${SHORT_SHA}"
+                  echo "FULL_VERSION=${FULL_VERSION}" >> $GITHUB_ENV
 
                   command_exp='.mcpServers."devops-mcp".command = "${extensionPath}${/}'
                   command_exp="${command_exp}${BIN_FILE}\""
-                  command_exp="${command_exp} | .version += \"${VERSION_SUFFIX}\""
+                  command_exp="${command_exp} | .version = \"${FULL_VERSION}\""
                   jq "${command_exp}" < ../gemini-extension.json >"${RELEASE_DIR}/gemini-extension.json"
 
                   cp ../README.md "${RELEASE_DIR}/"
@@ -107,7 +111,7 @@ jobs:
                   export GOARCH=${{ matrix.platform.goarch }}
 
                   output_path="${RELEASE_DIR}/${{ matrix.platform.bin_file }}"
-                  go build -o "${output_path}"
+                  go build -ldflags "-X main.version=${{ env.FULL_VERSION }}" -o "${output_path}"
 
             - name: Create release assets
               id: archive

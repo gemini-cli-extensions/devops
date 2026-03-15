@@ -66,11 +66,15 @@ build_mcp() {
     err "Error: MCP serverdirectory '${MCP_SERVER_DIR}' not found."
     return 1
   fi
+
+  # Read version from root VERSION file
+  VERSION=$(cat VERSION)
+
   (
     cd ${MCP_SERVER_DIR}
     go mod tidy
-    go build -o "../${BINARY_NAME}"
-    echo "Successfully built '${BINARY_NAME}' Please move it to `.gemini/extensions/devops/bin/devops-mcp-server`"
+    go build -ldflags "-X main.version=${VERSION}" -o "../${BINARY_NAME}"
+    echo "Successfully built '${BINARY_NAME}' version ${VERSION}. Please move it to `.gemini/extensions/devops/bin/devops-mcp-server`"
   )
 }
 

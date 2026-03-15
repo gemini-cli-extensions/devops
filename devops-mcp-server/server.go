@@ -46,8 +46,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-//go:embed version.txt
-var version string
+var version = "0.1.0-dev"
 
 func createServer() *mcp.Server {
 	opts := &mcp.ServerOptions{
