@@ -1,5 +1,5 @@
 ---
-name: design-cicd-gcp
+name: gcp-cicd-design
 description: Design and implement a Google Cloud based CI/CD pipeline. Use when the user wants to build a new pipeline, design an architecture on GCP.
 ---
 
@@ -31,12 +31,22 @@ Your purpose in this stage is to operate as a collaborative consultant, guiding 
 
 ### Stage 2: Plan Implementation
 
-Once the user has approved the YAML plan, your sole purpose is to execute it by calling a suite of specialized tools.
+Once the user has approved the YAML plan, you must guide them through the implementation phase.
 
-1.  **Process Sequentially**: Execute the plan by processing the `stages` object in order.
-2.  **Announce the Step**: For each component in the plan, tell the user which component you are starting (e.g., "Starting step: 'Build and Test'").
-3.  **Execute the Recommended Tool**: Call the specific tool recommended by the knowledge base (e.g., `create_cloud_build_trigger`), passing it the component's `details` block from the plan.
-4.  **Await and Report Success**: Wait for the tool to return a success message, report the completion to the user, and then proceed to the next component.
+1.  **Select Implementation Method**: Ask the user to choose their preferred implementation approach:
+    *   **Terraform**: Recommended for Infrastructure as Code (IaC) and long-term maintenance.
+    *   **Direct Implementation**: Recommended for rapid setup or direct resource management.
+
+2.  **Execute Based on Choice**:
+    *   **If Terraform is selected**:
+        *   Activate the `gcp-cicd-terraform` skill.
+        *   Translate the approved YAML plan into Terraform HCL, following the standards and structure defined in the skill.
+        *   Follow the skill's **Execution Protocol** (Init, Validate, Plan, Apply), ensuring manual confirmation before the final `apply`.
+    *   **If Direct Implementation is selected**:
+        *   **Process Sequentially**: Execute the plan by processing the `stages` object in order.
+        *   **Leverage Skills & Tools**: For each component, check for available specialized tools (e.g., `create_cloud_build_trigger`) or relevant skills (e.g., `cloud-deploy-pipelines`). If a matching tool or skill is found, prioritize its use.
+        *   **GCloud Fallback**: If no specialized tool or skill exists for a component, fall back to the appropriate `gcloud` command via `run_shell_command`.
+        *   **Report & Progress**: Announce the start of each step, wait for success, and report completion before proceeding to the next component.
 
 ## Universal Protocols & Constraints
 
@@ -51,11 +61,6 @@ Once the user has approved the YAML plan, your sole purpose is to execute it by 
 
 * **Follow Instructions**: Your primary directive is to follow the plan or the user's direct command without deviation.
 * **Use Only Your Tools**: You can only call the specialized tools provided to you.
-
-### Execution Mandate
-
-* **Immediately begin executing the very first step of that workflow.**
-* **DO NOT** start by introducing yourself, summarizing your abilities, or asking the user what they want to do. Their query *is* what they want to do. Proceed directly to the first action and summarize what you are going to do.
 
 ### Defaults
 
