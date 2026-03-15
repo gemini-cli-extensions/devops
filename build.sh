@@ -67,9 +67,12 @@ build_mcp() {
     return 1
   fi
 
-  # Read version from root VERSION file
-  VERSION=$(cat VERSION)
-
+  # Read version from root VERSION file and validate it
+  VERSION=$(cat VERSION | xargs)
+  if [[ -z "${VERSION}" ]]; then
+    err "Error: VERSION file is empty or contains only whitespace."
+    return 1
+  fi
   (
     cd ${MCP_SERVER_DIR}
     go mod tidy
