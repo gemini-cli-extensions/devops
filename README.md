@@ -90,24 +90,24 @@ The goal is to produce a functional, production-ready CI/CD pipeline configurati
 The extension exposes the following tools to Gemini CLI, enabling interaction with Google Cloud services:
 
 #### CI/CD Service Tools
-*   `artifactregistry.setup_repository`: Creates a new Artifact Registry repository. Optionally grants Artifact Registry Writer permissions to a specified service account.
-*   `cloudbuild.create_trigger`: Creates a new Cloud Build trigger.
-*   `cloudbuild.list_triggers`: Lists all Cloud Build triggers in a given project and location.
-*   `cloudbuild.run_trigger`: Manually runs an existing Cloud Build trigger.
-*   `devconnect.add_git_repo_link`: Creates a Developer Connect Git repository link under an existing connection.
-*   `devconnect.setup_connection`: Sets up a new Developer Connect connection (e.g., to GitHub).
+*   `create_artifact_repository`: Creates a new Artifact Registry repository. Optionally grants Artifact Registry Writer permissions to a specified service account.
+*   `create_build_trigger`: Creates a new Cloud Build trigger.
+*   `list_build_triggers`: Lists all Cloud Build triggers in a given project and location.
+*   `run_build_trigger`: Manually runs an existing Cloud Build trigger.
+*   `create_git_repository_link`: Creates a Developer Connect Git repository link under an existing connection.
+*   `create_git_connection`: Sets up a new Developer Connect connection (e.g., to GitHub).
 
 #### Deployment Tools
-*   `cloudrun.deploy_to_cloud_run_from_image`: Deploys a container image to Cloud Run, creating a new service or updating an existing one.
-*   `cloudrun.deploy_to_cloud_run_from_source`: Deploys to Cloud Run directly from source code, typically using Cloud Build and BuildPacks.
-*   `cloudrun.list_services`: Lists Cloud Run services in a specified project and location.
-*   `cloudstorage.list_buckets`: Lists Cloud Storage buckets in a specified project.
-*   `cloudstorage.upload_source`: Uploads files from the local workspace to a GCS bucket. Can create a new public bucket if specified.
-*   `osv.scan_secrets`: Scans a specified directory for potential secrets and keys using OSV-Scanner.
+*   `deploy_cloudrun_service_from_image`: Deploys a container image to Cloud Run, creating a new service or updating an existing one.
+*   `deploy_cloudrun_service_from_source`: Deploys to Cloud Run directly from source code, typically using Cloud Build and BuildPacks.
+*   `list_cloudrun_services`: Lists Cloud Run services in a specified project and location.
+*   `list_storage_buckets`: Lists Cloud Storage buckets in a specified project.
+*   `upload_storage_object`: Uploads files from the local workspace to a GCS bucket. Can create a new public bucket if specified.
+*   `scan_code_for_secrets`: Scans a specified directory for potential secrets and keys using OSV-Scanner.
 
 #### Knowledge Retrieval Tools
-*   `bm25.query_knowledge`: Retrieves relevant snippets from the extension's knowledge base to answer questions.
-*   `bm25.search_common_cicd_patterns`: Finds common CI/CD pipeline patterns and best practices.
+*   `search_knowledge_base`: Retrieves relevant snippets from the extension's knowledge base to answer questions.
+*   `search_cicd_patterns`: Finds common CI/CD pipeline patterns and best practices.
 
 ## 📚 Resources
 

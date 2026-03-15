@@ -68,8 +68,8 @@ func main() {
 	testUploadSource(ctx, csClient)
 	// Cloud Run Tests
 	testListServices(ctx, crClient)
-	testDeployToCloudRunFromImage(ctx, crClient)         // Tests the cloudrun.deploy_to_cloud_run_from_image tool with a new service.
-	testDeployToCloudRunFromImageNewRevision(ctx, crClient) // Tests the cloudrun.deploy_to_cloud_run_from_image tool with a preexisting service.
+	testDeployToCloudRunFromImage(ctx, crClient)         // Tests the deploy_cloudrun_service_from_image tool with a new service.
+	testDeployToCloudRunFromImageNewRevision(ctx, crClient) // Tests the deploy_cloudrun_service_from_image tool with a preexisting service.
 	testDeployToCloudRunFromSource(ctx, crClient)
 	// OSV Tests
 	testScanSecrets(ctx, osvClient)
@@ -162,10 +162,10 @@ func testSetupRepository(ctx context.Context, arClient artifactregistryclient.Ar
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "artifactregistry.setup_repository"
+	req.Params.Name = "create_artifact_repository"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'artifactregistry.setup_repository'...")
+	log.Println("Calling tool 'create_artifact_repository'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -287,10 +287,10 @@ func testListBuckets(ctx context.Context, csClient cloudstorageclient.CloudStora
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudstorage.list_buckets"
+	req.Params.Name = "list_storage_buckets"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudstorage.list_buckets'...")
+	log.Println("Calling tool 'list_storage_buckets'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -398,10 +398,10 @@ func testUploadSource(ctx context.Context, csClient cloudstorageclient.CloudStor
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudstorage.upload_source"
+	req.Params.Name = "upload_storage_object"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudstorage.upload_source'...")
+	log.Println("Calling tool 'upload_storage_object'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -518,10 +518,10 @@ func testListServices(ctx context.Context, crClient cloudrunclient.CloudRunClien
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudrun.list_services"
+	req.Params.Name = "list_cloudrun_services"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudrun.list_services'...")
+	log.Println("Calling tool 'list_cloudrun_services'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -571,7 +571,7 @@ func testListServices(ctx context.Context, crClient cloudrunclient.CloudRunClien
 	log.Println("Services verification successful.")
 }
 
-// Tests the cloudrun.deploy_to_cloud_run_from_image tool with a new private service.
+// Tests the deploy_cloudrun_service_from_image tool with a new private service.
 func testDeployToCloudRunFromImage(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
 	log.Println("--- Running test: CreateService ---")
 	const serverURL = "http://localhost:8080"
@@ -612,10 +612,10 @@ func testDeployToCloudRunFromImage(ctx context.Context, crClient cloudrunclient.
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudrun.deploy_to_cloud_run_from_image"
+	req.Params.Name = "deploy_cloudrun_service_from_image"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudrun.deploy_to_cloud_run_from_image'...")
+	log.Println("Calling tool 'deploy_cloudrun_service_from_image'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -647,7 +647,7 @@ func testDeployToCloudRunFromImage(ctx context.Context, crClient cloudrunclient.
 	log.Println("Service verification successful.")
 }
 
-// Tests the cloudrun.deploy_to_cloud_run_from_image tool with a preexisting service (private service).
+// Tests the deploy_cloudrun_service_from_image tool with a preexisting service (private service).
 func testDeployToCloudRunFromImageNewRevision(ctx context.Context, crClient cloudrunclient.CloudRunClient) {
 	log.Println("--- Running test: CreateServiceRevision ---")
 	const serverURL = "http://localhost:8080"
@@ -705,10 +705,10 @@ func testDeployToCloudRunFromImageNewRevision(ctx context.Context, crClient clou
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudrun.deploy_to_cloud_run_from_image"
+	req.Params.Name = "deploy_cloudrun_service_from_image"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudrun.deploy_to_cloud_run_from_image'...")
+	log.Println("Calling tool 'deploy_cloudrun_service_from_image'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -818,10 +818,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "cloudrun.deploy_to_cloud_run_from_source"
+	req.Params.Name = "deploy_cloudrun_service_from_source"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'cloudrun.deploy_to_cloud_run_from_source'...")
+	log.Println("Calling tool 'deploy_cloudrun_service_from_source'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -896,10 +896,10 @@ func testScanSecrets(ctx context.Context, oClient osvclient.OsvClient) {
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "osv.scan_secrets"
+	req.Params.Name = "scan_code_for_secrets"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'osv.scan_secrets'...")
+	log.Println("Calling tool 'scan_code_for_secrets'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {
@@ -958,10 +958,10 @@ func testScanSecretsWithSecret(ctx context.Context, oClient osvclient.OsvClient)
 	}
 
 	var req mcp.CallToolRequest
-	req.Params.Name = "osv.scan_secrets"
+	req.Params.Name = "scan_code_for_secrets"
 	req.Params.Arguments = args
 
-	log.Println("Calling tool 'osv.scan_secrets'...")
+	log.Println("Calling tool 'scan_code_for_secrets'...")
 
 	resp, err := mcpClient.CallTool(ctx, req)
 	if err != nil {

@@ -4,7 +4,7 @@ This document provides detailed information about the tools available in the Goo
 
 ## Artifact Registry
 
-### `artifactregistry.setup_repository`
+### `create_artifact_repository`
 Sets up a new Artifact Registry repository. Optionally, it can grant Artifact Registry Writer permissions to a service account.
 
 **Arguments:**
@@ -16,14 +16,14 @@ Sets up a new Artifact Registry repository. Optionally, it can grant Artifact Re
 
 ## Cloud Build
 
-### `cloudbuild.list_triggers`
+### `list_build_triggers`
 Lists all Cloud Build triggers in a given location.
 
 **Arguments:**
 - `project_id` (string, required): The Google Cloud project ID.
 - `location` (string, required): The Google Cloud location for the triggers.
 
-### `cloudbuild.create_trigger`
+### `create_build_trigger`
 Creates a new Cloud Build trigger.
 
 **Arguments:**
@@ -35,7 +35,7 @@ Creates a new Cloud Build trigger.
 - `branch` (string, optional): Create builds on push to branch (regex, e.g., `^main$`).
 - `tag` (string, optional): Create builds on new tag push (regex, e.g., `^nightly$`).
 
-### `cloudbuild.run_trigger`
+### `run_build_trigger`
 Runs a Cloud Build trigger.
 
 **Arguments:**
@@ -48,14 +48,14 @@ Runs a Cloud Build trigger.
 
 ## Cloud Run
 
-### `cloudrun.list_services`
+### `list_cloudrun_services`
 Lists the Cloud Run services in a specified GCP project and location.
 
 **Arguments:**
 - `project_id` (string, required): The Google Cloud project ID.
 - `location` (string, required): The Google Cloud location.
 
-### `cloudrun.deploy_to_cloud_run_from_image`
+### `deploy_cloudrun_service_from_image`
 Creates a new Cloud Run service or updates an existing one from a container image.
 
 **Arguments:**
@@ -67,7 +67,7 @@ Creates a new Cloud Run service or updates an existing one from a container imag
 - `port` (integer, optional): The port the container listens on.
 - `allow_public_access` (boolean, optional): If the service should be public. Default is `false`.
 
-### `cloudrun.deploy_to_cloud_run_from_source`
+### `deploy_cloudrun_service_from_source`
 Creates a new Cloud Run service or updates an existing one from source.
 
 **Arguments:**
@@ -80,13 +80,13 @@ Creates a new Cloud Run service or updates an existing one from source.
 
 ## Cloud Storage
 
-### `cloudstorage.list_buckets`
+### `list_storage_buckets`
 Lists Cloud Storage buckets in a specified project.
 
 **Arguments:**
 - `project_id` (string, required): The Google Cloud project ID.
 
-### `cloudstorage.upload_source`
+### `upload_storage_object`
 Uploads source to a GCS bucket. If a new bucket is created, it will be public.
 
 **Arguments:**
@@ -97,7 +97,7 @@ Uploads source to a GCS bucket. If a new bucket is created, it will be public.
 
 ## Developer Connect
 
-### `devconnect.setup_connection`
+### `create_git_connection`
 Sets up a Developer Connect connection.
 
 **Arguments:**
@@ -105,7 +105,7 @@ Sets up a Developer Connect connection.
 - `location` (string, required): The Google Cloud location.
 - `git_repo_uri` (string, required): The URI of the git repository to connect to.
 
-### `devconnect.add_git_repo_link`
+### `create_git_repository_link`
 Creates a Developer Connect git repository link when a connection already exists.
 
 **Arguments:**
@@ -116,7 +116,7 @@ Creates a Developer Connect git repository link when a connection already exists
 
 ## OSV
 
-### `osv.scan_secrets`
+### `scan_code_for_secrets`
 Scans the specified root directory for secrets using OSV.
 
 **Arguments:**
@@ -125,13 +125,13 @@ Scans the specified root directory for secrets using OSV.
 
 ## BM25 (Search)
 
-### `bm25.search_common_cicd_patterns`
+### `search_cicd_patterns`
 Finds common CI/CD patterns in the database.
 
 **Arguments:**
 - `query` (string, required): The query to search for.
 
-### `bm25.query_knowledge`
+### `search_knowledge_base`
 Finds knowledge snippets in the knowledge database.
 
 **Arguments:**

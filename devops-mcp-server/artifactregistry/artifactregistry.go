@@ -69,5 +69,5 @@ func addSetupRepositoryTool(server *mcp.Server, arClient artifactregistryclient.
 
 		return &mcp.CallToolResult{}, res, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "artifactregistry.setup_repository", Description: "Sets up a new Artifact Registry repository. Optionally, it can grant Artifact Registry Writer permissions to a service account."}, setupRepositoryToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "create_artifact_repository", Description: "Sets up a new Artifact Registry repository. Optionally, it can grant Artifact Registry Writer permissions to a service account."}, setupRepositoryToolFunc)
 }

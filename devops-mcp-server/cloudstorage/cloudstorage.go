@@ -55,7 +55,7 @@ func addListBucketsTool(server *mcp.Server, csClient cloudstorageclient.CloudSto
 		return &mcp.CallToolResult{}, map[string]any{"buckets": res}, nil
 
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.list_buckets", Description: "Lists Cloud Storage buckets in a specified project."}, listBucketsToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "list_storage_buckets", Description: "Lists Cloud Storage buckets in a specified project."}, listBucketsToolFunc)
 }
 
 type UploadSourceArgs struct {
@@ -127,5 +127,5 @@ func addUploadSourceTool(server *mcp.Server, csClient cloudstorageclient.CloudSt
 			return nil
 		})
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudstorage.upload_source", Description: "Uploads source to a GCS bucket. If a new bucket is created, it will create a public bucket."}, uploadSourceToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "upload_storage_object", Description: "Uploads source to a GCS bucket. If a new bucket is created, it will create a public bucket."}, uploadSourceToolFunc)
 }
