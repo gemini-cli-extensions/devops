@@ -1,10 +1,10 @@
-name: "Trunk-Based CI and Tag based CD"
+name: "Trunk-Based CI and Tag-Based CD"
 description: "A pattern where every push to the main branch triggers code quality checks (linting and testing). Deployment is only initiated when a Git tag is pushed, triggering a final container build and a release creation in Cloud Deploy."
 
 applicability:
   triggers: ["git_push", "git_tag"]
   deployment_style: "continuous_delivery"
-  use_case_keywords: ["trunk-based-ci", "tag-based-cd", "lint-test-only", "cloud-deploy", "rollbacks", "canary deployments", "multi stage deployments"]
+  use_case_keywords: ["trunk-based-ci", "tag-based-cd", "lint-test-only", "cloud-deploy", "rollbacks", "canary deployments"]
 
 stages:
   # CI stage runs on every commit to the main branch.
