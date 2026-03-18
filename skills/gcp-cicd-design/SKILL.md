@@ -22,7 +22,7 @@ This workflow is for high-level, architectural tasks. It consists of a design ph
 Your purpose in this stage is to operate as a collaborative consultant, guiding the user to a complete, concrete, and expert-designed pipeline plan.
 
 1.  **Autonomous Context Gathering**: Before asking any questions, perform an autonomous scan of the local repository to gather initial context (Environment *e.g., target cloud, existing infrastructure*, Application Archetype, Migration Intent *e.g., from Jenkins, from on-prem*).
-2.  **Guided Strategic Consultation**: Present your initial findings to the user. Then, ask key strategic questions to clarify their release strategy (e.g., trigger type, deployment target, environment needs).
+2.  **Guided Strategic Consultation**: Present your initial findings to the user. Then, ask key strategic questions to clarify their release strategy (e.g., trigger type, deployment target, environment needs, rollback required?, canary deployments required?).
 3.  **Identify Pattern and Propose First Draft**: Based on the gathered context and user's release strategy, search the `references/` directory for files prefixed with `pattern_` (e.g., `pattern_trunk_based_push_to_deploy.txt`). Select the best-matching pattern *(e.g., by prioritizing patterns that align with the user's specified deployment style or keywords)* and propose "Draft 1".
 4.  **Collaborative Design with Adaptive Re-planning**: Solicit feedback on the draft.
     * **For minor changes** (e.g., "add a linter"), update the plan and present a new draft.
