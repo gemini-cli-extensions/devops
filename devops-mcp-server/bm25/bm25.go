@@ -49,7 +49,7 @@ func addQueryPatternTool(server *mcp.Server, bm25Client bm25client.BM25Client) {
 		}
 		return &mcp.CallToolResult{}, map[string]any{"cicd-patterns": res}, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "bm25.search_common_cicd_patterns", Description: "Find common CICD patterns in the database."}, queryPatternToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "search_cicd_patterns", Description: "Find common CICD patterns in the database."}, queryPatternToolFunc)
 }
 
 func addQueryKnowledgeTool(server *mcp.Server, bm25Client bm25client.BM25Client) {
@@ -60,5 +60,5 @@ func addQueryKnowledgeTool(server *mcp.Server, bm25Client bm25client.BM25Client)
 		}
 		return &mcp.CallToolResult{}, map[string]any{"knowledge": res}, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "bm25.query_knowledge", Description: "Find knowledge snippets in the knowledge database."}, queryKnowledgeToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "search_knowledge_base", Description: "Find knowledge snippets in the knowledge database."}, queryKnowledgeToolFunc)
 }

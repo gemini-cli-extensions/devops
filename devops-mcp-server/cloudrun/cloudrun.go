@@ -53,7 +53,7 @@ func addListServicesTool(server *mcp.Server, crClient cloudrunclient.CloudRunCli
 		}
 		return &mcp.CallToolResult{}, map[string]any{"services": services}, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.list_services", Description: "Lists the Cloud Run service in a specified GCP project and location."}, listServicesToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "list_cloudrun_services", Description: "Lists the Cloud Run service in a specified GCP project and location."}, listServicesToolFunc)
 
 }
 
@@ -106,7 +106,7 @@ func addDeployToCloudRunFromImageTool(server *mcp.Server, crClient cloudrunclien
 		}
 		return &mcp.CallToolResult{}, revision, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.deploy_to_cloud_run_from_image", Description: "Creates a new Cloud Run service or updates an existing one from a container image. This tool may take a couple minutes to finish running."}, deployToCloudRunFromImageToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "deploy_cloudrun_service_from_image", Description: "Creates a new Cloud Run service or updates an existing one from a container image. This tool may take a couple minutes to finish running."}, deployToCloudRunFromImageToolFunc)
 }
 
 type DeployToCloudRunFromSourceArgs struct {
@@ -132,5 +132,5 @@ func addDeployToCloudRunFromSourceTool(server *mcp.Server, crClient cloudrunclie
 		}
 		return &mcp.CallToolResult{}, service, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudrun.deploy_to_cloud_run_from_source", Description: "Creates a new Cloud Run service or updates an existing one from source. This tool may take a couple minutes to finish running."}, deployToCloudRunFromSourceToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "deploy_cloudrun_service_from_source", Description: "Creates a new Cloud Run service or updates an existing one from source. This tool may take a couple minutes to finish running."}, deployToCloudRunFromSourceToolFunc)
 }

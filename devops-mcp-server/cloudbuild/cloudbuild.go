@@ -65,7 +65,7 @@ func addRunTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildC
 		}
 		return &mcp.CallToolResult{}, res, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.run_trigger", Description: "Runs a Cloud Build trigger."}, runTriggerToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "run_build_trigger", Description: "Runs a Cloud Build trigger."}, runTriggerToolFunc)
 }
 
 type ListTriggersArgs struct {
@@ -83,7 +83,7 @@ func addListTriggersTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuil
 		}
 		return &mcp.CallToolResult{}, map[string]any{"triggers": res}, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.list_triggers", Description: "Lists all Cloud Build triggers in a given location."}, listTriggersToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "list_build_triggers", Description: "Lists all Cloud Build triggers in a given location."}, listTriggersToolFunc)
 }
 
 type CreateTriggerArgs struct {
@@ -116,7 +116,7 @@ func addCreateTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBui
 		}
 		return &mcp.CallToolResult{}, res, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.create_trigger", Description: "Creates a new Cloud Build trigger."}, createTriggerToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "create_build_trigger", Description: "Creates a new Cloud Build trigger."}, createTriggerToolFunc)
 }
 
 // setPermissionsForSA resolves the SA (if default) and grants it a role.
@@ -178,7 +178,7 @@ func addListBuildsTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildC
 		}
 		return &mcp.CallToolResult{}, map[string]any{"builds": res}, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.list_builds", Description: "Lists all Cloud Builds in a given location and project."}, listBuildsToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "list_builds", Description: "Lists all Cloud Builds in a given location and project."}, listBuildsToolFunc)
 }
 
 func addGetBuildInfoTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
@@ -189,7 +189,7 @@ func addGetBuildInfoTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuil
 		}
 		return &mcp.CallToolResult{}, res, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.get_build_info", Description: "Gets information about a specific Cloud Build."}, getBuildInfoToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "get_build_details", Description: "Gets information about a specific Cloud Build."}, getBuildInfoToolFunc)
 }
 
 func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {
@@ -208,5 +208,5 @@ func addStartBuildTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildC
 		}
 		return &mcp.CallToolResult{}, res, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "cloudbuild.start_build", Description: "Starts a new Cloud Build from a source in Google Cloud Storage."}, startBuildToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "start_build", Description: "Starts a new Cloud Build from a source in Google Cloud Storage."}, startBuildToolFunc)
 }

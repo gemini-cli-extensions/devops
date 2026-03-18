@@ -54,7 +54,7 @@ func addAddDevConnectGitRepoLinkTool(server *mcp.Server, dcClient devconnectclie
 		}
 		return &mcp.CallToolResult{}, newLink, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.add_git_repo_link", Description: "Creates a Developer Connect git repository link when a connection already exists."}, addDevConnectGitRepoLinkToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "create_git_repository_link", Description: "Creates a Developer Connect git repository link when a connection already exists."}, addDevConnectGitRepoLinkToolFunc)
 }
 
 type ResultWrapper struct {
@@ -88,5 +88,5 @@ func addSetupDevConnectConnectionTool(server *mcp.Server, dcClient devconnectcli
 
 		return &mcp.CallToolResult{}, ResultWrapper{Message: "Created connection, authorize the connection by visiting the `installationUri`. After authorizing, call the AddDevConnectGitRepoLink to finalize.", Result: newConnection}, nil
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "devconnect.setup_connection", Description: "Sets up a Developer Connect connection."}, setupDevConnectConnectionToolFunc)
+	mcp.AddTool(server, &mcp.Tool{Name: "create_git_connection", Description: "Sets up a Developer Connect connection."}, setupDevConnectConnectionToolFunc)
 }
