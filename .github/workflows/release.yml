@@ -90,7 +90,6 @@ jobs:
 
                   cp ../README.md "${RELEASE_DIR}/"
                   cp ../LICENSE "${RELEASE_DIR}/"
-                  cp -r ../commands "${RELEASE_DIR}/"
                   cp -r ../skills "${RELEASE_DIR}/"
 
             - name: Set up Go
