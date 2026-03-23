@@ -94,7 +94,7 @@ Cloud Deploy **requires** the Google Cloud Observability alerting policies to be
 
 1. Prompt the user whether they have existing alerting policies defined for the application. **DO NOT** assume that existing alerting policies are applicable to the application being deployed.
 2. If the user does not have alerting policies defined for the application, help the user generate them.
-  - **If Cloud Run** Use `references/basic-cloudrun-alerts.md` as a reference.
+  - **If Cloud Run**: Use `references/basic-cloudrun-alerts.md` as a reference.
 
 ### Step 1: Update the pipeline definition
 
