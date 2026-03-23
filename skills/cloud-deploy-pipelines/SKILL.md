@@ -1,7 +1,7 @@
 ---
 name: cloud-deploy-pipelines
 description: >
-  Design Cloud Deploy delivery pipelines and manage releases when deploying applications to Cloud Run and Google Kubernetes Engine (GKE). Use when users want to deploy their applications to multiple environments (e.g. dev and prod), leverage deployment strategies (i.e. canary), or  rollback (manually or automatically) when there are issues deploying their application.
+  Design Cloud Deploy delivery pipelines and manage releases when deploying applications to Cloud Run and Google Kubernetes Engine (GKE). Use when users want to deploy their applications to multiple environments (e.g. dev and prod), leverage deployment strategies (i.e. canary), or rollback (manually or automatically) when there are issues deploying their application.
 version: "0.1.0"
 ---
 
@@ -77,6 +77,43 @@ gcloud deploy apply --file=clouddeploy.yaml --region=<REGION> --project=<PROJECT
     - **If GKE**: Generate a Kubernetes `Deployment` and `Service`manifest. Use `references/basic-k8s-manifests.md` as a reference.
 2. Create a `skaffold.yaml` file required to create a Cloud Deploy `Release` for the `DeliveryPipeline`.
     - Use `references/configure-skaffold.md` as a reference when generating the `skaffold.yaml` file.
+
+## Workflow: Add Google Observability Metrics Analysis to a Pipeline
+
+Cloud Deploy integrates with Google Cloud Observability to provide metrics analysis when deploying an application. When the application is deployed, Cloud Deploy will monitor alert policies defined in Google Cloud Observability for any incidents that were triggered after the application was deployed.
+
+This section covers how to update the user's `DeliveryPipeline` to leverage this feature.
+
+### Constraints & Rules
+
+A `DeliveryPipeline` MUST already be defined or being designed in the current context.
+
+### Step 0: Prerequisites
+
+Cloud Deploy **requires** the Google Cloud Observability alerting policies to be defined before they can be referenced in the `DeliveryPipeline`. 
+
+1. Prompt the user whether they have existing alerting policies defined for the application. **DO NOT** assume that existing alerting policies are applicable to the application being deployed.
+2. If the user does not have alerting policies defined for the application, help the user generate them.
+  - **If Cloud Run** Use `references/basic-cloudrun-alerts.md` as a reference.
+
+### Step 1: Update the pipeline definition
+
+1. Identify the duration for which the metrics analysis should run after the application is deployed (e.g., 30 minutes).
+2. Identify which alerting policies Cloud Deploy should monitor for incidents.
+3. Update the `DeliveryPipeline` definition in the `clouddeploy.yaml` file to include analysis configuration.
+    - Use `references/configure-pipelines.md` as a reference when updating the `DeliveryPipeline` definition.
+
+### Step 2: Validate the clouddeploy.yaml file
+
+Ensure that the `clouddeploy.yaml` file is valid. See https://docs.cloud.google.com/deploy/docs/config-files for the schema.
+
+### Step 3: Apply the pipeline changes
+
+Run the following command to update the Cloud Deploy `DeliveryPipeline`:
+
+```bash
+gcloud deploy apply --file=clouddeploy.yaml --region=<REGION> --project=<PROJECT_ID>
+```
 
 ## Release Management
 

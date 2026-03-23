@@ -85,3 +85,66 @@ serialPipeline:
         canaryDeployment:
           percentages: [10, 50]
 ```
+
+## Pipeline with Google Observability metrics analysis (Cloud Run)
+
+The examples in this section leverage `labels` to filter the incidents for the alert policies to only take into account the Cloud Run `Service` and `Revision` that is being deployed. The `duration` is set to 30 minutes (`1800s`) to give the alerting policies time to evaluate the metrics and potentially trigger incidents.
+
+### Standard deployment strategy with analysis
+
+This `DeliveryPipeline` is configured to monitor a single Google Cloud Observability alert policy for any incidents over a 30 minute (`1800s`) period after the application has been deployed.
+
+```yaml
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+ name: <PIPELINE_ID>
+serialPipeline:
+  stages:
+  - targetId: <TARGET_ID>
+    profiles: [<TARGET_ID>]
+    strategy:
+      standard:
+        analysis:
+          duration: 1800s
+          googleCloud:
+            alertPolicyChecks:
+            - id: alert-check-1
+              alertPolicies:
+              - projects/<PROJECT_ID>/alertPolicies/<ALERT_POLICY_ID>
+              labels:
+                service_name: '${{ render.metadata.cloud_run.service.id }}'
+                revision_name: '${{ render.metadata.cloud_run.revision.id }}'
+```
+
+### Canary deployment strategy with analysis
+
+This `DeliveryPipeline` is configured to monitor a single Google Cloud Observability alert policy for any incidents over a 30 minute (`1800s`) period after deploying in each phase of the `Rollout`. In this case Cloud Deploy will monitor the alert policy after deploying 50% of the traffic to the new version and after deploying 100% of the traffic to the new version during the stable phase.
+
+```yaml
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+ name: <PIPELINE_ID>
+serialPipeline:
+  stages:
+  - targetId: <TARGET_ID>
+    profiles: [<TARGET_ID>]
+    strategy:
+      canary:
+        runtimeConfig:
+          cloudRun:
+            automaticTrafficControl: true
+        canaryDeployment:
+          percentages: [50]
+          analysis:
+            duration: 1800s
+            googleCloud:
+              alertPolicyChecks:
+              - id: alert-check-1
+                alertPolicies:
+                - projects/<PROJECT_ID>/alertPolicies/<ALERT_POLICY_ID>
+                labels:
+                  service_name: '${{ render.metadata.cloud_run.service.id }}'
+                  revision_name: '${{ render.metadata.cloud_run.revision.id }}'
+```
