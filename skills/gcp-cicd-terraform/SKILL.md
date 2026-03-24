@@ -40,10 +40,15 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 7.20.0"
+      version = "~> 7.20.0" # ALWAYS use latest version if any
     }
   }
 }
+```
+
+To retrieve the latest version of the Google provider, use the following command:
+```bash
+curl -s https://registry.terraform.io/v1/providers/hashicorp/google | jq -r .version
 ```
 
 ## 🛠️ Execution Protocol (Safety First)
