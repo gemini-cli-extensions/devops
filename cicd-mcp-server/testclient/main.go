@@ -67,7 +67,7 @@ func main() {
 	req.Params.Name = "artifactregistry.create_repository"
 	req.Params.Arguments = args
 
-	fmt.Println("Calling tool 'cicd/artifactregistry.create_repository' using mark3labs client...")
+    fmt.Println("Calling tool 'cicd/create_artifact_repository' using mark3labs client...")
 
 	// 6. Call the tool
 	resp, err := mcpClient.CallTool(ctx, req)
