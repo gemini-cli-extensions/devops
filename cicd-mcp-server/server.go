@@ -23,7 +23,6 @@ import (
 	"cicd-mcp-server/bm25"
 	"cicd-mcp-server/cloudbuild"
 	"cicd-mcp-server/cloudrun"
-	"cicd-mcp-server/cloudstorage"
 	"cicd-mcp-server/devconnect"
 	"cicd-mcp-server/osv"
 
@@ -32,7 +31,6 @@ import (
 	artifactregistryclient "cicd-mcp-server/artifactregistry/client"
 	cloudbuildclient "cicd-mcp-server/cloudbuild/client"
 	cloudrunclient "cicd-mcp-server/cloudrun/client"
-	cloudstorageclient "cicd-mcp-server/cloudstorage/client"
 	developerconnectclient "cicd-mcp-server/devconnect/client"
 	iamclient "cicd-mcp-server/iam/client"
 	osvclient "cicd-mcp-server/osv/client"
@@ -86,10 +84,6 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err != nil {
 		return fmt.Errorf("failed to create CloudRun client: %w", err)
 	}
-	csClient, err := cloudstorageclient.NewCloudStorageClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create CloudStorage client: %w", err)
-	}
 	devConnectClient, err := developerconnectclient.NewDeveloperConnectClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create dev connect client: %w", err)
@@ -112,7 +106,6 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	(&cloudrun.Handler{CrClient: crClient}).Register(server)
 	(&devconnect.Handler{DcClient: devConnectClient}).Register(server)
 	(&cloudbuild.Handler{CbClient: cbClient, IClient: i, RClient: r}).Register(server)
-	(&cloudstorage.Handler{CsClient: csClient}).Register(server)
 	(&osv.Handler{OsvClient: osvClient}).Register(server)
 	(&bm25.Handler{BM25Client: bm25Client}).Register(server)
 
