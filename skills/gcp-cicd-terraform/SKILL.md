@@ -30,6 +30,22 @@ terraform {
 
 Note: The GCS bucket must have Object Versioning enabled to allow recovery from accidental state corruption or overlapping writes.
 
+### Provider Version Pinning
+Always pin the Google provider to a recent version. Older versions (e.g., `~> 6.0`) lack support for newer resources such as Developer Connect. Example:
+
+```hcl
+terraform {
+  required_version = ">= 1.6.0"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 7.20.0"
+    }
+  }
+}
+```
+
 ## 🛠️ Execution Protocol (Safety First)
 The Agent must follow this lifecycle for every infrastructure change to ensure idempotency and prevent production outages:
 
