@@ -78,23 +78,6 @@ Creates a new Cloud Run service or updates an existing one from source.
 - `port` (integer, optional): The port the container listens on.
 - `allow_public_access` (boolean, optional): If the service should be public. Default is `false`.
 
-## Cloud Storage
-
-### `list_storage_buckets`
-Lists Cloud Storage buckets in a specified project.
-
-**Arguments:**
-- `project_id` (string, required): The Google Cloud project ID.
-
-### `upload_storage_object`
-Uploads source to a GCS bucket. If a new bucket is created, it will be public.
-
-**Arguments:**
-- `project_id` (string, required): The Google Cloud project ID.
-- `bucket_name` (string, optional): The name of the bucket.
-- `destination_dir` (string, required): The name of the destination directory in the bucket.
-- `source_path` (string, required): The local path to the source directory.
-
 ## Developer Connect
 
 ### `create_git_connection`

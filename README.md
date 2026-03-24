@@ -101,8 +101,6 @@ The extension exposes the following tools to Gemini CLI, enabling interaction wi
 *   `deploy_cloudrun_service_from_image`: Deploys a container image to Cloud Run, creating a new service or updating an existing one.
 *   `deploy_cloudrun_service_from_source`: Deploys to Cloud Run directly from source code, typically using Cloud Build and BuildPacks.
 *   `list_cloudrun_services`: Lists Cloud Run services in a specified project and location.
-*   `list_storage_buckets`: Lists Cloud Storage buckets in a specified project.
-*   `upload_storage_object`: Uploads files from the local workspace to a GCS bucket. Can create a new public bucket if specified.
 *   `scan_code_for_secrets`: Scans a specified directory for potential secrets and keys using OSV-Scanner.
 
 #### Knowledge Retrieval Tools
