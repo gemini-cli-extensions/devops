@@ -104,6 +104,20 @@ To maintain a clean module interface, use the main identifier for singleton reso
    - Private Google Access: Subnets should always have private_ip_google_access = true.
    - Workload Identity: Prefer GKE Workload Identity over static Service Account JSON keys.
 
+3. Cloud Build Triggers with Developer Connect
+   When using Developer Connect git repository links, use `developer_connect_event_config` — NOT `repository_event_config`. The `repository_event_config` block is for Cloud Build v2 repository connections and will not work with Developer Connect resources. An example block to create a Cloud Build trigger with Developer Connect git repository link is as follows:
+
+    ```hcl
+    resource "google_cloudbuild_trigger" "main" {
+      developer_connect_event_config {
+        git_repository_link = google_developer_connect_git_repository_link.main.id
+        push {
+          branch = var.trigger_branch
+        }
+      }
+    }
+    ```
+
 ## 📂 Directory Structure
 Follow this standard to ensure compatibility with Antigravity (AGY) discovery and Google best practices:
 
