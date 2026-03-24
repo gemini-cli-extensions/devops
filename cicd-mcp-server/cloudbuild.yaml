@@ -1,0 +1,94 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+steps:
+  # Step 1: Install tools (like the linter) and clean the cache.
+  - name: 'golang:1.24'
+    id: 'Install Tools'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        set -e
+        export PATH=/workspace/bin:$$PATH
+        echo "Installing golangci-lint..."
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+        echo "Cleaning module cache..."
+        go clean -modcache
+    env:
+      - 'GOPATH=/workspace'
+    dir: 'cicd-mcp-server'
+
+  # Step 2: Download dependencies.
+  - name: 'golang:1.24'
+    id: 'Download Dependencies'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        set -e
+        export PATH=/workspace/bin:$$PATH
+        go mod tidy
+    env:
+      - 'GOPATH=/workspace'
+    dir: 'cicd-mcp-server'
+    waitFor: ['Install Tools'] # Run after tools are installed
+
+  # Step 3: Run the linter.
+  - name: 'golang:1.24'
+    id: 'Run Linter'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        set -e
+        export PATH=/workspace/bin:$$PATH
+        golangci-lint run --timeout=5m ./...
+    env:
+      - 'GOPATH=/workspace'
+    dir: 'cicd-mcp-server'
+    waitFor: ['Download Dependencies']
+
+  # Step 4: Build the code.
+  - name: 'golang:1.24'
+    id: 'Run Build'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        set -e
+        export PATH=/workspace/bin:$$PATH
+        go build ./...
+    env:
+      - 'GOPATH=/workspace'
+    dir: 'cicd-mcp-server'
+    waitFor: ['Run Linter'] # Wait for lint to pass
+
+  # Step 5: Run tests.
+  - name: 'golang:1.24'
+    id: 'Run Tests'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        set -e
+        export PATH=/workspace/bin:$$PATH
+        go test ./...
+    env:
+      - 'GOPATH=/workspace'
+    dir: 'cicd-mcp-server'
+    waitFor: ['Run Build'] # Wait for build to pass
+
+options:
+  logging: CLOUD_LOGGING_ONLY

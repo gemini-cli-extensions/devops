@@ -17,8 +17,8 @@
 set -euo pipefail
 
 
-readonly MCP_SERVER_DIR="devops-mcp-server"
-readonly BINARY_NAME="devops-mcp-server"
+readonly MCP_SERVER_DIR="cicd-mcp-server"
+readonly BINARY_NAME="cicd-mcp-server"
 
 
 # Prints an error message to standard error.
@@ -70,7 +70,7 @@ build_mcp() {
     cd ${MCP_SERVER_DIR}
     go mod tidy
     go build -o "../${BINARY_NAME}"
-    echo "Successfully built '${BINARY_NAME}' Please move it to `.gemini/extensions/devops/bin/devops-mcp-server`"
+    echo "Successfully built '${BINARY_NAME}' Please move it to \`.gemini/extensions/cicd/bin/cicd-mcp-server\`"
   )
 }
 

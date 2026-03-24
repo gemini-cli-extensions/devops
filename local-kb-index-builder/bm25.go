@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"devops/lib/bm25"
+	"cicd/lib/bm25"
 )
 
 // loadFilesFromDirectory reads all files from a directory (recursively) and adds them to the index

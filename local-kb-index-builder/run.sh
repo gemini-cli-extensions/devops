@@ -13,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export RAG_DB_PATH=$(pwd)/devops-rag.db
+export RAG_DB_PATH=$(pwd)/cicd-rag.db
 go build
 ./local-rag 2>&1 | tee -a embedding.log

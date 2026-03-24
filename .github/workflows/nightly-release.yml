@@ -36,7 +36,7 @@ jobs:
         runs-on: ubuntu-latest
         defaults:
             run:
-                working-directory: devops-mcp-server
+                working-directory: cicd-mcp-server
         env:
             RELEASE_DIR: "${{ github.workspace }}/release"
             DIST_DIR: "${{ github.workspace }}/dist"
@@ -48,23 +48,23 @@ jobs:
                     - {
                           goos: "linux",
                           goarch: "amd64",
-                          bin_file: "devops-mcp-server",
-                          archive: "linux.x64.devops.tar.gz",
+                          bin_file: "cicd-mcp-server",
+                          archive: "linux.x64.cicd.tar.gz",
                           archive_cmd: 'tar -czvf "${ARCHIVE_PATH}" -C "${RELEASE_DIR}" .',
                       }
                     - {
                           goos: "darwin",
                           goarch: "arm64",
-                          bin_file: "devops-mcp-server",
-                          archive: "darwin.arm64.devops.tar.gz",
+                          bin_file: "cicd-mcp-server",
+                          archive: "darwin.arm64.cicd.tar.gz",
                           archive_cmd: 'tar -czvf "${ARCHIVE_PATH}" -C "${RELEASE_DIR}" .',
                       }
 
                     - {
                           goos: "windows",
                           goarch: "amd64",
-                          bin_file: "devops-mcp-server.exe",
-                          archive: "win32.x64.devops.zip",
+                          bin_file: "cicd-mcp-server.exe",
+                          archive: "win32.x64.cicd.zip",
                           archive_cmd: 'cd "${RELEASE_DIR}" && zip -r "${ARCHIVE_PATH}" .',
                       }
         steps:
@@ -83,7 +83,7 @@ jobs:
                   SHORT_SHA=$(git rev-parse --short HEAD)
                   VERSION_SUFFIX="-${TIMESTAMP}-${SHORT_SHA}"
 
-                  command_exp='.mcpServers."devops-mcp".command = "${extensionPath}${/}'
+                  command_exp='.mcpServers."cicd-mcp".command = "${extensionPath}${/}'
                   command_exp="${command_exp}${BIN_FILE}\""
                   command_exp="${command_exp} | .version += \"${VERSION_SUFFIX}\""
                   jq "${command_exp}" < ../gemini-extension.json >"${RELEASE_DIR}/gemini-extension.json"

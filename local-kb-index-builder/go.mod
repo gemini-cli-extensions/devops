@@ -14,7 +14,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.8.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
-	devops/lib/bm25 v0.0.0
+	cicd/lib/bm25 v0.0.0
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v1.1.3 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
@@ -50,4 +50,4 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
-replace devops/lib/bm25 => ../lib/bm25
+replace cicd/lib/bm25 => ../lib/bm25

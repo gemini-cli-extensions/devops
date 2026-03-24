@@ -1,10 +1,10 @@
 {
-  "name": "devops",
+  "name": "cicd",
   "version": "0.1.1",
-  "description": "The DevOps extension provides Gemini powered AI assisted CI/CD. It supports deployment to Cloud Run and Cloud Storage as well as creation of a robust CI/CD pipeline.",
+  "description": "The CI/CD extension provides Gemini powered AI assisted CI/CD. It supports deployment to Cloud Run and Cloud Storage as well as creation of a robust CI/CD pipeline.",
   "mcpServers": {
-    "devops-mcp": {
-      "command": "${extensionPath}${/}bin${/}devops-mcp-server",
+    "cicd-mcp": {
+      "command": "${extensionPath}${/}bin${/}cicd-mcp-server",
       "timeout": 300000
     }
   }

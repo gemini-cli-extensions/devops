@@ -30,7 +30,7 @@ func dbFile() string {
 		if err != nil {
 			log.Fatal(err)
 		}
-		dbFile = filepath.Join(pwd, "devops-rag.db")
+		dbFile = filepath.Join(pwd, "cicd-rag.db")
 	}
 	return dbFile
 }
