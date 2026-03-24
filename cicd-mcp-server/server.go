@@ -37,7 +37,6 @@ import (
 	iamclient "cicd-mcp-server/iam/client"
 	osvclient "cicd-mcp-server/osv/client"
 
-	// ragclient "cicd-mcp-server/rag/client"
 	bm25client "cicd-mcp-server/bm25/client"
 	resourcemanagerclient "cicd-mcp-server/resourcemanager/client"
 
@@ -103,10 +102,6 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	if err != nil {
 		return fmt.Errorf("failed to create OSV client: %w", err)
 	}
-	// ragClient, err := ragclient.NewClient(ctx)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to create rag client: %w", err)
-	// }
 
 	bm25Client, err := bm25client.NewClient(ctx)
 	if err != nil {
@@ -119,7 +114,6 @@ func addAllTools(ctx context.Context, server *mcp.Server) error {
 	(&cloudbuild.Handler{CbClient: cbClient, IClient: i, RClient: r}).Register(server)
 	(&cloudstorage.Handler{CsClient: csClient}).Register(server)
 	(&osv.Handler{OsvClient: osvClient}).Register(server)
-	// (&rag.Handler{RagClient: ragClient}).Register(server)
 	(&bm25.Handler{BM25Client: bm25Client}).Register(server)
 
 	return nil
