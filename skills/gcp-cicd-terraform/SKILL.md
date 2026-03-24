@@ -118,6 +118,30 @@ To maintain a clean module interface, use the main identifier for singleton reso
     }
     ```
 
+4. Developer Connect Connection
+   When configuring `google_developer_connect_connection`, always set `github_app` to `"DEVELOPER_CONNECT"`. Using `"FIREBASE"` is incorrect and will cause triggers to fail.
+
+    ```hcl
+    resource "google_developer_connect_connection" "main" {
+      location      = var.region
+      connection_id = "tinyjam-github"
+      project       = var.project_id
+
+      github_config {
+        github_app = "DEVELOPER_CONNECT" # CORRECT
+        authorizer_credential {
+          oauth_token_secret_version = "" # Populated after manual authorization
+        }
+      }
+
+      depends_on = [google_project_service.main["developerconnect.googleapis.com"]]
+
+      lifecycle {
+        ignore_changes = [github_config[0].authorizer_credential]
+      }
+    }
+    ```
+
 ## 📂 Directory Structure
 Follow this standard to ensure compatibility with Antigravity (AGY) discovery and Google best practices:
 
