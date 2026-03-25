@@ -54,6 +54,7 @@ type CloudRunClient interface {
 	DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error
 	DeleteService(ctx context.Context, projectID, location, serviceName string) error
 	SetServiceAccess(ctx context.Context, serviceName string, allowPublicAccess bool) error
+	GetServiceStatus(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Condition_State, error)
 }
 
 // NewCloudRunClient creates a new CloudRunClient.
@@ -142,6 +143,20 @@ func (c *CloudRunClientImpl) GetService(ctx context.Context, projectID, location
 		return nil, fmt.Errorf("failed to get service: %w", err)
 	}
 	return service, nil
+}
+
+func (c *CloudRunClientImpl) GetServiceStatus(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Condition_State, error) {
+	servicePath := fmt.Sprintf("projects/%s/locations/%s/services/%s", projectID, location, serviceName)
+
+	service, err := c.servicesClient.GetService(ctx, &cloudrunpb.GetServiceRequest{Name: servicePath})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get service: %w", err)
+	}
+	terminalCondition := service.GetTerminalCondition()
+	if terminalCondition == nil {
+		return nil, fmt.Errorf("service %q does not have a terminal condition", service.Name)
+	}
+	return &terminalCondition.State, nil
 }
 
 func (c *CloudRunClientImpl) GetRevision(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error) {

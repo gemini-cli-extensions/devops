@@ -30,6 +30,7 @@ type MockCloudRunClient struct {
 	DeployFromSourceFunc func(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error
 	DeleteServiceFunc    func(ctx context.Context, projectID, location, serviceName string) error
 	SetServiceAccessFunc func(ctx context.Context, serviceName string, allowPublicAccess bool) error
+	GetServiceStatusFunc func(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Condition_State, error)
 }
 
 // DeleteService mocks the DeleteService method.
@@ -69,4 +70,9 @@ func (m *MockCloudRunClient) DeployFromSource(ctx context.Context, projectID, lo
 
 func (m *MockCloudRunClient) SetServiceAccess(ctx context.Context, serviceName string, allowPublicAccess bool) error {
 	return m.SetServiceAccessFunc(ctx, serviceName, allowPublicAccess)
+}
+
+// GetServiceStatus mocks the GetServiceStatus method.
+func (m *MockCloudRunClient) GetServiceStatus(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Condition_State, error) {
+	return m.GetServiceStatusFunc(ctx, projectID, location, serviceName)
 }
