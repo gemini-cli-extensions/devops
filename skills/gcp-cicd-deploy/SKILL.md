@@ -38,11 +38,11 @@ Your job is to deploy the users application to a Google Cloud Storage bucket.
 
 1.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Storage(e.g., `project_ID: "my-project"`).
 2.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Storage, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
-3.  **Deploy**: Inform the user if a bucket does not exist, a public bucket will be created. Deploy the users application to Google Cloud Storage.
-    * Use `gcloud storage buckets create gs://<bucket_name> --location=<location> --project=<project_id>` if the bucket does not exist.
-    * Use `gcloud storage buckets add-iam-policy-binding gs://<bucket_name> --member=allUsers --role=roles/storage.objectViewer --project=<project_id>` to make the bucket public.
-    * Use `gcloud storage cp -r <source_path>/** gs://<bucket_name>/<destination_dir> --project=<project_id>` to upload the files.
-    * Return the URL of the deployed application (e.g., `https://storage.googleapis.com/<bucket_name>/index.html`).
+3.  **Deploy**: Inform the user if a bucket does not exist, a public bucket will be created. Deploy the users application to Google Cloud Storage. Consult the `references/how_to_deploy_to_gcs_with_gcloud.md` file for detailed `gcloud storage` commands and best practices.
+    * Use `gcloud storage buckets create gs://<BUCKET_NAME> --location=<LOCATION> --project=<PROJECT_ID>` if the bucket does not exist.
+    * Use `gcloud storage buckets add-iam-policy-binding gs://<BUCKET_NAME> --member=allUsers --role=roles/storage.objectViewer --project=<PROJECT_ID>` to make the bucket public.
+    * Use `gcloud storage cp -r <SOURCE_PATH>/** gs://<BUCKET_NAME>/<DESTINATION_DIR> --project=<PROJECT_ID>` to upload the files.
+    * Return the URL of the deployed application (e.g., `https://storage.googleapis.com/<BUCKET_NAME>/<MAIN_FILE>`).
 
 
 ## Workflow B: Google Cloud Run With Buildpacks
