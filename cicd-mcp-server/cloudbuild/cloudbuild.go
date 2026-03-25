@@ -164,10 +164,10 @@ type GetBuildInfoArgs struct {
 }
 
 type StartBuildArgs struct {
-	ProjectID string                 `json:"project_id" jsonschema:"The Google Cloud project ID."`
-	Location  string                 `json:"location" jsonschema:"The Google Cloud location for the build."`
-	Bucket   string                 `json:"bucket" jsonschema:"The Cloud Storage bucket where the source is located."`
-	Object   string                 `json:"object" jsonschema:"The Cloud Storage object (file) where the source is located."`
+	ProjectID string `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location  string `json:"location" jsonschema:"The Google Cloud location for the build."`
+	Bucket    string `json:"bucket" jsonschema:"The Cloud Storage bucket where the source is located."`
+	Object    string `json:"object" jsonschema:"The Cloud Storage object (file) where the source is located."`
 }
 
 func addListBuildsTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient) {

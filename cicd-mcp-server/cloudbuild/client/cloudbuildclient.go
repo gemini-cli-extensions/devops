@@ -25,7 +25,7 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	
+
 	cloudbuildpb "cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb"
 	loggingpb "cloud.google.com/go/logging/apiv2/loggingpb"
 )
@@ -61,7 +61,7 @@ type CloudBuildClient interface {
 
 type BuildInfo struct {
 	BuildDetails *cloudbuildpb.Build
-	Logs string
+	Logs         string
 }
 
 // NewCloudBuildClient creates a new Cloud Build client.
@@ -90,8 +90,8 @@ func NewCloudBuildClient(ctx context.Context) (CloudBuildClient, error) {
 
 // CloudBuildClientImpl is an implementation of the CloudBuildClient interface.
 type CloudBuildClientImpl struct {
-	v1client     *cloudbuild.Client
-	legacyClient *build.Service
+	v1client      *cloudbuild.Client
+	legacyClient  *build.Service
 	loggingClient *logging.Client
 }
 
@@ -203,7 +203,6 @@ func (c *CloudBuildClientImpl) RunBuildTrigger(ctx context.Context, projectID, l
 	return op, nil
 }
 
-
 func (c *CloudBuildClientImpl) ListBuilds(ctx context.Context, projectID, location string) ([]*cloudbuildpb.Build, error) {
 	req := &cloudbuildpb.ListBuildsRequest{
 		Parent: fmt.Sprintf("projects/%s/locations/%s", projectID, location),
@@ -216,7 +215,7 @@ func (c *CloudBuildClientImpl) ListBuilds(ctx context.Context, projectID, locati
 			break
 		}
 		if err != nil {
-return nil, fmt.Errorf("failed to list builds: %w", err)
+			return nil, fmt.Errorf("failed to list builds: %w", err)
 		}
 		builds = append(builds, build)
 	}
@@ -248,20 +247,20 @@ func (c *CloudBuildClientImpl) GetBuildInfo(ctx context.Context, projectID, loca
 		}
 		var logMessage string
 		switch payload := entry.Payload.(type) {
-			case *loggingpb.LogEntry_TextPayload:
-				logMessage = payload.TextPayload
-			case *loggingpb.LogEntry_JsonPayload:
-				jsonBytes, err := protojson.Marshal(payload.JsonPayload)
-				if err != nil {
-					logMessage = fmt.Sprintf("failed to marshal json payload to string: %v", err)
-				} else {
-					logMessage = string(jsonBytes)
-				}
-			case *loggingpb.LogEntry_ProtoPayload:
-				logMessage = fmt.Sprintf("%v", payload.ProtoPayload)
-			default:
-				return BuildInfo{}, fmt.Errorf("unknown log entry payload type")
+		case *loggingpb.LogEntry_TextPayload:
+			logMessage = payload.TextPayload
+		case *loggingpb.LogEntry_JsonPayload:
+			jsonBytes, err := protojson.Marshal(payload.JsonPayload)
+			if err != nil {
+				logMessage = fmt.Sprintf("failed to marshal json payload to string: %v", err)
+			} else {
+				logMessage = string(jsonBytes)
 			}
+		case *loggingpb.LogEntry_ProtoPayload:
+			logMessage = fmt.Sprintf("%v", payload.ProtoPayload)
+		default:
+			return BuildInfo{}, fmt.Errorf("unknown log entry payload type")
+		}
 		logs = append(logs, logMessage)
 	}
 	info.Logs = strings.Join(logs, "\n")
@@ -275,7 +274,7 @@ func (c *CloudBuildClientImpl) StartBuild(ctx context.Context, projectID, locati
 	}
 	ops, err := c.v1client.CreateBuild(ctx, req)
 	if err != nil {
-return nil, fmt.Errorf("failed to start build: %w", err)
+		return nil, fmt.Errorf("failed to start build: %w", err)
 	}
 	return ops, nil
 }

@@ -139,7 +139,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 		setupMocks             func(t *testing.T, csMock *csmocks.MockCloudStorageClient)
 		expectErr              bool
 		expectedErrorSubstring string
-		expectedResult string
+		expectedResult         string
 	}{
 		{
 			name:    "Success case - bucket exists",
@@ -156,14 +156,14 @@ func TestAddUploadSourceTool(t *testing.T) {
 				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
 					return nil
 				}
-				csMock.DeleteObjectsFunc = func (ctx context.Context, b string) error {
+				csMock.DeleteObjectsFunc = func(ctx context.Context, b string) error {
 					return nil
 				}
 				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
 					return nil
 				}
 			},
-			expectErr: false,
+			expectErr:      false,
 			expectedResult: bucketName,
 		},
 		{
@@ -188,10 +188,10 @@ func TestAddUploadSourceTool(t *testing.T) {
 					return nil
 				}
 			},
-			expectErr: false,
+			expectErr:      false,
 			expectedResult: bucketName,
 		},
-				{
+		{
 			name:    "Success case - bucket name not provided",
 			setupFS: createTempDir,
 			getArgs: func(sourcePath string) UploadSourceArgs {
@@ -215,7 +215,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 					return nil
 				}
 			},
-			expectErr: false,
+			expectErr:      false,
 			expectedResult: projectID + "-1",
 		},
 		{
@@ -296,7 +296,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
 					return nil
 				}
-				csMock.DeleteObjectsFunc = func (ctx context.Context, b string) error {
+				csMock.DeleteObjectsFunc = func(ctx context.Context, b string) error {
 					return nil
 				}
 				csMock.UploadFileFunc = func(ctx context.Context, b, o string, f *os.File) error {
@@ -307,7 +307,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 			expectedErrorSubstring: "failed to upload file: upload error",
 		},
 		{
-			name: "Fail deleted prexisiting objects in bucket",
+			name:    "Fail deleted prexisiting objects in bucket",
 			setupFS: createTempDir,
 			getArgs: func(sourcePath string) UploadSourceArgs {
 				return UploadSourceArgs{
@@ -321,7 +321,7 @@ func TestAddUploadSourceTool(t *testing.T) {
 				csMock.CheckBucketExistsFunc = func(ctx context.Context, b string) error {
 					return nil
 				}
-				csMock.DeleteObjectsFunc = func (ctx context.Context, b string) error {
+				csMock.DeleteObjectsFunc = func(ctx context.Context, b string) error {
 					return errors.New("deleting error")
 				}
 			},

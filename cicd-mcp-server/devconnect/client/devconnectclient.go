@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"time"
 
+	"encoding/json"
 	"github.com/google/uuid"
 	"google.golang.org/api/developerconnect/v1"
-	"encoding/json"
 )
 
 // contextKey is a private type to use as a key for context values.

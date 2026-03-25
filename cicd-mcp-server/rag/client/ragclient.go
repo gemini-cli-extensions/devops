@@ -16,8 +16,8 @@ package ragclient
 
 import (
 	"bytes"
-	"context"
 	"cicd-mcp-server/auth"
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"

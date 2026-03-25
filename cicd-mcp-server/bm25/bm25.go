@@ -37,7 +37,6 @@ type QueryArgs struct {
 	Query string `json:"query" jsonschema:"The query to search for."`
 }
 
-
 var queryPatternToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args QueryArgs) (*mcp.CallToolResult, any, error)
 var queryKnowledgeToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args QueryArgs) (*mcp.CallToolResult, any, error)
 

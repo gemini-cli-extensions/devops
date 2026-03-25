@@ -95,7 +95,7 @@ func TestDesignPrompt(t *testing.T) {
 	// Test the prompt handler's behavior.
 	query := "create a simple CI/CD pipeline"
 	getPromptParams := &mcp.GetPromptParams{
-		Name: "cicd:design", // Name is part of GetPromptParams for GetPrompt
+		Name:      "cicd:design", // Name is part of GetPromptParams for GetPrompt
 		Arguments: map[string]string{"query": query},
 	}
 

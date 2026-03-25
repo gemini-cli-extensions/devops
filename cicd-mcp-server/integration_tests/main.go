@@ -68,7 +68,7 @@ func main() {
 	testUploadSource(ctx, csClient)
 	// Cloud Run Tests
 	testListServices(ctx, crClient)
-	testDeployToCloudRunFromImage(ctx, crClient)         // Tests the deploy_cloudrun_service_from_image tool with a new service.
+	testDeployToCloudRunFromImage(ctx, crClient)            // Tests the deploy_cloudrun_service_from_image tool with a new service.
 	testDeployToCloudRunFromImageNewRevision(ctx, crClient) // Tests the deploy_cloudrun_service_from_image tool with a preexisting service.
 	testDeployToCloudRunFromSource(ctx, crClient)
 	// OSV Tests
@@ -212,8 +212,8 @@ func canCreatePublicBuckets(ctx context.Context, projectID string, csClient clou
 
 	if err != nil {
 		if strings.Contains(err.Error(), "conditionNotMet") || strings.Contains(err.Error(), "permitted customer") {
-			 log.Printf("Detected public bucket restriction: %v", err)
-			 return false
+			log.Printf("Detected public bucket restriction: %v", err)
+			return false
 		}
 		// If it failed for another reason, we probably can't run tests either, but let's assume false.
 		log.Printf("Probe bucket creation failed: %v", err)
@@ -891,7 +891,7 @@ func testScanSecrets(ctx context.Context, oClient osvclient.OsvClient) {
 	}
 
 	args := map[string]any{
-		"root": tmpDir,
+		"root":               tmpDir,
 		"ignore_directories": []string{},
 	}
 
@@ -953,7 +953,7 @@ func testScanSecretsWithSecret(ctx context.Context, oClient osvclient.OsvClient)
 	}
 
 	args := map[string]any{
-		"root": tmpDir,
+		"root":               tmpDir,
 		"ignore_directories": []string{},
 	}
 
