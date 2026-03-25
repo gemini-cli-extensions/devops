@@ -1,6 +1,6 @@
 module cicd-mcp-server
 
-go 1.24.8
+go 1.25.0
 
 require (
 	cloud.google.com/go/artifactregistry v1.17.2
@@ -15,7 +15,7 @@ require (
 	github.com/google/osv-scalibr v0.3.6
 	github.com/google/uuid v1.6.0
 	github.com/mark3labs/mcp-go v0.42.0
-	github.com/modelcontextprotocol/go-sdk v1.3.1
+	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/api v0.252.0
@@ -25,11 +25,12 @@ require (
 
 require (
 	github.com/segmentio/asm v1.1.3 // indirect
-	github.com/segmentio/encoding v0.5.3 // indirect
+	github.com/segmentio/encoding v0.5.4 // indirect
 )
 
 require (
 	cel.dev/expr v0.24.0 // indirect
+	cicd/lib/bm25 v0.0.0
 	cloud.google.com/go v0.123.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
@@ -42,7 +43,6 @@ require (
 	deps.dev/util/pypi v0.0.0-20250903005441-604c45d5b44b // indirect
 	deps.dev/util/resolve v0.0.0-20250903005441-604c45d5b44b // indirect
 	deps.dev/util/semver v0.0.0-20250903005441-604c45d5b44b // indirect
-	cicd/lib/bm25 v0.0.0
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20230306123547-8075edf89bb0 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
@@ -184,17 +184,17 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.17.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
-	golang.org/x/mod v0.29.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/oauth2 v0.32.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/mod v0.32.0 // indirect
+	golang.org/x/net v0.49.0 // indirect
+	golang.org/x/oauth2 v0.34.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/telemetry v0.0.0-20260109210033-bd525da824e2 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	golang.org/x/tools v0.38.0 // indirect
+	golang.org/x/tools v0.41.0 // indirect
 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	golang.org/x/vuln v1.1.4 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
