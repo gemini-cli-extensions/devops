@@ -30,7 +30,6 @@ terraform {
 
 Note: The GCS bucket must have Object Versioning enabled to allow recovery from accidental state corruption or overlapping writes.
 
-### Provider Version Pinning
 ### Required Provider Version
 Use the Google Cloud Terraform provider version 7.20.0 or higher. This skill utilizes features (e.g., Developer Connect) introduced in Google Provider v7.20.0.
 
