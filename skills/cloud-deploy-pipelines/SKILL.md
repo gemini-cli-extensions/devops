@@ -78,9 +78,11 @@ gcloud deploy apply --file=clouddeploy.yaml --region=<REGION> --project=<PROJECT
 2. Create a `skaffold.yaml` file required to create a Cloud Deploy `Release` for the `DeliveryPipeline`.
     - Use `references/configure-skaffold.md` as a reference when generating the `skaffold.yaml` file.
 
-## Workflow: Add Google Observability Metrics Analysis to a Pipeline
+## Workflow: Add Google Observability Alert Policy Analysis to a Pipeline
 
-Cloud Deploy integrates with Google Cloud Observability to provide metrics analysis when deploying an application. When the application is deployed, Cloud Deploy will monitor alert policies defined in Google Cloud Observability for any incidents that were triggered after the application was deployed.
+Cloud Deploy integrates with Google Cloud Observability to provide metrics analysis when deploying an application. When the application is deployed, Cloud Deploy will monitor alert policies defined in Google Cloud Observability for any incidents that were triggered after the application was deployed. 
+
+This feature can be used alongside automation to enable automatic rollbacks if the application deployment triggers alert policies.
 
 This section covers how to update the user's `DeliveryPipeline` to leverage this feature.
 

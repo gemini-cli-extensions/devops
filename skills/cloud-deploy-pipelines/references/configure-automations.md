@@ -14,7 +14,7 @@ The examples in this file use placeholders between `<` and `>`, e.g. `<AUTOMATIO
 
 ## Automatic Rollbacks
 
-This `Automation` will rollback for any `Target` in the `DeliveryPipeline` progression sequence if the `Rollout` fails.
+This `Automation` will rollback for any `Target` in the `DeliveryPipeline` progression sequence if any job in the `Rollout` fails.
 
 The `*` in the `selector.targets.id` field means that this `Automation` will apply to all `Target` resources in the `DeliveryPipeline`.
 
@@ -33,6 +33,27 @@ rules:
     repairPhases:
     - rollback: {}
 ```
+
+Automatic rollbacks can be triggered for a subset of `Rollout` jobs. For example, if the user wants to rollback only if the `deploy` or `analysis` job fail, the `Automation` would be defined as follows:
+
+```yaml
+apiVersion: deploy.cloud.google.com/v1
+kind: Automation
+metadata:
+  name: <PIPELINE_ID>/<AUTOMATION_ID>
+serviceAccount: <PROJECT_NUMBER>-compute@developer.gserviceaccount.com
+selector:
+  targets:
+  - id: "*"
+rules:
+- repairRolloutRule:
+    id: "repair-rule"
+    jobs: ["deploy", "analysis"]
+    repairPhases:
+    - rollback: {}
+```
+
+The possible values include: `predeploy`, `deploy`, `postdeploy`, `verify`, and `analysis`.
 
 ## Automatic Rollbacks with Retry
 
