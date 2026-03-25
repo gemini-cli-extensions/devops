@@ -30,6 +30,7 @@ require (
 
 require (
 	cel.dev/expr v0.24.0 // indirect
+	cicd/lib/bm25 v0.0.0
 	cloud.google.com/go v0.123.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
@@ -42,7 +43,6 @@ require (
 	deps.dev/util/pypi v0.0.0-20250903005441-604c45d5b44b // indirect
 	deps.dev/util/resolve v0.0.0-20250903005441-604c45d5b44b // indirect
 	deps.dev/util/semver v0.0.0-20250903005441-604c45d5b44b // indirect
-	cicd/lib/bm25 v0.0.0
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20230306123547-8075edf89bb0 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/anchore/go-lzo v0.1.0 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20230627203149-c72ef8859ca9 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
-	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20251014123835-2ee22ca58382 // indirect
 	github.com/compose-spec/compose-go/v2 v2.8.1 // indirect
