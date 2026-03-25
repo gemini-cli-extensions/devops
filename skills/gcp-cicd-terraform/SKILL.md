@@ -129,7 +129,7 @@ To maintain a clean module interface, use the main identifier for singleton reso
     ```hcl
     resource "google_developer_connect_connection" "main" {
       location      = var.region
-      connection_id = "tinyjam-github"
+      connection_id = var.connection_id
       project       = var.project_id
 
       github_config {
