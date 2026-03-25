@@ -146,7 +146,9 @@ func (c *CloudRunClientImpl) GetService(ctx context.Context, projectID, location
 }
 
 func (c *CloudRunClientImpl) GetServiceStatus(ctx context.Context, projectID, location, serviceName string) (*cloudrunpb.Condition_State, error) {
-	service, err := c.GetService(ctx, projectID, location, serviceName)
+	servicePath := fmt.Sprintf("projects/%s/locations/%s/services/%s", projectID, location, serviceName)
+
+	service, err := c.servicesClient.GetService(ctx, &cloudrunpb.GetServiceRequest{Name: servicePath})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service: %w", err)
 	}
