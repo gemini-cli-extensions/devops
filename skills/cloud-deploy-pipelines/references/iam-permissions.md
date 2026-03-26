@@ -2,7 +2,7 @@
 
 This document provides insights into the IAM permissions required for Cloud Deploy to operate based on the features enabled for the `DeliveryPipeline`.
 
-## Execution Service Account Permissions
+## Execution Service Account
 
 **MUST KNOW**: The execution service account used by Cloud Deploy. This is either the default Compute Engine service account or a user-provided service account that was defined in the `Target`.
 
@@ -22,7 +22,13 @@ The following roles are **required**:
 * `roles/monitoring.alertViewer`
 * `roles/serviceusage.serviceUsageConsumer`
 
-## Release Creator Permissions
+## Automation Service Account
+
+**MUST KNOW**: The service account defined in the `Automation` resources.
+
+The `Automation` service account **requires** the `roles/clouddeploy.operator` role.
+
+## Release Creator
 
 The user or service account that creates a `Release` and `Rollout` **must** have:
 * `roles/clouddeploy.releaser`
