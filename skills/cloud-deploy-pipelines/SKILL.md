@@ -11,6 +11,8 @@ version: "0.1.0"
 
 This skill encompasses the entire lifecycle of Cloud Deploy for a user, from designing and creating delivery pipelines to managing releases and debugging release failures.
 
+**All** Workflows require the `clouddeploy.googleapis.com` API to be enabled.
+
 ## Workflow: Designing a Pipeline
 
 This workflow provides steps for designing a Cloud Deploy `DeliveryPipeline`.
@@ -78,6 +80,12 @@ gcloud deploy apply --file=clouddeploy.yaml --region=<REGION> --project=<PROJECT
 2. Create a `skaffold.yaml` file required to create a Cloud Deploy `Release` for the `DeliveryPipeline`.
     - Use `references/configure-skaffold.md` as a reference when generating the `skaffold.yaml` file.
 
+
+### Step 7: Setup IAM permissions
+
+Use `references/iam-permissions.md` as a reference to set up the necessary IAM permissions based on the `DeliveryPipeline` defined.
+
+
 ## Workflow: Add Google Observability Alert Policy Analysis to a Pipeline
 
 Cloud Deploy integrates with Google Cloud Observability to provide metrics analysis when deploying an application. When the application is deployed, Cloud Deploy will monitor alert policies defined in Google Cloud Observability for any incidents that were triggered after the application was deployed. 
@@ -116,6 +124,10 @@ Run the following command to update the Cloud Deploy `DeliveryPipeline`:
 ```bash
 gcloud deploy apply --file=clouddeploy.yaml --region=<REGION> --project=<PROJECT_ID>
 ```
+
+### Step 4: Setup IAM permissions
+
+Use `references/iam-permissions.md` as a reference to set up the necessary IAM permissions for analysis.
 
 ## Release Management
 
