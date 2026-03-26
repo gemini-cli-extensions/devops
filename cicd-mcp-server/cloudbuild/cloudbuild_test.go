@@ -54,29 +54,19 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 		assert.Equal(t, serviceAccount, resolvedSA)
 	})
 
-	t.Run("without service account", func(t *testing.T) {
-		projectNumber := int64(12345)
-		expectedSA := fmt.Sprintf("serviceAccount:%d-compute@developer.gserviceaccount.com", projectNumber)
+	t.Run("no service account provided fails", func(t *testing.T) {
+		// Since fallback is removed, providing an empty SA should result in an invalid SA prefix 
+		// and fail during IAM role binding.
+		mockIAMClient.EXPECT().AddIAMRoleBinding(gomock.Any(), gomock.Any(), gomock.Any(), "serviceAccount:").Return(nil, fmt.Errorf("invalid member"))
 
-		mockRMClient.EXPECT().ToProjectNumber(ctx, projectID).Return(projectNumber, nil)
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/developerconnect.tokenAccessor", expectedSA).Return(nil, nil)
-
-		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, "", mockRMClient, mockIAMClient)
-		assert.NoError(t, err)
-		assert.Equal(t, expectedSA, resolvedSA)
+		_, err := setPermissionsForCloudBuildSA(ctx, projectID, "", mockRMClient, mockIAMClient)
+		assert.Error(t, err)
 	})
 
 	t.Run("iam error", func(t *testing.T) {
 		mockIAMClient.EXPECT().AddIAMRoleBinding(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("some error"))
 
 		_, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccount, mockRMClient, mockIAMClient)
-		assert.Error(t, err)
-	})
-
-	t.Run("resourcemanager error", func(t *testing.T) {
-		mockRMClient.EXPECT().ToProjectNumber(gomock.Any(), gomock.Any()).Return(int64(0), fmt.Errorf("some error"))
-
-		_, err := setPermissionsForCloudBuildSA(ctx, projectID, "", mockRMClient, mockIAMClient)
 		assert.Error(t, err)
 	})
 }

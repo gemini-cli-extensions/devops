@@ -91,7 +91,7 @@ type CreateTriggerArgs struct {
 	Location       string `json:"location" jsonschema:"The Google Cloud location for the trigger."`
 	TriggerID      string `json:"trigger_id" jsonschema:"The ID of the trigger."`
 	RepoLink       string `json:"repo_link" jsonschema:"The Developer Connect repository link, use dev connect setup repo to create a connect and repo link"`
-	ServiceAccount string `json:"service_account,omitempty" jsonschema:"The service account to use for the build. E.g. serviceAccount:name@project-id.iam.gserviceaccount.com optional"`
+	ServiceAccount string `json:"service_account" jsonschema:"The service account to use for the build. E.g. serviceAccount:name@project-id.iam.gserviceaccount.com. This MUST be a dedicated service account, not the default Compute Engine service account."`
 	Branch         string `json:"branch,omitempty" jsonschema:"Create builds on push to branch. Should be regex e.g. '^main$'"`
 	Tag            string `json:"tag,omitempty" jsonschema:"Create builds on new tag push. Should be regex e.g. '^nightly$'"`
 }
@@ -100,10 +100,13 @@ var createTriggerToolFunc func(ctx context.Context, req *mcp.CallToolRequest, ar
 
 func addCreateTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient, iamClient iamclient.IAMClient, rmClient resourcemanagerclient.ResourcemanagerClient) {
 	createTriggerToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateTriggerArgs) (*mcp.CallToolResult, any, error) {
-		if args.ServiceAccount != "" && !strings.HasPrefix(args.ServiceAccount, "serviceAccount:") {
+		if args.ServiceAccount == "" {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("service_account is required and must be a dedicated service account")
+		}
+		if !strings.HasPrefix(args.ServiceAccount, "serviceAccount:") {
 			args.ServiceAccount = fmt.Sprintf("serviceAccount:%s", args.ServiceAccount)
 		}
-		if args.ServiceAccount != "" && !IsValidServiceAccount(args.ServiceAccount) {
+		if !IsValidServiceAccount(args.ServiceAccount) {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("service account needs to be of the form serviceAccount:name@project-id.iam.gserviceaccount.com")
 		}
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, args.ProjectID, args.ServiceAccount, rmClient, iamClient)
@@ -119,18 +122,9 @@ func addCreateTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBui
 	mcp.AddTool(server, &mcp.Tool{Name: "create_build_trigger", Description: "Creates a new Cloud Build trigger."}, createTriggerToolFunc)
 }
 
-// setPermissionsForSA resolves the SA (if default) and grants it a role.
-// It creates and manages its own Resource Manager client.
+// setPermissionsForSA resolves the SA and grants it a role.
 func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccount string, rmClient resourcemanagerclient.ResourcemanagerClient, iamClient iamclient.IAMClient) (string, error) {
-	// Construct the Compute Engine default service account email
 	resolvedSA := serviceAccount
-	if resolvedSA == "" {
-		projectNumber, err := rmClient.ToProjectNumber(ctx, projectID)
-		if err != nil {
-			return "", fmt.Errorf("unable to resolve project id to number: %w", err)
-		}
-		resolvedSA = fmt.Sprintf("serviceAccount:%d-compute@developer.gserviceaccount.com", projectNumber)
-	}
 
 	// If the serviceAccount prefix is not there, add it.
 	if !strings.HasPrefix(resolvedSA, "serviceAccount:") {
