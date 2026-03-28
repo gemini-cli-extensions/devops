@@ -53,7 +53,7 @@ Your job is to deploy the user's applications to Cloud Run from an image.
 
 ## Workflow D: Google Kubernetes Engine (GKE)
 
-This workflow is for deploying container-based applications to a GKE cluster.
+This workflow is for deploying container-based applications to a GKE cluster. Consult the `references/how_to_deploy_to_gke_with_kubectl.md` file for detailed `gcloud` and `kubectl` commands and best practices.
 
 1.  **Identify Cluster**: Ask the user for the GKE cluster name and location (zone or region) if not already known.
 2.  **Create Dockerfile**: If a Dockerfile does not already exist, analyze the project to determine the appropriate base image and build steps, then create a multistage Dockerfile. Ensure the Dockerfile can be built locally using the Docker cli.
