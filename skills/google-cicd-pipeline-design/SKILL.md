@@ -1,5 +1,5 @@
 ---
-name: gcp-cicd-design
+name: google-cicd-pipeline-design
 description: Design and implement a Google Cloud based CI/CD pipeline. Use when the user wants to build a new pipeline, design an architecture on GCP.
 ---
 
@@ -39,12 +39,12 @@ Once the user has approved the YAML plan, you must guide them through the implem
 
 2.  **Execute Based on Choice**:
     *   **If Terraform is selected**:
-        *   Activate the `gcp-cicd-terraform` skill.
+        *   Activate the `google-cicd-terraform` skill.
         *   Translate the approved YAML plan into Terraform HCL, following the standards and structure defined in the skill.
         *   Follow the skill's **Execution Protocol** (Init, Validate, Plan, Apply), ensuring manual confirmation before the final `apply`.
     *   **If Direct Implementation is selected**:
         *   **Process Sequentially**: Execute the plan by processing the `stages` object in order.
-        *   **Leverage Skills & Tools**: For each component, check for available specialized tools (e.g., `create_cloud_build_trigger`) or relevant skills (e.g., `cloud-deploy-pipelines`). If a matching tool or skill is found, prioritize its use.
+        *   **Leverage Skills & Tools**: For each component, check for available specialized tools (e.g., `create_cloud_build_trigger`) or relevant skills (e.g., `google-cicd-release-orchestration`). If a matching tool or skill is found, prioritize its use.
         *   **GCloud Fallback**: If no specialized tool or skill exists for a component, fall back to the appropriate `gcloud` command via `run_shell_command`.
         *   **Report & Progress**: Announce the start of each step, wait for success, and report completion before proceeding to the next component.
 
