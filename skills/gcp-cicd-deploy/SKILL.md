@@ -86,7 +86,7 @@ This workflow is for deploying container-based applications to a GKE cluster. Co
 7.  **Deploy to GKE**: Use standard `gcloud` and `kubectl` commands to deploy:
     *   Authenticate: `gcloud container clusters get-credentials <CLUSTER_NAME> --location=<LOCATION> --project=<PROJECT_ID>`.
     *   Apply: `kubectl apply -f <MANIFEST_PATH>`.
-8.  **Verification**: Provide the user with the command to check the deployment status: `kubectl get pods,services`.
+8.  **Verification**: Provide the user with commands to check the deployment status, as detailed in the reference document, such as `kubectl get pods`, `kubectl get service <APP_NAME>-service`, and `kubectl rollout status deployment/<APP_NAME>`.
 
 
 ## Universal Protocols & Constraints
