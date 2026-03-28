@@ -59,6 +59,13 @@ spec:
         image: <IMAGE_URI>
         ports:
         - containerPort: 8080
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
 ```
 
 **`service.yaml`**:
