@@ -82,7 +82,7 @@ Designs and implements a Google Cloud-based CI/CD pipeline. Operates in two stag
 **Design Process:**
 
 1.  **Requirement Gathering:** Gemini inspects your current workspace and asks clarifying questions to understand your application type, build process, testing strategies, and deployment objectives.
-2.  **Infrastructure Setup:** Based on the requirements, Gemini guides you through setting up the required GCP resources. The skills offers setting up infrastructure using Terraform or directly updating your Google Cloud resources. This may include:
+2.  **Infrastructure Setup:** Based on the requirements, Gemini guides you through setting up the required GCP resources. The skill offers setting up infrastructure using Terraform or directly updating your Google Cloud resources. This may include:
     *   Creating or configuring Artifact Registry repositories.
     *   Establishing connections to your Git repository (e.g., GitHub) using Developer Connect.
     *   Setting up or advising on necessary IAM service accounts and permissions for the Cloud Build service.
