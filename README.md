@@ -41,9 +41,8 @@ gemini extensions install https://github.com/gemini-cli-extensions/cicd
     *   Artifact Registry API
     *   Artifact Analysis API
     *   Developer Connect API
-    *   Cloud Storage API
-    *   Cloud Storage API
     *   Cloud Resource Manager API
+    *   Cloud Storage API
     *   Cloud Run API
     *   Google Kubernetes Engine API
 *   Application Default Credentials (ADC): Ensure [Application Default Credentials](https://cloud.google.com/docs/authentication/gcloud) are configured in your environment. You can set this up by running:
