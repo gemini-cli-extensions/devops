@@ -1,5 +1,5 @@
 ---
-name: deploy-cicd-gcp
+name: google-cicd-deploy
 description: Deploy an application to Google Cloud. Use when the user wants to deploy a new application on GCP.
 ---
 
