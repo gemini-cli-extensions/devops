@@ -14,7 +14,7 @@
 
 steps:
   # Step 1: Install tools (like the linter) and clean the cache.
-  - name: 'golang:1.24'
+  - name: 'golang:1.25'
     id: 'Install Tools'
     entrypoint: 'sh'
     args:
@@ -31,7 +31,7 @@ steps:
     dir: 'cicd-mcp-server'
 
   # Step 2: Download dependencies.
-  - name: 'golang:1.24'
+  - name: 'golang:1.25'
     id: 'Download Dependencies'
     entrypoint: 'sh'
     args:
@@ -46,7 +46,7 @@ steps:
     waitFor: ['Install Tools'] # Run after tools are installed
 
   # Step 3: Run the linter.
-  - name: 'golang:1.24'
+  - name: 'golang:1.25'
     id: 'Run Linter'
     entrypoint: 'sh'
     args:
@@ -61,7 +61,7 @@ steps:
     waitFor: ['Download Dependencies']
 
   # Step 4: Build the code.
-  - name: 'golang:1.24'
+  - name: 'golang:1.25'
     id: 'Run Build'
     entrypoint: 'sh'
     args:
@@ -76,7 +76,7 @@ steps:
     waitFor: ['Run Linter'] # Wait for lint to pass
 
   # Step 5: Run tests.
-  - name: 'golang:1.24'
+  - name: 'golang:1.25'
     id: 'Run Tests'
     entrypoint: 'sh'
     args:
