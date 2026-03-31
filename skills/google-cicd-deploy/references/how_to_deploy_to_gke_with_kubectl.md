@@ -58,13 +58,13 @@ spec:
       - name: <APP_NAME>
         image: <IMAGE_URI>
         ports:
-        - containerPort: 8080
+        - containerPort: <CONTAINER_PORT>
         resources:
           requests:
-            memory: "64Mi"
+            memory: "256Mi"
             cpu: "250m"
           limits:
-            memory: "128Mi"
+            memory: "512Mi"
             cpu: "500m"
 ```
 
@@ -80,7 +80,7 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 8080
+      targetPort: <CONTAINER_PORT>
   type: LoadBalancer
 ```
 
