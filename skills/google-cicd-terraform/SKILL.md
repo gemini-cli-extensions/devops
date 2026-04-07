@@ -173,6 +173,8 @@ Follow this standard to ensure compatibility with Antigravity (AGY) discovery an
 
    - ❌ Broad Scopes: Avoid cloud-platform scopes for GKE nodes; use fine-grained IAM roles instead.
 
+   - ❌ Uppercase Types: Terraform variable types must be lower case (e.g. `type = string` not `type = STRING`).
+
 ## 🧪 Testing Strategy
    - Static Analysis: Use checkov, trivy, or terrascan to catch insecure GCP configurations (e.g., public GCS buckets).
 
