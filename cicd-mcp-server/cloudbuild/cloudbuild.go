@@ -130,31 +130,54 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 	if !strings.HasPrefix(resolvedSA, "serviceAccount:") {
 		resolvedSA = fmt.Sprintf("serviceAccount:%s", resolvedSA)
 	}
-	roles := []string{
-		"roles/logging.logWriter",
-		"roles/developerconnect.tokenAccessor",
-		"roles/storage.admin",
-		"roles/serviceusage.serviceUsageConsumer",
-		"roles/cloudbuild.builds.editor",
+
+	// 1. Roles for the Cloud Build Service Account (Project Level)
+	gcbSARoles := []string{
 		"roles/artifactregistry.writer",
-		"roles/cloudbuild.workerpools.use",
+		"roles/developerconnect.readTokenAccessor",
+		"roles/developerconnect.tokenAccessor",
+		"roles/logging.logWriter",
+		"roles/run.developer",
+		"roles/storage.admin",
 	}
-	for _, r := range roles {
+	for _, r := range gcbSARoles {
 		_, err := iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, resolvedSA)
 		if err != nil {
-			return "", fmt.Errorf("unable to add role %s to member %s on resource %s err: %w", r, resolvedSA, fmt.Sprintf("projects/%s", projectID), err)
+			return "", fmt.Errorf("unable to add role %s to member %s on project %s err: %w", r, resolvedSA, projectID, err)
 		}
 	}
 
-	// Grant Secret Manager Admin to Developer Connect Service Agent (P4SA)
 	projectNumber, err := rmClient.ToProjectNumber(ctx, projectID)
 	if err != nil {
 		return "", fmt.Errorf("unable to resolve project id to number: %w", err)
 	}
-	p4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
-	_, err = iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", p4sa)
+
+	// 2. Roles for the Developer Connect Service Agent (Project Level)
+	dcP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
+	_, err = iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", dcP4sa)
 	if err != nil {
-		return "", fmt.Errorf("unable to add secretmanager.admin role to Developer Connect P4SA %s: %w", p4sa, err)
+		return "", fmt.Errorf("unable to add secretmanager.admin role to Developer Connect P4SA %s: %w", dcP4sa, err)
+	}
+
+	// 3. Roles for the Cloud Build Service Agent (Project Level)
+	gcbP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-cloudbuild.iam.gserviceaccount.com", projectNumber)
+	gcbP4saRoles := []string{
+		"roles/cloudbuild.serviceAgent",
+		"roles/developerconnect.tokenAccessor",
+	}
+	for _, r := range gcbP4saRoles {
+		_, err := iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa)
+		if err != nil {
+			return "", fmt.Errorf("unable to add role %s to Cloud Build P4SA %s on project %s err: %w", r, gcbP4sa, projectID, err)
+		}
+	}
+
+	// 4. Role for the Cloud Build Service Agent on the Cloud Run SA (Default Compute SA)
+	defaultComputeSA := fmt.Sprintf("serviceAccount:%d-compute@developer.gserviceaccount.com", projectNumber)
+	resource := fmt.Sprintf("projects/%s/serviceAccounts/%s", projectID, strings.TrimPrefix(defaultComputeSA, "serviceAccount:"))
+	_, err = iamClient.AddIAMRoleBinding(ctx, resource, "roles/iam.serviceAccountUser", gcbP4sa)
+	if err != nil {
+		return "", fmt.Errorf("unable to add iam.serviceAccountUser role to Cloud Build P4SA %s on SA %s err: %w", gcbP4sa, defaultComputeSA, err)
 	}
 
 	return resolvedSA, nil

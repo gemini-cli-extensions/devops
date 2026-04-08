@@ -38,24 +38,34 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 	serviceAccount := "serviceAccount:test-sa@example.com"
 	serviceAccountWOPrefix := "test-sa@example.com"
 
-	roles := []string{
-		"roles/logging.logWriter",
-		"roles/developerconnect.tokenAccessor",
-		"roles/storage.admin",
-		"roles/serviceusage.serviceUsageConsumer",
-		"roles/cloudbuild.builds.editor",
-		"roles/artifactregistry.writer",
-		"roles/cloudbuild.workerpools.use",
-	}
 	projectNumber := int64(12345)
-	p4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
+	gcbSARoles := []string{
+		"roles/artifactregistry.writer",
+		"roles/developerconnect.readTokenAccessor",
+		"roles/developerconnect.tokenAccessor",
+		"roles/logging.logWriter",
+		"roles/run.developer",
+		"roles/storage.admin",
+	}
+	dcP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
+	gcbP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-cloudbuild.iam.gserviceaccount.com", projectNumber)
+	gcbP4saRoles := []string{
+		"roles/cloudbuild.serviceAgent",
+		"roles/developerconnect.tokenAccessor",
+	}
+	defaultComputeSA := fmt.Sprintf("%d-compute@developer.gserviceaccount.com", projectNumber)
+	saResource := fmt.Sprintf("projects/%s/serviceAccounts/%s", projectID, defaultComputeSA)
 
 	t.Run("with service account", func(t *testing.T) {
-		for _, r := range roles {
+		for _, r := range gcbSARoles {
 			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, serviceAccount).Return(nil, nil)
 		}
 		mockRMClient.EXPECT().ToProjectNumber(ctx, projectID).Return(projectNumber, nil)
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", p4sa).Return(nil, nil)
+		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", dcP4sa).Return(nil, nil)
+		for _, r := range gcbP4saRoles {
+			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa).Return(nil, nil)
+		}
+		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccount, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
@@ -63,11 +73,15 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 	})
 
 	t.Run("with service account, no prefix", func(t *testing.T) {
-		for _, r := range roles {
+		for _, r := range gcbSARoles {
 			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, serviceAccount).Return(nil, nil)
 		}
 		mockRMClient.EXPECT().ToProjectNumber(ctx, projectID).Return(projectNumber, nil)
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", p4sa).Return(nil, nil)
+		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", dcP4sa).Return(nil, nil)
+		for _, r := range gcbP4saRoles {
+			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa).Return(nil, nil)
+		}
+		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccountWOPrefix, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
