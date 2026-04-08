@@ -122,7 +122,7 @@ func addCreateTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBui
 	mcp.AddTool(server, &mcp.Tool{Name: "create_build_trigger", Description: "Creates a new Cloud Build trigger."}, createTriggerToolFunc)
 }
 
-// setPermissionsForSA resolves the SA and grants it a role.
+// setPermissionsForCloudBuildSA resolves the SA and grants it a role.
 func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccount string, rmClient resourcemanagerclient.ResourcemanagerClient, iamClient iamclient.IAMClient) (string, error) {
 	resolvedSA := serviceAccount
 
@@ -130,13 +130,34 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 	if !strings.HasPrefix(resolvedSA, "serviceAccount:") {
 		resolvedSA = fmt.Sprintf("serviceAccount:%s", resolvedSA)
 	}
-	roles := []string{"roles/developerconnect.tokenAccessor"}
+	roles := []string{
+		"roles/logging.logWriter",
+		"roles/artifactregistry.writer",
+		"roles/developerconnect.tokenAccessor",
+		"roles/storage.admin",
+		"roles/secretmanager.admin",
+		"roles/run.admin",
+		"roles/iam.serviceAccountUser",
+		"roles/cloudbuild.builds.builder",
+	}
 	for _, r := range roles {
 		_, err := iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, resolvedSA)
 		if err != nil {
 			return "", fmt.Errorf("unable to add role %s to member %s on resource %s err: %w", r, resolvedSA, fmt.Sprintf("projects/%s", projectID), err)
 		}
 	}
+
+	// Grant Secret Manager Admin to Developer Connect Service Agent (P4SA)
+	projectNumber, err := rmClient.ToProjectNumber(ctx, projectID)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve project id to number: %w", err)
+	}
+	p4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
+	_, err = iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", p4sa)
+	if err != nil {
+		return "", fmt.Errorf("unable to add secretmanager.admin role to Developer Connect P4SA %s: %w", p4sa, err)
+	}
+
 	return resolvedSA, nil
 }
 

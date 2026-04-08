@@ -38,8 +38,25 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 	serviceAccount := "serviceAccount:test-sa@example.com"
 	serviceAccountWOPrefix := "test-sa@example.com"
 
+	roles := []string{
+		"roles/logging.logWriter",
+		"roles/artifactregistry.writer",
+		"roles/developerconnect.tokenAccessor",
+		"roles/storage.admin",
+		"roles/secretmanager.admin",
+		"roles/run.admin",
+		"roles/iam.serviceAccountUser",
+		"roles/cloudbuild.builds.builder",
+	}
+	projectNumber := int64(12345)
+	p4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
+
 	t.Run("with service account", func(t *testing.T) {
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/developerconnect.tokenAccessor", serviceAccount).Return(nil, nil)
+		for _, r := range roles {
+			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, serviceAccount).Return(nil, nil)
+		}
+		mockRMClient.EXPECT().ToProjectNumber(ctx, projectID).Return(projectNumber, nil)
+		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", p4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccount, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
@@ -47,7 +64,11 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 	})
 
 	t.Run("with service account, no prefix", func(t *testing.T) {
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/developerconnect.tokenAccessor", serviceAccount).Return(nil, nil)
+		for _, r := range roles {
+			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, serviceAccount).Return(nil, nil)
+		}
+		mockRMClient.EXPECT().ToProjectNumber(ctx, projectID).Return(projectNumber, nil)
+		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", p4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccountWOPrefix, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
