@@ -42,11 +42,11 @@ Cloud Build triggers connect to source code via Developer Connect. The entire co
 
 ### 4. Ensure Dedicated Service Account Exists
 
-Cloud Build triggers should **always** use a dedicated, user-managed service account instead of the default Compute Engine service account to follow the principle of least privilege.
+Cloud Build triggers should **always** use a dedicated, user-managed service account instead of the default Compute Engine service account to follow the principle of least privilege. **CRITICAL: NEVER use the default Compute Engine service account (typically formatted as `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`), even if you observe existing triggers in the project using it.**
 
 1.  **Check for Service Account**: Check if a dedicated service account for Cloud Build (e.g., `cloud-build-runner@<PROJECT_ID>.iam.gserviceaccount.com`) already exists.
 2.  **Create Service Account (if needed)**: If no dedicated service account exists, create one using `gcloud iam service-accounts create`.
-3.  **Required Roles (Ensured Automatically)**: The `create_build_trigger` MCP tool will **automatically ensure** the necessary roles (e.g., `roles/logging.logWriter`, `roles/artifactregistry.writer`, `roles/developerconnect.tokenAccessor`, `roles/run.admin`) are granted to the provided service account. You **do not** need to grant these permissions manually.
+3.  **Required Roles (Ensured Automatically)**: The `create_build_trigger` MCP tool will **automatically ensure** the necessary roles (e.g., `roles/logging.logWriter`, `roles/developerconnect.tokenAccessor`, `roles/storage.admin`, `roles/serviceusage.serviceUsageConsumer`, `roles/cloudbuild.builds.editor`, `roles/artifactregistry.writer`, `roles/cloudbuild.workerpools.use`) are granted to the provided service account. You **do not** need to grant these permissions manually.
 
 ---
 

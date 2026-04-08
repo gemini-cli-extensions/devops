@@ -132,13 +132,12 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 	}
 	roles := []string{
 		"roles/logging.logWriter",
-		"roles/artifactregistry.writer",
 		"roles/developerconnect.tokenAccessor",
 		"roles/storage.admin",
-		"roles/secretmanager.admin",
-		"roles/run.admin",
-		"roles/iam.serviceAccountUser",
-		"roles/cloudbuild.builds.builder",
+		"roles/serviceusage.serviceUsageConsumer",
+		"roles/cloudbuild.builds.editor",
+		"roles/artifactregistry.writer",
+		"roles/cloudbuild.workerpools.use",
 	}
 	for _, r := range roles {
 		_, err := iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, resolvedSA)

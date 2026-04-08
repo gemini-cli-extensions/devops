@@ -40,13 +40,12 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 
 	roles := []string{
 		"roles/logging.logWriter",
-		"roles/artifactregistry.writer",
 		"roles/developerconnect.tokenAccessor",
 		"roles/storage.admin",
-		"roles/secretmanager.admin",
-		"roles/run.admin",
-		"roles/iam.serviceAccountUser",
-		"roles/cloudbuild.builds.builder",
+		"roles/serviceusage.serviceUsageConsumer",
+		"roles/cloudbuild.builds.editor",
+		"roles/artifactregistry.writer",
+		"roles/cloudbuild.workerpools.use",
 	}
 	projectNumber := int64(12345)
 	p4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
