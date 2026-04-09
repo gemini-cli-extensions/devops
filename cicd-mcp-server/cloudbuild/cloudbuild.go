@@ -134,10 +134,12 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 	// 1. Roles for the Cloud Build Service Account (Project Level)
 	gcbSARoles := []string{
 		"roles/artifactregistry.writer",
-		"roles/developerconnect.readTokenAccessor",
+		"roles/cloudbuild.builds.editor",
+		"roles/cloudbuild.workerpools.use",
 		"roles/developerconnect.tokenAccessor",
 		"roles/logging.logWriter",
 		"roles/run.developer",
+		"roles/serviceusage.serviceUsageConsumer",
 		"roles/storage.admin",
 	}
 	for _, r := range gcbSARoles {

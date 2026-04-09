@@ -41,10 +41,12 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 	projectNumber := int64(12345)
 	gcbSARoles := []string{
 		"roles/artifactregistry.writer",
-		"roles/developerconnect.readTokenAccessor",
+		"roles/cloudbuild.builds.editor",
+		"roles/cloudbuild.workerpools.use",
 		"roles/developerconnect.tokenAccessor",
 		"roles/logging.logWriter",
 		"roles/run.developer",
+		"roles/serviceusage.serviceUsageConsumer",
 		"roles/storage.admin",
 	}
 	dcP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
@@ -99,6 +101,18 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 
 	t.Run("iam error", func(t *testing.T) {
 		mockIAMClient.EXPECT().AddIAMRoleBinding(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("some error"))
+
+		_, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccount, mockRMClient, mockIAMClient)
+		assert.Error(t, err)
+	})
+
+	t.Run("resourcemanager error", func(t *testing.T) {
+		// Mock success for the first set of roles
+		for _, r := range gcbSARoles {
+			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, serviceAccount).Return(nil, nil)
+		}
+		// Mock failure for ToProjectNumber
+		mockRMClient.EXPECT().ToProjectNumber(ctx, projectID).Return(int64(0), fmt.Errorf("some error"))
 
 		_, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccount, mockRMClient, mockIAMClient)
 		assert.Error(t, err)

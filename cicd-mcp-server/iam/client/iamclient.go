@@ -82,10 +82,32 @@ func (c *IAMClientImpl) AddIAMRoleBinding(ctx context.Context, resourceID, role,
 		return nil, fmt.Errorf("failed to get iam policy: %v", err)
 	}
 
-	policy.Bindings = append(policy.Bindings, &cloudresourcemanagerv1.Binding{
-		Role:    role,
-		Members: []string{member},
-	})
+	// Find the binding for the specific role
+	var binding *cloudresourcemanagerv1.Binding
+	for _, b := range policy.Bindings {
+		if b.Role == role {
+			binding = b
+			break
+		}
+	}
+
+	if binding != nil {
+		// Check if the member already exists in the binding
+		for _, m := range binding.Members {
+			if m == member {
+				// Member already exists, no need to update
+				return policy, nil
+			}
+		}
+		// Add member to existing binding
+		binding.Members = append(binding.Members, member)
+	} else {
+		// Create new binding for the role
+		policy.Bindings = append(policy.Bindings, &cloudresourcemanagerv1.Binding{
+			Role:    role,
+			Members: []string{member},
+		})
+	}
 
 	setPolicyRequest := &cloudresourcemanagerv1.SetIamPolicyRequest{
 		Policy: policy,

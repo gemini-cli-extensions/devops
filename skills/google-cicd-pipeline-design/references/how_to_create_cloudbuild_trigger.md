@@ -46,7 +46,7 @@ Cloud Build triggers should **always** use a dedicated, user-managed service acc
 
 1.  **Check for Service Account**: Check if a dedicated service account for Cloud Build (e.g., `cloud-build-runner@<PROJECT_ID>.iam.gserviceaccount.com`) already exists.
 2.  **Create Service Account (if needed)**: If no dedicated service account exists, create one using `gcloud iam service-accounts create`.
-3.  **Required Roles (Ensured Automatically)**: The `create_build_trigger` MCP tool will **automatically ensure** the necessary roles (e.g., `roles/logging.logWriter`, `roles/artifactregistry.writer`, `roles/developerconnect.tokenAccessor`, `roles/run.developer`, `roles/storage.admin`, and specific IAM delegation on the default Compute SA) are granted to the relevant service accounts. You **do not** need to grant these permissions manually.
+3.  **Required Roles (Ensured Automatically)**: The `create_build_trigger` MCP tool will **automatically ensure** the necessary roles (e.g., `roles/logging.logWriter`, `roles/artifactregistry.writer`, `roles/developerconnect.tokenAccessor`, `roles/run.developer`, `roles/storage.admin`, `roles/serviceusage.serviceUsageConsumer`, `roles/cloudbuild.builds.editor`, `roles/cloudbuild.workerpools.use`, and specific IAM delegation on the default Compute SA) are granted to the relevant service accounts. You **do not** need to grant these permissions manually.
 
 ---
 
