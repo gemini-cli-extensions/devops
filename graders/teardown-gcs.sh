@@ -2,12 +2,7 @@
 
 # Check if GCS_BUCKET is set
 if [ -z "$GCS_BUCKET" ]; then
-  cat <<EOF
-{
-  "score": 0.0,
-  "details": "GCS_BUCKET environment variable is not set"
-}
-EOF
+  echo "Error: GCS_BUCKET environment variable is not set" >&2
   exit 1
 fi
 
@@ -26,19 +21,9 @@ gcloud storage buckets delete gs://$GCS_BUCKET $PROJECT_ARG --quiet &> /dev/null
 
 # Check if the bucket still exists
 if gcloud storage buckets describe gs://$GCS_BUCKET $PROJECT_ARG &> /dev/null; then
-  cat <<EOF
-{
-  "score": 0.0,
-  "details": "Failed to delete bucket $GCS_BUCKET"
-}
-EOF
+  echo "Error: Failed to delete bucket $GCS_BUCKET" >&2
   exit 1
 else
-  cat <<EOF
-{
-  "score": 1.0,
-  "details": "Successfully deleted bucket $GCS_BUCKET"
-}
-EOF
+  echo "Successfully deleted bucket $GCS_BUCKET"
   exit 0
 fi
