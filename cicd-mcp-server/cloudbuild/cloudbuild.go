@@ -91,7 +91,7 @@ type CreateTriggerArgs struct {
 	Location       string `json:"location" jsonschema:"The Google Cloud location for the trigger."`
 	TriggerID      string `json:"trigger_id" jsonschema:"The ID of the trigger."`
 	RepoLink       string `json:"repo_link" jsonschema:"The Developer Connect repository link, use dev connect setup repo to create a connect and repo link"`
-	ServiceAccount string `json:"service_account,omitempty" jsonschema:"The service account to use for the build. E.g. serviceAccount:name@project-id.iam.gserviceaccount.com optional"`
+	ServiceAccount string `json:"service_account" jsonschema:"The service account to use for the build. E.g. serviceAccount:name@project-id.iam.gserviceaccount.com. This MUST be a dedicated service account, not the default Compute Engine service account."`
 	Branch         string `json:"branch,omitempty" jsonschema:"Create builds on push to branch. Should be regex e.g. '^main$'"`
 	Tag            string `json:"tag,omitempty" jsonschema:"Create builds on new tag push. Should be regex e.g. '^nightly$'"`
 }
@@ -100,10 +100,13 @@ var createTriggerToolFunc func(ctx context.Context, req *mcp.CallToolRequest, ar
 
 func addCreateTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBuildClient, iamClient iamclient.IAMClient, rmClient resourcemanagerclient.ResourcemanagerClient) {
 	createTriggerToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args CreateTriggerArgs) (*mcp.CallToolResult, any, error) {
-		if args.ServiceAccount != "" && !strings.HasPrefix(args.ServiceAccount, "serviceAccount:") {
+		if args.ServiceAccount == "" {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("service_account is required and must be a dedicated service account")
+		}
+		if !strings.HasPrefix(args.ServiceAccount, "serviceAccount:") {
 			args.ServiceAccount = fmt.Sprintf("serviceAccount:%s", args.ServiceAccount)
 		}
-		if args.ServiceAccount != "" && !IsValidServiceAccount(args.ServiceAccount) {
+		if !IsValidServiceAccount(args.ServiceAccount) {
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("service account needs to be of the form serviceAccount:name@project-id.iam.gserviceaccount.com")
 		}
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, args.ProjectID, args.ServiceAccount, rmClient, iamClient)
@@ -119,30 +122,66 @@ func addCreateTriggerTool(server *mcp.Server, cbClient cloudbuildclient.CloudBui
 	mcp.AddTool(server, &mcp.Tool{Name: "create_build_trigger", Description: "Creates a new Cloud Build trigger."}, createTriggerToolFunc)
 }
 
-// setPermissionsForSA resolves the SA (if default) and grants it a role.
-// It creates and manages its own Resource Manager client.
+// setPermissionsForCloudBuildSA resolves the SA and grants it a role.
 func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccount string, rmClient resourcemanagerclient.ResourcemanagerClient, iamClient iamclient.IAMClient) (string, error) {
-	// Construct the Compute Engine default service account email
 	resolvedSA := serviceAccount
-	if resolvedSA == "" {
-		projectNumber, err := rmClient.ToProjectNumber(ctx, projectID)
-		if err != nil {
-			return "", fmt.Errorf("unable to resolve project id to number: %w", err)
-		}
-		resolvedSA = fmt.Sprintf("serviceAccount:%d-compute@developer.gserviceaccount.com", projectNumber)
-	}
 
 	// If the serviceAccount prefix is not there, add it.
 	if !strings.HasPrefix(resolvedSA, "serviceAccount:") {
 		resolvedSA = fmt.Sprintf("serviceAccount:%s", resolvedSA)
 	}
-	roles := []string{"roles/developerconnect.tokenAccessor"}
-	for _, r := range roles {
+
+	// 1. Roles for the Cloud Build Service Account (Project Level)
+	gcbSARoles := []string{
+		"roles/artifactregistry.writer",
+		"roles/cloudbuild.builds.editor",
+		"roles/cloudbuild.workerpools.use",
+		"roles/developerconnect.tokenAccessor",
+		"roles/logging.logWriter",
+		"roles/run.developer",
+		"roles/serviceusage.serviceUsageConsumer",
+		"roles/storage.admin",
+	}
+	for _, r := range gcbSARoles {
 		_, err := iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, resolvedSA)
 		if err != nil {
-			return "", fmt.Errorf("unable to add role %s to member %s on resource %s err: %w", r, resolvedSA, fmt.Sprintf("projects/%s", projectID), err)
+			return "", fmt.Errorf("unable to add role %s to member %s on project %s err: %w", r, resolvedSA, projectID, err)
 		}
 	}
+
+	projectNumber, err := rmClient.ToProjectNumber(ctx, projectID)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve project id to number: %w", err)
+	}
+
+	// 2. Roles for the Developer Connect Service Agent (Project Level)
+	dcP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
+	_, err = iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), "roles/secretmanager.admin", dcP4sa)
+	if err != nil {
+		return "", fmt.Errorf("unable to add secretmanager.admin role to Developer Connect P4SA %s: %w", dcP4sa, err)
+	}
+
+	// 3. Roles for the Cloud Build Service Agent (Project Level)
+	gcbP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-cloudbuild.iam.gserviceaccount.com", projectNumber)
+	gcbP4saRoles := []string{
+		"roles/cloudbuild.serviceAgent",
+		"roles/developerconnect.tokenAccessor",
+	}
+	for _, r := range gcbP4saRoles {
+		_, err := iamClient.AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa)
+		if err != nil {
+			return "", fmt.Errorf("unable to add role %s to Cloud Build P4SA %s on project %s err: %w", r, gcbP4sa, projectID, err)
+		}
+	}
+
+	// 4. Role for the Cloud Build Service Agent on the Cloud Run SA (Default Compute SA)
+	defaultComputeSA := fmt.Sprintf("serviceAccount:%d-compute@developer.gserviceaccount.com", projectNumber)
+	resource := fmt.Sprintf("projects/%s/serviceAccounts/%s", projectID, strings.TrimPrefix(defaultComputeSA, "serviceAccount:"))
+	_, err = iamClient.AddIAMRoleBinding(ctx, resource, "roles/iam.serviceAccountUser", gcbP4sa)
+	if err != nil {
+		return "", fmt.Errorf("unable to add iam.serviceAccountUser role to Cloud Build P4SA %s on SA %s err: %w", gcbP4sa, defaultComputeSA, err)
+	}
+
 	return resolvedSA, nil
 }
 
