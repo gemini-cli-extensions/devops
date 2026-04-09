@@ -8,9 +8,9 @@ version: "1"
 #  - docker build -t cicd-evals:latest .
 # - Install skillgrade: npm i -g @kmonty/skillgrade@latest
 # - Run all evals:
-#   - GEMINI_API_KEY=<key> skillgrade
+#   - GEMINI_API_KEY=<key> skillgrade --no-redact
 # - Run specific evals:
-#   - GEMINI_API_KEY=<key> skillgrade --name=task1,task2
+#   - GEMINI_API_KEY=<key> skillgrade --name=task1,task2  --no-redact
 # - View results:
 #   - skillgrade preview browser
 
@@ -19,24 +19,27 @@ defaults:
   agent: gemini
   provider: docker
   trials: 1 # TODO increase trials
-  timeout: 300
+  timeout: 150
   threshold: 0.8 # For --ci mode
   grader_model: gemini-3-flash-preview # default LLM grader model
   docker:
     base: cicd-evals:latest
+  env:
+    GOOGLE_APPLICATION_CREDENTIALS: /tmp/keys/adc.json
+  environment:
+    mounts:
+      - ~/.config/gcloud/application_default_credentials.json:/tmp/keys/adc.json:ro
 
 tasks:
 
   # Evals for simple static site: https://github.com/sdlc-graph/tinyjam.git
   - name: deploy-static-site-gcs
     instruction: |
-      Deploy this static site in ./example to a Google Cloud Storage bucket in region 'us-central1'. 
+      Deploy this static site in .tinyjam/example to a Google Cloud Storage bucket in region 'us-central1'. 
       The site should be built by using tinyjam itself.
 
       The bucket name will be available as an environment variable $GCS_BUCKET.
       The project id will be available as an environment variable $PROJECT_ID.
-
-    timeout: 600
 
     trialConfig:
       setup: git clone https://github.com/sdlc-graph/tinyjam.git
@@ -45,7 +48,13 @@ tasks:
     graders:
       - type: deterministic
         run: graders/validate-gcs-deployment.sh
-        weight: 1.0
+        weight: 0.5
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-deploy
+        weight: 0.5
 
   - name: design-cloud-run-pipeline-python
     instruction: |

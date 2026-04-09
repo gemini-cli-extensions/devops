@@ -60,11 +60,6 @@ COPY <<EOF /root/.gemini/trustedFolders.json
 EOF
 
 # Custom entrypoint needed to support Google Cloud authentication.
-# skillshare doesn't support bind mounts so the only way to securely
-# pass credentials is through runtime environment variables.
-# The entrypoint saves these to a file and exports the necessary
-# environment variables for the tools to use.
-
 COPY eval-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/eval-entrypoint.sh
 
