@@ -1,6 +1,6 @@
 version: "1"
 
-# See https://github.com/mgechev/skillgrade
+# See https://github.com/sdlc-graph/skillgrade
 
 # Running evals:
 # - Create local .env file by filling in values from .env.example
