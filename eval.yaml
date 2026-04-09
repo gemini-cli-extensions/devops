@@ -1,0 +1,83 @@
+version: "1"
+
+# See https://github.com/mgechev/skillgrade
+
+# Running evals:
+# - Create local .env file by filling in values from .env.example
+# - Install skillgrade: npm i -g skillgrade
+# - Run evals:
+#   - GEMINI_API_KEY=<key> skillgrade
+#   - GEMINI_API_KEY=<key> skillgrade --name=task1,task2
+# - View results:
+#   - skillgrade preview browser
+
+
+defaults:
+  agent: gemini
+  provider: docker
+  trials: 1 # TODO increase trials
+  timeout: 300
+  threshold: 0.8 # For --ci mode
+  grader_model: gemini-3-flash-preview # default LLM grader model
+  docker:
+    base: cicd-evals:latest
+
+tasks:
+  - name: deploy-static-site-gcs
+    instruction: |
+      Deploy this static site in ./example to a Google Cloud Storage bucket in region 'us-central1'. 
+      The site should be built by using tinyjam itself.
+
+      The bucket name will be available as an environment variable $GCS_BUCKET.
+      The project id will be available as an environment variable $PROJECT_ID.
+
+    timeout: 600
+
+    graders:
+      - type: deterministic
+        setup: |
+          git clone https://github.com/mourner/tinyjam .
+        run: graders/validate-gcs-deployment.sh
+        weight: 1.0
+      - type: deterministic
+        run: graders/teardown-gcs.sh
+        weight: 0
+      
+  
+  - name: design-cloud-run-pipeline-python
+    instruction: |
+      Design a CI/CD pipeline to deploy this application using Terraform. This should include steps
+      to lint, build, test and finally deploy to Cloud Run.
+
+    graders:
+      - type: deterministic
+        setup: |
+          git clone https://github.com/yeshwanth1993/chefs-companion.git . && \
+          rm Dockerfile cloudbuild.yaml
+        run: graders/validate-pipeline.sh
+        weight: 0.7
+      - type: llm_rubric
+        rubric: graders/validate-rubric.md
+        weight: 0.3
+      - type: deterministic
+        run: graders/teardown.sh
+        weight: 0
+
+  - name: design-cloud-run-pipeline-nodejs
+    instruction: |
+      Design a CI/CD pipeline to deploy this application using Terraform. This should include steps
+      to lint, build, test and finally deploy to Cloud Run. 
+
+    graders:
+      - type: deterministic
+        setup: |
+          git clone https://github.com/mourner/tinyjam . && \
+          rm Dockerfile cloudbuild.yaml
+        run: graders/validate-pipeline.sh
+        weight: 0.7
+      - type: llm_rubric
+        rubric: graders/validate-rubric.md
+        weight: 0.3
+      - type: deterministic
+        run: graders/teardown.sh
+        weight: 0

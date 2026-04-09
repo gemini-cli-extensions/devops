@@ -13,3 +13,4 @@ server
 
 # GitHub App credentials
 gha-creds-*.json
+.env
