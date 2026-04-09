@@ -4,6 +4,8 @@ version: "1"
 
 # Running evals:
 # - Create local .env file by filling in values from .env.example
+# - Build the base docker image
+#  - docker build -t cicd-evals:latest .
 # - Install skillgrade: npm i -g skillgrade
 # - Run evals:
 #   - GEMINI_API_KEY=<key> skillgrade
