@@ -41,13 +41,16 @@ RUN curl -LO https://releases.hashicorp.com/terraform/1.14.8/terraform_1.14.8_li
 # Configure cicd MCP server
 COPY --from=builder /app/cicd-mcp-server/cicd-mcp-server /usr/local/bin/cicd-mcp-server
 RUN mkdir -p /root/.gemini
-COPY <<EOF /root/.gemini/settings.json
+COPY <<'EOF' /root/.gemini/settings.json
 {
   "mcpServers": {
     "cicd": {
       "command": "/usr/local/bin/cicd-mcp-server",
       "timeout": 300000,
-      "trust": true
+      "trust": true,
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "$GOOGLE_APPLICATION_CREDENTIALS"
+      }
     }
   }
 }

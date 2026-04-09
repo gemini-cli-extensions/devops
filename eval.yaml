@@ -35,19 +35,21 @@ tasks:
   # Evals for simple static site: https://github.com/sdlc-graph/tinyjam.git
   - name: deploy-static-site-gcs
     instruction: |
-      Deploy this static site in .tinyjam/example to a Google Cloud Storage bucket in region 'us-central1'. 
+      Deploy this static site in ./tinyjam/example to a Google Cloud Storage bucket.
       The site should be built by using tinyjam itself.
 
-      The bucket name will be available as an environment variable $GCS_BUCKET.
       The project id will be available as an environment variable $PROJECT_ID.
+      The bucket name will be available as an environment variable $GCS_BUCKET.
+      The region to use will be available as an environment variable $REGION.
+      
 
     trialConfig:
       setup: git clone https://github.com/sdlc-graph/tinyjam.git
-      cleanup: graders/teardown-gcs.sh
+      cleanup: scripts/teardown-gcs.sh
 
     graders:
       - type: deterministic
-        run: graders/validate-gcs-deployment.sh
+        run: scripts/validate-gcs-deployment.sh
         weight: 0.5
       - type: tool_usage
         expectedTools:
@@ -56,40 +58,72 @@ tasks:
               name: google-cicd-deploy
         weight: 0.5
 
-  - name: design-cloud-run-pipeline-python
+  # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
+  - name: deploy-cloud-run-pipeline-python
     instruction: |
-      Design a CI/CD pipeline to deploy this application using Terraform. This should include steps
-      to lint, build, test and finally deploy to Cloud Run.
+      Deploy the python application in ./chefs-companion to Cloud Run in region 'us-central1'. 
       
+      The project id will be available as an environment variable $PROJECT_ID.
+      The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
+      The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+      The region to use will be available as an environment variable $REGION.
+
+    timeout: 600
+
     trialConfig:
-      setup: |
-        git clone https://github.com/sdlc-graph/chefs-companion.git && \
-        rm chefs-companion/Dockerfile chefs-companion/cloudbuild.yaml
-      cleanup: graders/teardown-cloud-run.sh
+      setup: git clone https://github.com/sdlc-graph/chefs-companion.git
+      cleanup: scripts/teardown-cloud-run.sh
 
     graders:
       - type: deterministic
-        run: graders/validate-pipeline.sh
-        weight: 0.7
-      - type: llm_rubric
-        rubric: graders/validate-rubric.md
-        weight: 0.3
+        run: scripts/validate-cloud-run-deployment.sh
+        weight: 0.5
+      # TODO: confirm these are the correct tools for this repo
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-deploy
+          - name: mcp_cicd_create_artifact_repository
+          - name: mcp_cicd_deploy_cloudrun_service_from_source
+          - name: mcp_cicd_scan_code_for_secrets
+        weight: 0.5
 
-  - name: design-cloud-run-pipeline-nodejs
-    instruction: |
-      Design a CI/CD pipeline to deploy this application using Terraform. This should include steps
-      to lint, build, test and finally deploy to Cloud Run. 
 
-    trialConfig:
-      setup: |
-        git clone https://github.com/sdlc-graph/chefs-companion.git && \
-        rm chefs-companion/Dockerfile chefs-companion/cloudbuild.yaml
-      cleanup: graders/teardown-cloud-run.sh
+  # - name: design-cloud-run-pipeline-python
+  #   instruction: |
+  #     Design a CI/CD pipeline to deploy this application using Terraform. This should include steps
+  #     to lint, build, test and finally deploy to Cloud Run.
+      
+  #   trialConfig:
+  #     setup: |
+  #       git clone https://github.com/sdlc-graph/chefs-companion.git && \
+  #       rm chefs-companion/Dockerfile chefs-companion/cloudbuild.yaml
+  #     cleanup: scripts/teardown-cloud-run.sh
 
-    graders:
-      - type: deterministic
-        run: graders/validate-pipeline.sh
-        weight: 0.7
-      - type: llm_rubric
-        rubric: graders/validate-rubric.md
-        weight: 0.3
+  #   graders:
+  #     - type: deterministic
+  #       run: scripts/validate-pipeline.sh
+  #       weight: 0.7
+  #     - type: llm_rubric
+  #       rubric: scripts/validate-rubric.md
+  #       weight: 0.3
+
+  # - name: design-cloud-run-pipeline-nodejs
+  #   instruction: |
+  #     Design a CI/CD pipeline to deploy this application using Terraform. This should include steps
+  #     to lint, build, test and finally deploy to Cloud Run. 
+
+  #   trialConfig:
+  #     setup: |
+  #       git clone https://github.com/sdlc-graph/chefs-companion.git && \
+  #       rm chefs-companion/Dockerfile chefs-companion/cloudbuild.yaml
+  #     cleanup: scripts/teardown-cloud-run.sh
+
+  #   graders:
+  #     - type: deterministic
+  #       run: gradscriptsers/validate-pipeline.sh
+  #       weight: 0.7
+  #     - type: llm_rubric
+  #       rubric: scripts/validate-rubric.md
+  #       weight: 0.3
