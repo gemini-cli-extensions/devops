@@ -39,10 +39,12 @@ tasks:
       Deploy this static site in ./tinyjam/example to a Google Cloud Storage bucket.
       The site should be built by using tinyjam itself.
 
-      The project id will be available as an environment variable $PROJECT_ID.
-      The bucket name will be available as an environment variable $GCS_BUCKET.
-      The region to use will be available as an environment variable $REGION.
-      
+    workspace:
+      - content: |
+          The project id will be available as an environment variable $PROJECT_ID.
+          The bucket name will be available as an environment variable $GCS_BUCKET.
+          The region to use will be available as an environment variable $REGION.
+        dest: /root/.gemini/GEMINI.md
 
     trialConfig:
       setup: git clone https://github.com/sdlc-graph/tinyjam.git
@@ -51,24 +53,27 @@ tasks:
     graders:
       - type: deterministic
         run: scripts/validate-gcs-deployment.sh
-        weight: 0.5
+        weight: 1
       - type: tool_usage
         expectedTools:
           - name: activate_skill
             args:
               name: google-cicd-deploy
-        weight: 0.5
+        weight: 1
 
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
   - name: deploy-cloud-run-buildpacks-python
     instruction: |
       Deploy the python application in ./chefs-companion to Cloud Run
-      
-      The project id will be available as an environment variable $PROJECT_ID.
-      The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
-      The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
-      The region to use will be available as an environment variable $REGION.
-      Use buildpacks for building and deploying the application.
+
+    workspace:
+      - content: |
+          The project id will be available as an environment variable $PROJECT_ID.
+          The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
+          The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+          The region to use will be available as an environment variable $REGION.
+          Use buildpacks for building and deploying the application.
+        dest: /root/.gemini/GEMINI.md
 
     timeout: 600
 
@@ -105,12 +110,15 @@ tasks:
   - name: deploy-cloud-run-no-dockerfile-python
     instruction: |
       Deploy the python application in ./chefs-companion to Cloud Run
-      
-      The project id will be available as an environment variable $PROJECT_ID.
-      The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
-      The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
-      The region to use will be available as an environment variable $REGION.
-      Build a customer docker image for the application.
+
+    workspace:
+      - content: |
+          The project id will be available as an environment variable $PROJECT_ID.
+          The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
+          The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+          The region to use will be available as an environment variable $REGION.
+          Build a customer docker image for the application.
+        dest: /root/.gemini/GEMINI.md
 
     timeout: 600
 
@@ -136,7 +144,7 @@ tasks:
           - name: activate_skill
             args:
               name: google-cicd-deploy
-          - name: mcp_cicd_deploy_cloudrun_service_from_source
+          - name: mcp_cicd_deploy_cloudrun_service_from_image
           - name: mcp_cicd_scan_code_for_secrets
         weight: 1
       - type: llm_rubric
