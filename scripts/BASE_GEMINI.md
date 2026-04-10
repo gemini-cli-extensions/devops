@@ -6,7 +6,7 @@ but we want to evaluate cases where input is provided by the user that you shoul
 ## Context Loading
 
 1.  **Workspace Specifics**: Check the current working directory or workspace root for a `GEMINI.md` file. If present, read it immediately as it contains task-specific instructions and constraints that override or supplement these general guidelines.
-2.  **Environment**: Check for environment variables that clearly define properites needed to complete the task.
+2.  **Environment**: Check for environment variables that clearly define properties needed to complete the task.
 
 ## Execution Guidelines
 
