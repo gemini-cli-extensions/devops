@@ -37,6 +37,9 @@ RUN curl -LO https://releases.hashicorp.com/terraform/1.14.8/terraform_1.14.8_li
     && mv terraform /usr/local/bin/ \
     && rm terraform_1.14.8_linux_amd64.zip
 
+# Gemini CLI
+RUN npm install -g @google/gemini-cli
+
 # Configure cicd MCP server
 COPY --from=builder /app/cicd-mcp-server/cicd-mcp-server /usr/local/bin/cicd-mcp-server
 RUN mkdir -p /root/.gemini

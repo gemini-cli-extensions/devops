@@ -18,7 +18,7 @@ defaults:
   agent: gemini
   provider: docker
   trials: 1 # TODO increase trials
-  timeout: 150
+  timeout: 300
   threshold: 0.8 # For --ci mode
   grader_model: gemini-3-flash-preview # default LLM grader model
   docker:
@@ -40,11 +40,13 @@ tasks:
       The site should be built by using tinyjam itself.
 
     workspace:
+      - src: scripts/BASE_GEMINI.md
+        dest: /root/.gemini/GEMINI.md
       - content: |
           The project id will be available as an environment variable $PROJECT_ID.
           The bucket name will be available as an environment variable $GCS_BUCKET.
           The region to use will be available as an environment variable $REGION.
-        dest: /root/.gemini/GEMINI.md
+        dest: /workspace/GEMINI.md
 
     trialConfig:
       setup: git clone https://github.com/sdlc-graph/tinyjam.git
@@ -67,6 +69,8 @@ tasks:
       Deploy the python application in ./chefs-companion to Cloud Run
 
     workspace:
+      - src: scripts/BASE_GEMINI.md
+        dest: /root/.gemini/GEMINI.md
       - content: |
           The project id will be available as an environment variable $PROJECT_ID.
           The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
@@ -112,6 +116,8 @@ tasks:
       Deploy the python application in ./chefs-companion to Cloud Run
 
     workspace:
+      - src: scripts/BASE_GEMINI.md
+        dest: /root/.gemini/GEMINI.md
       - content: |
           The project id will be available as an environment variable $PROJECT_ID.
           The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
