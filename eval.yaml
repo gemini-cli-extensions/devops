@@ -3,6 +3,8 @@ version: "1"
 # See https://github.com/sdlc-graph/skillgrade
 
 # Running evals:
+# - Set gcloud ADC credentials
+#  - gcloud auth application-default login
 # - Create local .env file by filling in values from .env.example
 # - Build the base docker image
 #  - docker build -t cicd-evals:latest .
