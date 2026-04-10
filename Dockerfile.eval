@@ -1,0 +1,64 @@
+# Stage 1: Build the MCP Server
+FROM debian:sid AS builder
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    sudo \
+    golang-go \
+    && rm -rf /var/lib/apt/lists/*
+COPY cicd-mcp-server/ ./cicd-mcp-server/
+COPY lib/ ./lib/
+COPY build.sh ./
+
+RUN chmod +x build.sh
+RUN ./build.sh
+
+# Stage 2: Build the eval image with dependencies
+FROM node:20-slim
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    procps \
+    python3 \
+    unzip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# gcloud
+RUN curl -sSL https://sdk.cloud.google.com | bash
+ENV PATH=${PATH}:/root/google-cloud-sdk/bin
+
+# Terraform
+RUN curl -LO https://releases.hashicorp.com/terraform/1.14.8/terraform_1.14.8_linux_amd64.zip \
+    && unzip terraform_1.14.8_linux_amd64.zip \
+    && mv terraform /usr/local/bin/ \
+    && rm terraform_1.14.8_linux_amd64.zip
+
+# Configure cicd MCP server
+COPY --from=builder /app/cicd-mcp-server/cicd-mcp-server /usr/local/bin/cicd-mcp-server
+RUN mkdir -p /root/.gemini
+COPY <<'EOF' /root/.gemini/settings.json
+{
+  "mcpServers": {
+    "cicd": {
+      "command": "/usr/local/bin/cicd-mcp-server",
+      "timeout": 300000,
+      "trust": true,
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "$GOOGLE_APPLICATION_CREDENTIALS"
+      }
+    }
+  }
+}
+EOF
+
+COPY <<EOF /root/.gemini/trustedFolders.json
+{
+  "/": "TRUST_PARENT"
+}
+EOF
+
+CMD ["sh"]

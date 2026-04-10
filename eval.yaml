@@ -1,0 +1,144 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: "1"
+
+defaults:
+  agent: gemini
+  provider: docker
+  trials: 1 # TODO increase trials
+  timeout: 150
+  threshold: 0.8 # For --ci mode
+  grader_model: gemini-3-flash-preview # default LLM grader model
+  docker:
+    base: cicd-evals:latest
+  env:
+    GOOGLE_APPLICATION_CREDENTIALS: /tmp/keys/adc.json
+  environment:
+    mounts:
+      - ~/.config/gcloud/application_default_credentials.json:/tmp/keys/adc.json:ro
+  trialConfig:
+    setup: scripts/setup_gcloud.sh
+
+tasks:
+
+  # Evals for simple static site: https://github.com/sdlc-graph/tinyjam.git
+  - name: deploy-static-site-gcs
+    instruction: |
+      Deploy this static site in ./tinyjam/example to a Google Cloud Storage bucket.
+      The site should be built by using tinyjam itself.
+
+      The project id will be available as an environment variable $PROJECT_ID.
+      The bucket name will be available as an environment variable $GCS_BUCKET.
+      The region to use will be available as an environment variable $REGION.
+      
+
+    trialConfig:
+      setup: git clone https://github.com/sdlc-graph/tinyjam.git
+      cleanup: scripts/teardown-gcs.sh
+
+    graders:
+      - type: deterministic
+        run: scripts/validate-gcs-deployment.sh
+        weight: 0.5
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-deploy
+        weight: 0.5
+
+  # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
+  - name: deploy-cloud-run-buildpacks-python
+    instruction: |
+      Deploy the python application in ./chefs-companion to Cloud Run
+      
+      The project id will be available as an environment variable $PROJECT_ID.
+      The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
+      The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+      The region to use will be available as an environment variable $REGION.
+      Use buildpacks for building and deploying the application.
+
+    timeout: 600
+
+    trialConfig:
+      setup: |
+        git clone -b buildpacks https://github.com/sdlc-graph/chefs-companion.git
+      cleanup: scripts/teardown-cloud-run.sh
+
+    graders:
+      - type: deterministic
+        run: scripts/validate-cloud-run-deployment.sh
+        weight: 1
+      - type: deterministic
+        run: |
+          if [ ! -f chefs-companion/Dockerfile ]; then
+            echo '{"score": 1, "details": "Dockerfile does not exist"}'
+          else
+            echo '{"score": 0, "details": "Dockerfile exists"}'
+          fi
+        weight: 1
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-deploy
+          - name: mcp_cicd_deploy_cloudrun_service_from_source
+          - name: mcp_cicd_scan_code_for_secrets
+        weight: 1
+      - type: llm_rubric
+        rubric: The agent must have used buildpacks to build the application
+        weight: 1
+
+  # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
+  - name: deploy-cloud-run-no-dockerfile-python
+    instruction: |
+      Deploy the python application in ./chefs-companion to Cloud Run
+      
+      The project id will be available as an environment variable $PROJECT_ID.
+      The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
+      The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+      The region to use will be available as an environment variable $REGION.
+      Build a customer docker image for the application.
+
+    timeout: 600
+
+    trialConfig:
+      setup: |
+        git clone -b no-dockerfile https://github.com/sdlc-graph/chefs-companion.git
+      cleanup: scripts/teardown-cloud-run.sh
+
+    graders:
+      - type: deterministic
+        run: scripts/validate-cloud-run-deployment.sh
+        weight: 1
+      - type: deterministic
+        run: |
+          if [ -f chefs-companion/Dockerfile ]; then
+            echo '{"score": 1, "details": "Dockerfile exists"}'
+          else
+            echo '{"score": 0, "details": "Dockerfile does not exist"}'
+          fi
+        weight: 1
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-deploy
+          - name: mcp_cicd_deploy_cloudrun_service_from_source
+          - name: mcp_cicd_scan_code_for_secrets
+        weight: 1
+      - type: llm_rubric
+        rubric: The agent must have used a custom docker image to build the application
+        weight: 1
