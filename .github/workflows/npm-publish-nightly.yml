@@ -1,0 +1,122 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: NPM Publish Nightly
+
+on:
+  workflow_dispatch: # Manual trigger
+    inputs:
+      npm_token:
+        description: 'NPM Token for publishing (optional, falls back to secret)'
+        required: false
+        type: string
+  workflow_run:
+    workflows: ["Nightly Release"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  publish-npm:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check NPM Token
+        env:
+          TOKEN: ${{ inputs.npm_token || secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "Error: NPM_TOKEN is not set in inputs or secrets. Exiting."
+            exit 1
+          fi
+
+      - name: Download Nightly Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p artifacts
+          gh release download nightly --pattern '*' --dir artifacts --repo ${{ github.repository }}
+
+      - name: List downloaded files
+        run: ls -R artifacts
+
+      - name: Extract Binaries
+        run: |
+          mkdir -p cicd-mcp-server/npm/cicd-mcp-linux-amd64/bin
+          mkdir -p cicd-mcp-server/npm/cicd-mcp-darwin-arm64/bin
+          mkdir -p cicd-mcp-server/npm/cicd-mcp-windows-amd64/bin
+
+          # Extract Linux
+          tar -xzvf artifacts/linux.x64.cicd.tar.gz -C cicd-mcp-server/npm/cicd-mcp-linux-amd64/bin cicd-mcp-server
+
+          # Extract Darwin
+          tar -xzvf artifacts/darwin.arm64.cicd.tar.gz -C cicd-mcp-server/npm/cicd-mcp-darwin-arm64/bin cicd-mcp-server
+
+          # Extract Windows
+          unzip artifacts/win32.x64.cicd.zip -d cicd-mcp-server/npm/cicd-mcp-windows-amd64/bin cicd-mcp-server.exe
+
+      - name: Set Nightly Version
+        id: version
+        run: |
+          # Get current version from meta package
+          cd cicd-mcp-server/npm/cicd-mcp
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          
+          # Create nightly version
+          NIGHTLY_VERSION="${PACKAGE_VERSION}-nightly.$(date +%Y%m%d%H%M)"
+          echo "NIGHTLY_VERSION=$NIGHTLY_VERSION" >> $GITHUB_OUTPUT
+          
+          cd ../../..
+
+          # Update sub-packages
+          for dir in cicd-mcp-linux-amd64 cicd-mcp-darwin-arm64 cicd-mcp-windows-amd64; do
+            cd cicd-mcp-server/npm/$dir
+            npm version $NIGHTLY_VERSION --no-git-tag-version
+            cd ../../..
+          done
+
+          # Update meta package
+          cd cicd-mcp-server/npm/cicd-mcp
+          npm version $NIGHTLY_VERSION --no-git-tag-version
+          
+          # Update optionalDependencies in meta package
+          jq ".optionalDependencies[\"@google-cloud/cicd-mcp-linux-amd64\"] = \"$NIGHTLY_VERSION\" | .optionalDependencies[\"@google-cloud/cicd-mcp-darwin-arm64\"] = \"$NIGHTLY_VERSION\" | .optionalDependencies[\"@google-cloud/cicd-mcp-windows-amd64\"] = \"$NIGHTLY_VERSION\"" package.json > package.json.tmp && mv package.json.tmp package.json
+          
+          cd ../../..
+
+      - name: Publish Sub-packages
+        env:
+          NODE_AUTH_TOKEN: ${{ inputs.npm_token || secrets.NPM_TOKEN }}
+        run: |
+          for dir in cicd-mcp-linux-amd64 cicd-mcp-darwin-arm64 cicd-mcp-windows-amd64; do
+            cd cicd-mcp-server/npm/$dir
+            npm publish --tag nightly --access public
+            cd ../../..
+          done
+
+      - name: Publish Meta Package
+        env:
+          NODE_AUTH_TOKEN: ${{ inputs.npm_token || secrets.NPM_TOKEN }}
+        run: |
+          cd cicd-mcp-server/npm/cicd-mcp
+          npm publish --tag nightly --access public
