@@ -1,22 +1,5 @@
 version: "1"
 
-# See https://github.com/sdlc-graph/skillgrade
-
-# Running evals:
-# - Set gcloud ADC credentials
-#  - gcloud auth application-default login
-# - Create local .env file by filling in values from .env.example
-# - Build the base docker image
-#  - docker build -t cicd-evals:latest .
-# - Install skillgrade: npm i -g @kmonty/skillgrade@latest
-# - Run all evals:
-#   - GEMINI_API_KEY=<key> skillgrade --no-redact
-# - Run specific evals:
-#   - GEMINI_API_KEY=<key> skillgrade --name=task1,task2  --no-redact
-# - View results:
-#   - skillgrade preview browser
-
-
 defaults:
   agent: gemini
   provider: docker
