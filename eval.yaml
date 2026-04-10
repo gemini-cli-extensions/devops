@@ -29,6 +29,8 @@ defaults:
   environment:
     mounts:
       - ~/.config/gcloud/application_default_credentials.json:/tmp/keys/adc.json:ro
+  trialConfig:
+    setup: scripts/setup_gcloud.sh
 
 tasks:
 
@@ -59,7 +61,7 @@ tasks:
         weight: 0.5
 
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
-  - name: deploy-cloud-run-pipeline-python
+  - name: deploy-cloud-run-buildpacks-python
     instruction: |
       Deploy the python application in ./chefs-companion to Cloud Run in region 'us-central1'. 
       
@@ -67,63 +69,77 @@ tasks:
       The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
       The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
       The region to use will be available as an environment variable $REGION.
+      Use buildpacks for building and deploying the application.
 
     timeout: 600
 
     trialConfig:
-      setup: git clone https://github.com/sdlc-graph/chefs-companion.git
+      setup: |
+        git clone -b buildpacks https://github.com/sdlc-graph/chefs-companion.git
       cleanup: scripts/teardown-cloud-run.sh
 
     graders:
       - type: deterministic
         run: scripts/validate-cloud-run-deployment.sh
-        weight: 0.5
-      # TODO: confirm these are the correct tools for this repo
+        weight: 1
+      - type: deterministic
+        run: |
+          if [ ! -f chefs-companion/Dockerfile ]; then
+            echo '{"score": 1, "details": "Dockerfile does not exist"}'
+          else
+            echo '{"score": 0, "details": "Dockerfile exists"}'
+          fi
+        weight: 1
       - type: tool_usage
         expectedTools:
           - name: activate_skill
             args:
               name: google-cicd-deploy
-          - name: mcp_cicd_create_artifact_repository
           - name: mcp_cicd_deploy_cloudrun_service_from_source
           - name: mcp_cicd_scan_code_for_secrets
-        weight: 0.5
+        weight: 1
+      - type: llm_rubric
+        rubric: The agent must have used buildpacks to build the application
+        weight: 1
 
-
-  # - name: design-cloud-run-pipeline-python
-  #   instruction: |
-  #     Design a CI/CD pipeline to deploy this application using Terraform. This should include steps
-  #     to lint, build, test and finally deploy to Cloud Run.
+  # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
+  - name: deploy-cloud-run-no-dockerfile-python
+    instruction: |
+      Deploy the python application in ./chefs-companion to Cloud Run in region 'us-central1'. 
       
-  #   trialConfig:
-  #     setup: |
-  #       git clone https://github.com/sdlc-graph/chefs-companion.git && \
-  #       rm chefs-companion/Dockerfile chefs-companion/cloudbuild.yaml
-  #     cleanup: scripts/teardown-cloud-run.sh
+      The project id will be available as an environment variable $PROJECT_ID.
+      The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
+      The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+      The region to use will be available as an environment variable $REGION.
+      Build a customer docker image for the application.
 
-  #   graders:
-  #     - type: deterministic
-  #       run: scripts/validate-pipeline.sh
-  #       weight: 0.7
-  #     - type: llm_rubric
-  #       rubric: scripts/validate-rubric.md
-  #       weight: 0.3
+    timeout: 600
 
-  # - name: design-cloud-run-pipeline-nodejs
-  #   instruction: |
-  #     Design a CI/CD pipeline to deploy this application using Terraform. This should include steps
-  #     to lint, build, test and finally deploy to Cloud Run. 
+    trialConfig:
+      setup: |
+        git clone -b no-dockerfile https://github.com/sdlc-graph/chefs-companion.git
+      cleanup: scripts/teardown-cloud-run.sh
 
-  #   trialConfig:
-  #     setup: |
-  #       git clone https://github.com/sdlc-graph/chefs-companion.git && \
-  #       rm chefs-companion/Dockerfile chefs-companion/cloudbuild.yaml
-  #     cleanup: scripts/teardown-cloud-run.sh
-
-  #   graders:
-  #     - type: deterministic
-  #       run: gradscriptsers/validate-pipeline.sh
-  #       weight: 0.7
-  #     - type: llm_rubric
-  #       rubric: scripts/validate-rubric.md
-  #       weight: 0.3
+    graders:
+      - type: deterministic
+        run: scripts/validate-cloud-run-deployment.sh
+        weight: 1
+      - type: deterministic
+        run: |
+          if [ -f chefs-companion/Dockerfile ]; then
+            echo '{"score": 1, "details": "Dockerfile exists"}'
+          else
+            echo '{"score": 0, "details": "Dockerfile does not exist"}'
+          fi
+        weight: 1
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-deploy
+          - name: mcp_cicd_deploy_cloudrun_service_from_source
+          - name: mcp_cicd_scan_code_for_secrets
+        weight: 1
+      - type: llm_rubric
+        rubric: The agent must have used a custom docker image to build the application
+        weight: 1

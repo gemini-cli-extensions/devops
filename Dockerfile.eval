@@ -25,8 +25,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     unzip \
     git \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /bin/bash /bin/sh
+    && rm -rf /var/lib/apt/lists/*
 
 # gcloud
 RUN curl -sSL https://sdk.cloud.google.com | bash
@@ -62,15 +61,4 @@ COPY <<EOF /root/.gemini/trustedFolders.json
 }
 EOF
 
-# Custom entrypoint needed to support Google Cloud authentication.
-COPY eval-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/eval-entrypoint.sh
-
-# Set BASH_ENV for non-interactive shells
-ENV BASH_ENV=/etc/eval-env.sh
-# Ensure .bashrc sources the env file for interactive shells
-RUN echo "if [ -f /etc/eval-env.sh ]; then . /etc/eval-env.sh; fi" >> /root/.bashrc
-
-ENTRYPOINT ["/usr/local/bin/eval-entrypoint.sh"]
-
-CMD ["bash"]
+CMD ["sh"]
