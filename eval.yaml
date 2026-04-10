@@ -63,7 +63,7 @@ tasks:
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
   - name: deploy-cloud-run-buildpacks-python
     instruction: |
-      Deploy the python application in ./chefs-companion to Cloud Run in region 'us-central1'. 
+      Deploy the python application in ./chefs-companion to Cloud Run
       
       The project id will be available as an environment variable $PROJECT_ID.
       The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
@@ -105,7 +105,7 @@ tasks:
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
   - name: deploy-cloud-run-no-dockerfile-python
     instruction: |
-      Deploy the python application in ./chefs-companion to Cloud Run in region 'us-central1'. 
+      Deploy the python application in ./chefs-companion to Cloud Run
       
       The project id will be available as an environment variable $PROJECT_ID.
       The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
