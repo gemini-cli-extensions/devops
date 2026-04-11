@@ -36,7 +36,7 @@ tasks:
   # Evals for simple static site: https://github.com/sdlc-graph/tinyjam.git
   - name: deploy-static-site-gcs
     instruction: |
-      Deploy this static site in ./tinyjam/example to a Google Cloud Storage bucket.
+      Deploy this static application in ./example to Google Cloud.
       The site should be built by using tinyjam itself.
 
     workspace:
@@ -52,6 +52,8 @@ tasks:
       setup: git clone https://github.com/sdlc-graph/tinyjam.git
       cleanup: scripts/teardown-gcs.sh
 
+    agentWorkingDir: /workspace/tinyjam
+
     graders:
       - type: deterministic
         run: scripts/validate-gcs-deployment.sh
@@ -66,7 +68,7 @@ tasks:
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
   - name: deploy-cloud-run-buildpacks-python
     instruction: |
-      Deploy the python application in ./chefs-companion to Cloud Run
+      Deploy the python application to Cloud Run
 
     workspace:
       - src: scripts/BASE_GEMINI.md
@@ -85,6 +87,8 @@ tasks:
       setup: |
         git clone -b buildpacks https://github.com/sdlc-graph/chefs-companion.git
       cleanup: scripts/teardown-cloud-run.sh
+
+    agentWorkingDir: /workspace/chefs-companion
 
     graders:
       - type: deterministic
@@ -113,7 +117,7 @@ tasks:
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
   - name: deploy-cloud-run-no-dockerfile-python
     instruction: |
-      Deploy the python application in ./chefs-companion to Cloud Run
+      Deploy the python application to Cloud Run
 
     workspace:
       - src: scripts/BASE_GEMINI.md
@@ -132,6 +136,8 @@ tasks:
       setup: |
         git clone -b no-dockerfile https://github.com/sdlc-graph/chefs-companion.git
       cleanup: scripts/teardown-cloud-run.sh
+
+    agentWorkingDir: /workspace/chefs-companion
 
     graders:
       - type: deterministic
