@@ -135,7 +135,6 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 	gcbSARoles := []string{
 		"roles/artifactregistry.writer",
 		"roles/cloudbuild.builds.editor",
-		"roles/cloudbuild.workerpools.use",
 		"roles/developerconnect.tokenAccessor",
 		"roles/logging.logWriter",
 		"roles/run.developer",
@@ -174,12 +173,19 @@ func setPermissionsForCloudBuildSA(ctx context.Context, projectID, serviceAccoun
 		}
 	}
 
-	// 4. Role for the Cloud Build Service Agent on the Cloud Run SA (Default Compute SA)
+	// 4. Grant Cloud Build Service Agent permissions to impersonate the Cloud Run SA (Default Compute SA)
 	defaultComputeSA := fmt.Sprintf("serviceAccount:%d-compute@developer.gserviceaccount.com", projectNumber)
 	resource := fmt.Sprintf("projects/%s/serviceAccounts/%s", projectID, strings.TrimPrefix(defaultComputeSA, "serviceAccount:"))
 	_, err = iamClient.AddIAMRoleBinding(ctx, resource, "roles/iam.serviceAccountUser", gcbP4sa)
 	if err != nil {
 		return "", fmt.Errorf("unable to add iam.serviceAccountUser role to Cloud Build P4SA %s on SA %s err: %w", gcbP4sa, defaultComputeSA, err)
+	}
+
+	// 5. Grant Cloud Build Service Agent permissions to impersonate the SA passed in (SA that is going to run the build)
+	r := fmt.Sprintf("projects/%s/serviceAccounts/%s", projectID, strings.TrimPrefix(resolvedSA, "serviceAccount:"))
+	_, err = iamClient.AddIAMRoleBinding(ctx, r, "roles/iam.serviceAccountUser", gcbP4sa)
+	if err != nil {
+		return "", fmt.Errorf("unable to add iam.serviceAccountUser role to Cloud Build P4SA %s on SA %s err: %w", gcbP4sa, r, err)
 	}
 
 	return resolvedSA, nil

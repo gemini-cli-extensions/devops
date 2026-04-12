@@ -42,7 +42,6 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 	gcbSARoles := []string{
 		"roles/artifactregistry.writer",
 		"roles/cloudbuild.builds.editor",
-		"roles/cloudbuild.workerpools.use",
 		"roles/developerconnect.tokenAccessor",
 		"roles/logging.logWriter",
 		"roles/run.developer",
@@ -57,6 +56,7 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 	}
 	defaultComputeSA := fmt.Sprintf("%d-compute@developer.gserviceaccount.com", projectNumber)
 	saResource := fmt.Sprintf("projects/%s/serviceAccounts/%s", projectID, defaultComputeSA)
+	userSAResource := fmt.Sprintf("projects/%s/serviceAccounts/%s", projectID, "test-sa@example.com")
 
 	t.Run("with service account", func(t *testing.T) {
 		for _, r := range gcbSARoles {
@@ -68,6 +68,7 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa).Return(nil, nil)
 		}
 		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
+		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, userSAResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccount, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
@@ -84,6 +85,7 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa).Return(nil, nil)
 		}
 		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
+		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, userSAResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccountWOPrefix, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
@@ -117,4 +119,28 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 		_, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccount, mockRMClient, mockIAMClient)
 		assert.Error(t, err)
 	})
+}
+
+func TestIsValidServiceAccount(t *testing.T) {
+	tests := []struct {
+		name string
+		sa   string
+		want bool
+	}{
+		{"valid sa", "serviceAccount:test-sa@project.iam.gserviceaccount.com", true},
+		{"valid sa with dashes", "serviceAccount:my-sa-123@my-project-456.iam.gserviceaccount.com", true},
+		{"missing prefix", "test-sa@project.iam.gserviceaccount.com", false},
+		{"wrong prefix", "user:test-sa@project.iam.gserviceaccount.com", false},
+		{"missing domain", "serviceAccount:test-sa@project", false},
+		{"wrong domain", "serviceAccount:test-sa@project.com", false},
+		{"empty string", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsValidServiceAccount(tt.sa); got != tt.want {
+				t.Errorf("IsValidServiceAccount() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
