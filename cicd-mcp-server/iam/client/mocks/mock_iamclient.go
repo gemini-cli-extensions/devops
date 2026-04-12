@@ -52,6 +52,21 @@ func (mr *MockIAMClientMockRecorder) AddIAMRoleBinding(ctx, resourceID, role, me
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddIAMRoleBinding", reflect.TypeOf((*MockIAMClient)(nil).AddIAMRoleBinding), ctx, resourceID, role, member)
 }
 
+// AddServiceAccountRoleBinding mocks base method.
+func (m *MockIAMClient) AddServiceAccountRoleBinding(ctx context.Context, resourceID, role, member string) (*iam.Policy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddServiceAccountRoleBinding", ctx, resourceID, role, member)
+	ret0, _ := ret[0].(*iam.Policy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddServiceAccountRoleBinding indicates an expected call of AddServiceAccountRoleBinding.
+func (mr *MockIAMClientMockRecorder) AddServiceAccountRoleBinding(ctx, resourceID, role, member interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddServiceAccountRoleBinding", reflect.TypeOf((*MockIAMClient)(nil).AddServiceAccountRoleBinding), ctx, resourceID, role, member)
+}
+
 // CreateServiceAccount mocks base method.
 func (m *MockIAMClient) CreateServiceAccount(ctx context.Context, projectID, displayName, accountID string) (*iam.ServiceAccount, error) {
 	m.ctrl.T.Helper()

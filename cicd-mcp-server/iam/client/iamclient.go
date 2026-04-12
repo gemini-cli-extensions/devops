@@ -35,10 +35,11 @@ type RoleBindingList struct {
 
 // Client is an interface for interacting with the IAM API.
 type IAMClient interface {
-	CreateServiceAccount(ctx context.Context, projectID, displayName, accountID string) (*iamv1.ServiceAccount, error)
-	AddIAMRoleBinding(ctx context.Context, resourceID, role, member string) (*cloudresourcemanagerv1.Policy, error)
-	ListServiceAccounts(ctx context.Context, projectID string) (*ServiceAccountList, error)
-	GetIAMRoleBinding(ctx context.Context, projectID, serviceAccountEmail string) (*RoleBindingList, error)
+    CreateServiceAccount(ctx context.Context, projectID, displayName, accountID string) (*iamv1.ServiceAccount, error)
+    AddIAMRoleBinding(ctx context.Context, resourceID, role, member string) (*cloudresourcemanagerv1.Policy, error) // Project-level
+    AddServiceAccountRoleBinding(ctx context.Context, resourceID, role, member string) (*iamv1.Policy, error) // SA-level
+    ListServiceAccounts(ctx context.Context, projectID string) (*ServiceAccountList, error)
+    GetIAMRoleBinding(ctx context.Context, projectID, serviceAccountEmail string) (*RoleBindingList, error)
 }
 
 // clientImpl is a client for interacting with the IAM API.
@@ -147,4 +148,47 @@ func (c *IAMClientImpl) GetIAMRoleBinding(ctx context.Context, projectID, servic
 	}
 
 	return &RoleBindingList{Items: roles}, nil
+}
+
+// AddServiceAccountRoleBinding adds a member to a role on a specific SA and returns the updated Policy.
+func (c *IAMClientImpl) AddServiceAccountRoleBinding(ctx context.Context, resourceID, role, member string) (*iamv1.Policy, error) {
+    // 1. Get the current policy (includes the ETag)
+    policy, err := c.iamService.Projects.ServiceAccounts.GetIamPolicy(resourceID).Context(ctx).Do()
+    if err != nil {
+        return nil, fmt.Errorf("failed to get iam policy: %w", err)
+    }
+
+    // 2. Modify the policy
+    updated := false
+    for _, binding := range policy.Bindings {
+        if binding.Role == role {
+            for _, m := range binding.Members {
+                if m == member {
+                    return policy, nil // Already exists, exit early to save an API call
+                }
+            }
+            binding.Members = append(binding.Members, member)
+            updated = true
+            break
+        }
+    }
+
+    if !updated {
+        policy.Bindings = append(policy.Bindings, &iamv1.Binding{
+            Role:    role,
+            Members: []string{member},
+        })
+    }
+
+    // 3. Set the policy (The ETag in 'policy' ensures we don't overwrite concurrent changes)
+    request := &iamv1.SetIamPolicyRequest{
+        Policy: policy,
+    }
+    
+    updatedPolicy, err := c.iamService.Projects.ServiceAccounts.SetIamPolicy(resourceID, request).Context(ctx).Do()
+    if err != nil {
+        return nil, fmt.Errorf("failed to set iam policy: %w", err)
+    }
+
+    return updatedPolicy, nil
 }

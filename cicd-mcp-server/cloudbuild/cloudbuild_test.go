@@ -48,7 +48,7 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 		"roles/serviceusage.serviceUsageConsumer",
 		"roles/storage.admin",
 	}
-	dcP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
+	dcP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-devconnect.iam.gserviceaccount.com", projectNumber)
 	gcbP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-cloudbuild.iam.gserviceaccount.com", projectNumber)
 	gcbP4saRoles := []string{
 		"roles/cloudbuild.serviceAgent",
@@ -67,8 +67,8 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 		for _, r := range gcbP4saRoles {
 			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa).Return(nil, nil)
 		}
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, userSAResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
+		mockIAMClient.EXPECT().AddServiceAccountRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
+		mockIAMClient.EXPECT().AddServiceAccountRoleBinding(ctx, userSAResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccount, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
@@ -84,8 +84,8 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 		for _, r := range gcbP4saRoles {
 			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa).Return(nil, nil)
 		}
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, userSAResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
+		mockIAMClient.EXPECT().AddServiceAccountRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
+		mockIAMClient.EXPECT().AddServiceAccountRoleBinding(ctx, userSAResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccountWOPrefix, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
