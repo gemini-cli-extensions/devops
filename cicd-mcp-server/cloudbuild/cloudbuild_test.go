@@ -42,12 +42,12 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 	gcbSARoles := []string{
 		"roles/artifactregistry.writer",
 		"roles/cloudbuild.builds.editor",
-		"roles/cloudbuild.workerpools.use",
 		"roles/developerconnect.tokenAccessor",
 		"roles/logging.logWriter",
 		"roles/run.developer",
 		"roles/serviceusage.serviceUsageConsumer",
 		"roles/storage.admin",
+		"roles/iam.serviceAccountUser",
 	}
 	dcP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-developerconnect.iam.gserviceaccount.com", projectNumber)
 	gcbP4sa := fmt.Sprintf("serviceAccount:service-%d@gcp-sa-cloudbuild.iam.gserviceaccount.com", projectNumber)
@@ -55,8 +55,6 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 		"roles/cloudbuild.serviceAgent",
 		"roles/developerconnect.tokenAccessor",
 	}
-	defaultComputeSA := fmt.Sprintf("%d-compute@developer.gserviceaccount.com", projectNumber)
-	saResource := fmt.Sprintf("projects/%s/serviceAccounts/%s", projectID, defaultComputeSA)
 
 	t.Run("with service account", func(t *testing.T) {
 		for _, r := range gcbSARoles {
@@ -67,7 +65,6 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 		for _, r := range gcbP4saRoles {
 			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa).Return(nil, nil)
 		}
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccount, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
@@ -83,7 +80,6 @@ func TestSetPermissionsForCloudBuildSA(t *testing.T) {
 		for _, r := range gcbP4saRoles {
 			mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, fmt.Sprintf("projects/%s", projectID), r, gcbP4sa).Return(nil, nil)
 		}
-		mockIAMClient.EXPECT().AddIAMRoleBinding(ctx, saResource, "roles/iam.serviceAccountUser", gcbP4sa).Return(nil, nil)
 
 		resolvedSA, err := setPermissionsForCloudBuildSA(ctx, projectID, serviceAccountWOPrefix, mockRMClient, mockIAMClient)
 		assert.NoError(t, err)
