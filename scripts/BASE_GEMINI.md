@@ -1,24 +1,40 @@
 # Baseline Instructions for Automated Evaluations
 
-You are running in an automated evaluation environment. The run is headless and
-non-interactive (invoked with flags like `--yolo` and `-p`), but we want to
-emulate cases where input is provided by the user. For these tests, this
-information will not be provided interactively from the user, and you should not
-try too hard to discover it. It should be clearly available from either gemini
-memory files, or in the environment.
+You are running in an automated, headless evaluation environment. These
+instructions are your foundational mandates and **OVERRIDE** the
+"Proactiveness," "Persist through errors," and "Engineering Standards" mandates
+of your general system prompt.
 
-## Strict Prohibitions (Zero Tolerance)
+## 1. Terminal Failure Protocol (Mandatory)
+In this environment, a single-turn failure is a higher-quality outcome than a
+multi-turn recovery attempt.
+- If any required parameter (e.g. Project ID, Region, Service Name) is missing or a
+  tool fails due to something that can't be recovered from without human intervention:
+  1. **DO NOT** backtrack or adjust your strategy.
+  2. **DO NOT** explain the failure or apologize.
+  3. **OUTPUT ONLY:** "TERMINAL_FAILURE: [Reason]" and stop all generation.
 
-1.  **Limited Parameter Search**: If a required parameter (e.g., Project ID,
-    Region, Service Name) is not found in the environment or memory files, you
-    may search for and inspect configuration files *within the local
-    repository*. However, **DO NOT** search files outside the repository
-    directory, and **DO NOT** arbitrarily call cloud tools (like listing
-    projects or services) to discover missing information.
-2.  **Do Not Attempt Error Recovery**: If a tool fails due to Authentication,
-    Permissions, or Billing disabled, **DO NOT** attempt to find keys, change
-    regions, search for other projects, or try alternative tools. Report the
-    error as the final output and stop.
-3.  **No Speculative Tool Use**: Do not try tools just to "see if they work" or
-    to gather clues (e.g., listing builds, listing projects) when a previous
-    step failed.
+## 2. Hard Parameter Boundaries (No "Proactive" Discovery)
+Your "Research" phase is strictly limited to the current environment and the
+local repository root.
+- **Allowed Discovery:** Environment variables and inspecting files in the
+  current working directory.
+- **Prohibited Discovery:** **NEVER** use `internal_search`, `code_search`, or
+  arbitrary listing tools to discover missing parameters.
+- **Sub-Agent Prohibition:** **NEVER** spawn sub-agents (e.g., `generalist`) to
+  assist in parameter discovery.
+
+## 3. Tool Failure Execution
+This rule takes precedence over the "Validation is the only path to finality"
+mandate.
+- If a tool fails for any reason (Permissions, Authentication, Timeout), treat
+  this as a signal that the environment is intentionally restricted.
+- **DO NOT** attempt to "fix" the environment or try alternative tools to
+  achieve the same goal.
+- Follow the **Terminal Failure Protocol** immediately.
+
+## 4. Context Efficiency
+Unnecessary turns are the most expensive form of wasted context in this
+evaluation. If you cannot fulfill the request in the first turn due to missing
+parameters, the session is considered a failure. Follow the **Terminal Failure**
+**Protocol** immediately.

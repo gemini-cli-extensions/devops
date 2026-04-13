@@ -39,8 +39,7 @@ tasks:
   # Evals for simple static site: https://github.com/sdlc-graph/tinyjam.git
   - name: deploy-static-site-gcs
     instruction: |
-      Deploy this static application in ./example to Google Cloud.
-      The site should be built by using tinyjam itself.
+      Deploy this static application to Google Cloud.
 
     workspace:
       - content: |
@@ -50,10 +49,14 @@ tasks:
         dest: /workspace/GEMINI.md
 
     trialConfig:
-      setup: git clone https://github.com/sdlc-graph/tinyjam.git
+      setup: |
+        git clone https://github.com/sdlc-graph/tinyjam.git
+        cd tinyjam
+        npm install
+        npx . ./example ./example/_dist
       cleanup: scripts/teardown-gcs.sh
 
-    agentWorkingDir: /workspace/tinyjam
+    agentWorkingDir: /workspace/tinyjam/example
 
     graders:
       - type: deterministic
@@ -64,6 +67,7 @@ tasks:
           - name: activate_skill
             args:
               name: google-cicd-deploy
+          - name: mcp_cicd_scan_code_for_secrets
         weight: 1
 
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
