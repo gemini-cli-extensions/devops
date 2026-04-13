@@ -25,6 +25,9 @@ defaults:
     base: cicd-evals:latest
   env:
     GOOGLE_APPLICATION_CREDENTIALS: /tmp/keys/adc.json
+  workspace:
+    - src: scripts/BASE_GEMINI.md
+      dest: /root/.gemini/GEMINI.md
   environment:
     mounts:
       - ~/.config/gcloud/application_default_credentials.json:/tmp/keys/adc.json:ro
@@ -40,8 +43,6 @@ tasks:
       The site should be built by using tinyjam itself.
 
     workspace:
-      - src: scripts/BASE_GEMINI.md
-        dest: /root/.gemini/GEMINI.md
       - content: |
           The project id will be available as an environment variable $PROJECT_ID.
           The bucket name will be available as an environment variable $GCS_BUCKET.
@@ -71,8 +72,6 @@ tasks:
       Deploy the python application to Cloud Run
 
     workspace:
-      - src: scripts/BASE_GEMINI.md
-        dest: /root/.gemini/GEMINI.md
       - content: |
           The project id will be available as an environment variable $PROJECT_ID.
           The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
@@ -120,8 +119,6 @@ tasks:
       Deploy the python application to Cloud Run
 
     workspace:
-      - src: scripts/BASE_GEMINI.md
-        dest: /root/.gemini/GEMINI.md
       - content: |
           The project id will be available as an environment variable $PROJECT_ID.
           The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
