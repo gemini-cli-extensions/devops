@@ -134,7 +134,7 @@ CMD ["python", "app.py"]
   * When a runtime version is specified, use that version for the base image.
   * If no minimum version is specified, use a recent stable version of the runtime.
 
-### Google Cloud Run Specifics Base Images
+### Google Cloud Run Specific Base Images
 
 If you are deploying to **Google Cloud Run**, you can leverage advanced features for security and maintenance.
 
