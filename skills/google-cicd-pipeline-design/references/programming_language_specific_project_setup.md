@@ -34,7 +34,7 @@ Gemfile: Describes the gem dependencies required to run the Ruby code.
 The JavaScript/TypeScript ecosystem is highly standardized.
 
 * package.json: Manifest file containing metadata, scripts, and dependencies.
-* package-lock.json (or yarn.lock / pnpm-lock.yaml): Ensures consistent installation across machines.=
+* package-lock.json (or yarn.lock / pnpm-lock.yaml): Ensures consistent installation across machines.
 * tsconfig.json: Configuration for TypeScript compiler settings.
 * .npmrc: Configuration file for how npm should behave.
 
