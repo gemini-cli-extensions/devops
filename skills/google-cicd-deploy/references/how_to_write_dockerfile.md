@@ -132,7 +132,7 @@ CMD ["python", "app.py"]
 * Use latest version of the language specific image as base image.
 * Review project config files to identify required runtime version:
   * When a runtime version is specified, use that version for the base image.
-  * If no minimum version is specified use latest version of the runtime
+  * If no minimum version is specified, use a recent stable version of the runtime.
 
 ### Google Cloud Run Specifics Base Images
 
