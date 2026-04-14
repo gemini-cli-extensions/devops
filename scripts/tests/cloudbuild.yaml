@@ -1,0 +1,21 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build'
+  args: ['build', '-t', 'gcr.io/my-project/my-image', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'lint'
+  args: ['run', 'my-linter']
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'test'
+  args: ['run', 'my-tests']
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'deploy'
+  args: ['push', 'gcr.io/my-project/my-image']
+
+images:
+- 'gcr.io/my-project/my-image'
+
+serviceAccount: 'my-service-account@my-project.iam.gserviceaccount.com'
+
+options:
+  logging: 'CLOUD_LOGGING_ONLY'

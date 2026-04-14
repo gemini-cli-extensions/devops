@@ -163,3 +163,44 @@ tasks:
       - type: llm_rubric
         rubric: The agent must have used a custom docker image to build the application
         weight: 1
+
+  # Evals for pipeline design with Terraform
+  - name: pipeline-design-terraform-trunk-based-simple
+    instruction: |
+      Design and implement a simple CI/CD pipeline application in ./app_dir.
+    workspace:
+      - src: scripts/BASE_GEMINI.md
+        dest: /root/.gemini/GEMINI.md
+      - content: |
+          The project id will be available as an environment variable $PROJECT_ID.
+          The region to use will be available as an environment variable $REGION.
+          Use Terraform for implementation.
+          Follow Trunk-Based Push-to-Deploy pattern.
+          You must print all files that are created in ./app_dir in the output.
+        dest: /root/.gemini/GEMINI.md
+    timeout: 600
+
+    trialConfig:
+      setup: |
+        target="${APP_DIR:-chefs-companion}"
+        git clone -b no-dockerfile https://github.com/sdlc-graph/chefs-companion.git "$target"
+    graders:
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-pipeline-design
+          - name: activate_skill
+            args:
+              name: google-cicd-terraform
+        weight: 1
+      - type: deterministic
+        run: scripts/validate-dockerfile.sh
+      - type: deterministic
+        run: scripts/validate-cloudbuild-config.sh
+      - type: llm_rubric
+        rubric: |
+          Did the agent follow the Design & Implement workflow?
+          Did the agent use Terraform to implement the pipeline?
+          Did the plan align with Trunk-Based Push-to-Deploy?
+        weight: 1
