@@ -87,7 +87,7 @@ ENTRYPOINT ["/app"]
 
 ```
 
-### 💡 Example 3: Python simple application)
+### 💡 Example 3: Python simple application
 
 # --- Stage 1: Builder Stage ---
 # Use a full Python image with build tools
