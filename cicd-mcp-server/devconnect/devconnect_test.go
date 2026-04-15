@@ -164,14 +164,9 @@ func TestAddDevConnectGitRepoLink_ExistingLink(t *testing.T) {
 		t.Fatalf("tool function returned an error: %v", err)
 	}
 
-	resultWrapper, ok := res.(ResultWrapper)
+	link, ok := res.(*developerconnect.GitRepositoryLink)
 	if !ok {
-		t.Fatalf("result is not of the expected type ResultWrapper, got %T", res)
-	}
-
-	link, ok := resultWrapper.Result.(*developerconnect.GitRepositoryLink)
-	if !ok {
-		t.Fatalf("result is not of the expected type for links")
+		t.Fatalf("result is not of the expected type for links, got %T", res)
 	}
 
 	if link.Name != "existing-link" {

@@ -52,7 +52,7 @@ func addAddDevConnectGitRepoLinkTool(server *mcp.Server, dcClient devconnectclie
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to check for existing git repository links: %w", err)
 		}
 		if len(existingLinks) > 0 {
-			return &mcp.CallToolResult{}, ResultWrapper{Message: "pre-existing repository link found", Result: existingLinks[0]}, nil
+			return &mcp.CallToolResult{}, existingLinks[0], nil
 		}
 
 		// We need a repoLinkID. We can derive it from the URI.
