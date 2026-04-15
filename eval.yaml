@@ -167,11 +167,12 @@ tasks:
           2. The region to use will be available as an environment variable $REGION.
           3. The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
           4. Use Terraform for implementation. 
-          5. Follow Trunk-Based Push-to-Deploy pattern.
-          6. Cloud Run is the preferred deployment target.
-          7. If you create a GCS bucket for Terraform state, the bucket name should be gs://tf-state-${_EVAL_UUID}-${_EVAL_TRIAL}.
-          8. Do not apply terraform directly.
-          9. Do not submit builds to Cloud Build directly.
+          5. All Terraform vars should have defaults set to make it easier to validate later.
+          6. Follow Trunk-Based Push-to-Deploy pattern.
+          7. Cloud Run is the preferred deployment target.
+          8. If you create a GCS bucket for Terraform state, the bucket name should be gs://tf-state-${_EVAL_UUID}-${_EVAL_TRIAL}.
+          9. Do not apply terraform directly.
+          10. Do not submit builds to Cloud Build directly.
         dest: /workspace/GEMINI.md
       
     timeout: 600

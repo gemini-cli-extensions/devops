@@ -38,3 +38,9 @@ Unnecessary turns are the most expensive form of wasted context in this
 evaluation. If you cannot fulfill the request in the first turn due to missing
 parameters, the session is considered a failure. Follow the **Terminal Failure**
 **Protocol** immediately.
+
+## 5. Output Auditing
+At the end of each session, you **MUST** produce a short report listing the following details:
+1. Which tool calls were made that could mutate external state.
+2. For each tool call, list the arguments and any output that could be used to identify the mutation.
+For example, calling the `gcloud` CLI to create, update or delete resources should be explicitly reported.

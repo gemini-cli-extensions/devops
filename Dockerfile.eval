@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     unzip \
     git \
+    yq \
     && rm -rf /var/lib/apt/lists/*
 
 # gcloud

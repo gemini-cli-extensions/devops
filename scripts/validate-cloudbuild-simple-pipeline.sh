@@ -13,25 +13,28 @@ if [ ! -f "$FILE" ]; then
   exit 0
 fi
 
-# Check for Test step
-if grep -q -i "id:.*test" "$FILE"; then
-  CHECK_TEST="true"
-fi
+# Use yq to parse cloudbuild.yaml robustly
+while IFS="|" read -r id name args; do
+  # Check for Test step
+  if [[ "$id" =~ [Tt]est ]] || [[ "$name" =~ (npm|python|node|pytest) ]] || [[ "$args" =~ [Tt]est ]]; then
+    CHECK_TEST="true"
+  fi
 
-# Check for Build step
-if grep -q -i "id:.*build" "$FILE"; then
-  CHECK_BUILD="true"
-fi
+  # Check for Build step
+  if [[ "$id" =~ [Bb]uild ]] || ([[ "$name" =~ docker ]] && [[ "$args" =~ build ]]); then
+    CHECK_BUILD="true"
+  fi
 
-# Check for Push step
-if grep -q -i "id:.*push" "$FILE"; then
-  CHECK_PUSH="true"
-fi
+  # Check for Push step
+  if [[ "$id" =~ [Pp]ush ]] || ([[ "$name" =~ docker ]] && [[ "$args" =~ push ]]); then
+    CHECK_PUSH="true"
+  fi
 
-# Check for Deploy step
-if grep -q -i "id:.*deploy" "$FILE"; then
-  CHECK_DEPLOY="true"
-fi
+  # Check for Deploy step
+  if [[ "$id" =~ [Dd]eploy ]] || ([[ "$name" =~ (gcloud|cloud-sdk) ]] && [[ "$args" =~ (deploy|run) ]]); then
+    CHECK_DEPLOY="true"
+  fi
+done < <(yq '.steps[] | (.id // "") + "|" + (.name // "") + "|" + ((.args // []) | join(" "))' "$FILE")
 
 # Calculate score
 TOTAL_CHECKS=4
