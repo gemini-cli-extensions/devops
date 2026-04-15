@@ -27,3 +27,6 @@ else
     rm -f "$TOKEN_FILE"
     exit 1
 fi
+
+# Also disable interactive prompts from eval runs
+gcloud config set core/disable_prompts true

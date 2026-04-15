@@ -26,6 +26,8 @@ defaults:
   env:
     GOOGLE_APPLICATION_CREDENTIALS: /tmp/keys/adc.json
   workspace:
+    - src: scripts
+      dest: /workspace/scripts
     - src: scripts/BASE_GEMINI.md
       dest: /root/.gemini/GEMINI.md
   environment:
@@ -43,9 +45,9 @@ tasks:
 
     workspace:
       - content: |
-          The project id will be available as an environment variable $PROJECT_ID.
-          The bucket name will be available as an environment variable $GCS_BUCKET.
-          The region to use will be available as an environment variable $REGION.
+          1. The project id will be available as an environment variable $PROJECT_ID.
+          2. The bucket name should be constructed from gs://${_EVAL_UUID}-${_EVAL_TRIAL}.
+          3. The region to use will be available as an environment variable $REGION.
         dest: /workspace/GEMINI.md
 
     trialConfig:
@@ -54,21 +56,19 @@ tasks:
         cd tinyjam
         npm install
         npx . ./example ./example/_dist
-      cleanup: scripts/teardown-gcs.sh
+      cleanup: scripts/teardown-gcs.sh gs://${_EVAL_UUID}-${_EVAL_TRIAL}
 
     agentWorkingDir: /workspace/tinyjam/example
 
     graders:
       - type: deterministic
-        run: scripts/validate-gcs-deployment.sh
-        weight: 1
+        run: scripts/validate-gcs-deployment.sh gs://${_EVAL_UUID}-${_EVAL_TRIAL}
       - type: tool_usage
         expectedTools:
           - name: activate_skill
             args:
               name: google-cicd-deploy
           - name: mcp_cicd_scan_code_for_secrets
-        weight: 1
 
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
   - name: deploy-cloud-run-buildpacks-python
@@ -77,11 +77,10 @@ tasks:
 
     workspace:
       - content: |
-          The project id will be available as an environment variable $PROJECT_ID.
-          The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
-          The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
-          The region to use will be available as an environment variable $REGION.
-          Use buildpacks for building and deploying the application.
+          1. The cloud run service name should be constructed from ${_EVAL_UUID}-${_EVAL_TRIAL}.
+          2. The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+          3. The region to use will be available as an environment variable $REGION.
+          4. Use buildpacks for building and deploying the application.
         dest: /workspace/GEMINI.md
 
     timeout: 600
@@ -89,14 +88,13 @@ tasks:
     trialConfig:
       setup: |
         git clone -b buildpacks https://github.com/sdlc-graph/chefs-companion.git
-      cleanup: scripts/teardown-cloud-run.sh
+      cleanup: scripts/teardown-cloud-run.sh ${_EVAL_UUID}-${_EVAL_TRIAL}
 
     agentWorkingDir: /workspace/chefs-companion
 
     graders:
       - type: deterministic
-        run: scripts/validate-cloud-run-deployment.sh
-        weight: 1
+        run: scripts/validate-cloud-run-deployment.sh ${_EVAL_UUID}-${_EVAL_TRIAL}
       - type: deterministic
         run: |
           if [ ! -f chefs-companion/Dockerfile ]; then
@@ -104,7 +102,6 @@ tasks:
           else
             echo '{"score": 0, "details": "Dockerfile exists"}'
           fi
-        weight: 1
       - type: tool_usage
         expectedTools:
           - name: activate_skill
@@ -112,10 +109,8 @@ tasks:
               name: google-cicd-deploy
           - name: mcp_cicd_deploy_cloudrun_service_from_source
           - name: mcp_cicd_scan_code_for_secrets
-        weight: 1
       - type: llm_rubric
         rubric: The agent must have used buildpacks to build the application
-        weight: 1
 
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
   - name: deploy-cloud-run-no-dockerfile-python
@@ -124,11 +119,11 @@ tasks:
 
     workspace:
       - content: |
-          The project id will be available as an environment variable $PROJECT_ID.
-          The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
-          The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
-          The region to use will be available as an environment variable $REGION.
-          Build a customer docker image for the application.
+          1. The project id will be available as an environment variable $PROJECT_ID.
+          2. The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
+          3. The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+          4. The region to use will be available as an environment variable $REGION.
+          5. Build a customer docker image for the application.
         dest: /workspace/GEMINI.md
 
     timeout: 600
@@ -136,14 +131,13 @@ tasks:
     trialConfig:
       setup: |
         git clone -b no-dockerfile https://github.com/sdlc-graph/chefs-companion.git
-      cleanup: scripts/teardown-cloud-run.sh
+      cleanup: scripts/teardown-cloud-run.sh ${_EVAL_UUID}-${_EVAL_TRIAL}
 
     agentWorkingDir: /workspace/chefs-companion
 
     graders:
       - type: deterministic
-        run: scripts/validate-cloud-run-deployment.sh
-        weight: 1
+        run: scripts/validate-cloud-run-deployment.sh ${_EVAL_UUID}-${_EVAL_TRIAL}
       - type: deterministic
         run: |
           if [ -f chefs-companion/Dockerfile ]; then
@@ -151,7 +145,6 @@ tasks:
           else
             echo '{"score": 0, "details": "Dockerfile does not exist"}'
           fi
-        weight: 1
       - type: tool_usage
         expectedTools:
           - name: activate_skill
@@ -159,7 +152,51 @@ tasks:
               name: google-cicd-deploy
           - name: mcp_cicd_deploy_cloudrun_service_from_image
           - name: mcp_cicd_scan_code_for_secrets
-        weight: 1
       - type: llm_rubric
         rubric: The agent must have used a custom docker image to build the application
-        weight: 1
+
+  # Evals for pipeline design with Terraform
+  - name: pipeline-design-terraform-trunk-based-simple
+    
+    instruction: |
+      Design and implement a simple CI/CD pipeline for my application.
+
+    workspace:
+      - content: |
+          1. The project id will be available as an environment variable $PROJECT_ID.
+          2. The region to use will be available as an environment variable $REGION.
+          3. The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+          4. Use Terraform for implementation. 
+          5. Follow Trunk-Based Push-to-Deploy pattern.
+          6. Cloud Run is the preferred deployment target.
+          7. If you create a GCS bucket for Terraform state, the bucket name should be gs://tf-state-${_EVAL_UUID}-${_EVAL_TRIAL}.
+          8. Do not apply terraform directly.
+          9. Do not submit builds to Cloud Build directly.
+        dest: /workspace/GEMINI.md
+      
+    timeout: 600
+
+    trialConfig:
+      setup: git clone -b no-cloudbuild https://github.com/sdlc-graph/chefs-companion.git
+      cleanup: scripts/teardown-gcs.sh gs://tf-state-${_EVAL_UUID}-${_EVAL_TRIAL}
+
+    agentWorkingDir: /workspace/chefs-companion
+
+    graders:
+      - type: deterministic
+        run: scripts/validate-cloudbuild-simple-pipeline.sh chefs-companion/cloudbuild.yaml
+      - type: deterministic
+        run: scripts/validate-terraform-simple-pipeline.sh chefs-companion/terraform
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-pipeline-design
+          - name: activate_skill
+            args:
+              name: google-cicd-terraform
+      - type: llm_rubric
+        rubric: |
+          1. The agent must have used Terraform to implement the pipeline.
+          2. The agent must have used the trunk-based push-to-deploy pattern.
+          3. The agent must have used Cloud Run as the deployment target.

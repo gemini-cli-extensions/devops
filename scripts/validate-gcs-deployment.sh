@@ -14,14 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Check if GCS_BUCKET is set
+GCS_BUCKET="${1:-$GCS_BUCKET}"
+GCS_BUCKET="${GCS_BUCKET#gs://}"
+
 if [ -z "$GCS_BUCKET" ]; then
   cat <<EOF
 {
   "score": 0.0,
-  "details": "GCS_BUCKET environment variable is not set",
+  "details": "GCS bucket name not provided as argument and GCS_BUCKET environment variable is not set",
   "checks": [
-    {"name": "env-var", "passed": false, "message": "GCS_BUCKET environment variable is not set"}
+    {"name": "env-var", "passed": false, "message": "GCS bucket name not provided as argument and GCS_BUCKET environment variable is not set"}
   ]
 }
 EOF

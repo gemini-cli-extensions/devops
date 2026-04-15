@@ -23,6 +23,8 @@ MSG_EXISTS="Not checked"
 CHECK_REACHABLE="false"
 MSG_REACHABLE="Not checked"
 
+CLOUD_RUN_SERVICE="${1:-$CLOUD_RUN_SERVICE}"
+
 # Check for required environment variables
 MISSING_VARS=()
 [ -z "$CLOUD_RUN_SERVICE" ] && MISSING_VARS+=("CLOUD_RUN_SERVICE")

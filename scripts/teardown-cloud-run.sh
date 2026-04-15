@@ -18,8 +18,11 @@
 set -e
 
 # Check for required environment variables
+CLOUD_RUN_SERVICE="${1:-$CLOUD_RUN_SERVICE}"
+
 if [ -z "$CLOUD_RUN_SERVICE" ]; then
-  echo "Error: CLOUD_RUN_SERVICE environment variable is not set."
+  echo "Error: Cloud Run service name not provided as argument and CLOUD_RUN_SERVICE environment variable is not set." >&2
+  echo "Usage: $0 [service_name]" >&2
   exit 1
 fi
 
