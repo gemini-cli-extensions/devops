@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # Stage 1: Base Builder Image (Heavy dependencies)
 FROM node:lts-trixie-slim AS base-builder
 
@@ -46,26 +44,22 @@ FROM base-builder AS eval-docker-provider
 
 COPY --from=mcp-builder /app/cicd-mcp-server/cicd-mcp-server /usr/local/bin/cicd-mcp-server
 RUN mkdir -p /root/.gemini
-COPY <<'EOF' /root/.gemini/settings.json
-{
-  "mcpServers": {
-    "cicd": {
-      "command": "/usr/local/bin/cicd-mcp-server",
-      "timeout": 300000,
-      "trust": true,
-      "env": {
-        "GOOGLE_APPLICATION_CREDENTIALS": "$GOOGLE_APPLICATION_CREDENTIALS"
-      }
-    }
-  }
-}
-EOF
+RUN printf '%b' '{\n\
+  "mcpServers": {\n\
+    "cicd": {\n\
+      "command": "/usr/local/bin/cicd-mcp-server",\n\
+      "timeout": 300000,\n\
+      "trust": true,\n\
+      "env": {\n\
+        "GOOGLE_APPLICATION_CREDENTIALS": "$GOOGLE_APPLICATION_CREDENTIALS"\n\
+      }\n\
+    }\n\
+  }\n\
+}\n' > /root/.gemini/settings.json
 
-COPY <<EOF /root/.gemini/trustedFolders.json
-{
-  "/": "TRUST_PARENT"
-}
-EOF
+RUN printf '%b' '{\n\
+  "/": "TRUST_PARENT"\n\
+}\n' > /root/.gemini/trustedFolders.json
 
 ENV HOME=/root
 
