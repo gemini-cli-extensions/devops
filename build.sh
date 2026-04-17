@@ -89,7 +89,7 @@ main() {
 
   echo ""
   echo "Building MCP Server"
-  build_mcp || { err "Go build for MCP server failed. Exiting."; exit 1; }
+  build_mcp
 }
 
 main "$@"

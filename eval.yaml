@@ -29,7 +29,7 @@ defaults:
     - src: scripts
       dest: /workspace/scripts
     - src: scripts/BASE_GEMINI.md
-      dest: /root/.gemini/GEMINI.md
+      dest: $HOME/.gemini/GEMINI.md
   environment:
     mounts:
       - ~/.config/gcloud/application_default_credentials.json:/tmp/keys/adc.json:ro
@@ -77,10 +77,11 @@ tasks:
 
     workspace:
       - content: |
-          1. The cloud run service name should be constructed from ${_EVAL_UUID}-${_EVAL_TRIAL}.
-          2. The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
-          3. The region to use will be available as an environment variable $REGION.
-          4. Use buildpacks for building and deploying the application.
+          1. The project id will be available as an environment variable $PROJECT_ID. 
+          2. The cloud run service name should be constructed from service-${_EVAL_UUID}-${_EVAL_TRIAL}.
+          3. The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
+          4. The region to use will be available as an environment variable $REGION.
+          5. Use buildpacks for building and deploying the application.
         dest: /workspace/GEMINI.md
 
     timeout: 600
@@ -88,13 +89,13 @@ tasks:
     trialConfig:
       setup: |
         git clone -b buildpacks https://github.com/sdlc-graph/chefs-companion.git
-      cleanup: scripts/teardown-cloud-run.sh ${_EVAL_UUID}-${_EVAL_TRIAL}
+      cleanup: scripts/teardown-cloud-run.sh service-${_EVAL_UUID}-${_EVAL_TRIAL}
 
     agentWorkingDir: /workspace/chefs-companion
 
     graders:
       - type: deterministic
-        run: scripts/validate-cloud-run-deployment.sh ${_EVAL_UUID}-${_EVAL_TRIAL}
+        run: scripts/validate-cloud-run-deployment.sh service-${_EVAL_UUID}-${_EVAL_TRIAL}
       - type: deterministic
         run: |
           if [ ! -f chefs-companion/Dockerfile ]; then
@@ -120,7 +121,7 @@ tasks:
     workspace:
       - content: |
           1. The project id will be available as an environment variable $PROJECT_ID.
-          2. The cloud run service name will be available as an environment variable $CLOUD_RUN_SERVICE.
+          2. The cloud run service name should be constructed from service-${_EVAL_UUID}-${_EVAL_TRIAL}.
           3. The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
           4. The region to use will be available as an environment variable $REGION.
           5. Build a customer docker image for the application.
@@ -131,13 +132,13 @@ tasks:
     trialConfig:
       setup: |
         git clone -b no-dockerfile https://github.com/sdlc-graph/chefs-companion.git
-      cleanup: scripts/teardown-cloud-run.sh ${_EVAL_UUID}-${_EVAL_TRIAL}
+      cleanup: scripts/teardown-cloud-run.sh service-${_EVAL_UUID}-${_EVAL_TRIAL}
 
     agentWorkingDir: /workspace/chefs-companion
 
     graders:
       - type: deterministic
-        run: scripts/validate-cloud-run-deployment.sh ${_EVAL_UUID}-${_EVAL_TRIAL}
+        run: scripts/validate-cloud-run-deployment.sh service-${_EVAL_UUID}-${_EVAL_TRIAL}
       - type: deterministic
         run: |
           if [ -f chefs-companion/Dockerfile ]; then
