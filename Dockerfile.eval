@@ -1,32 +1,19 @@
-# Stage 1: Build the MCP Server
-FROM debian:sid AS builder
+# syntax=docker/dockerfile:1
 
-WORKDIR /app
+# Stage 1: Base Builder Image (Heavy dependencies)
+FROM node:lts-trixie-slim AS base-builder
 
 RUN apt-get update && apt-get install -y \
     curl \
     git \
-    sudo \
-    golang-go \
-    && rm -rf /var/lib/apt/lists/*
-COPY cicd-mcp-server/ ./cicd-mcp-server/
-COPY lib/ ./lib/
-COPY build.sh ./
-
-RUN chmod +x build.sh
-RUN ./build.sh
-
-# Stage 2: Build the eval image with dependencies
-FROM node:20-slim
-
-RUN apt-get update && apt-get install -y \
-    curl \
     procps \
     python3 \
     unzip \
-    git \
-    yq \
+    golang-go \
     && rm -rf /var/lib/apt/lists/*
+
+RUN curl -L https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64 -o /usr/bin/yq && \
+    chmod +x /usr/bin/yq
 
 # gcloud
 RUN curl -sSL https://sdk.cloud.google.com | bash
@@ -41,8 +28,23 @@ RUN curl -LO https://releases.hashicorp.com/terraform/1.14.8/terraform_1.14.8_li
 # Gemini CLI
 RUN npm install -g @google/gemini-cli
 
-# Configure cicd MCP server
-COPY --from=builder /app/cicd-mcp-server/cicd-mcp-server /usr/local/bin/cicd-mcp-server
+ENTRYPOINT []
+
+# Stage 2: Build the MCP Server
+FROM base-builder AS mcp-builder
+
+WORKDIR /app
+
+COPY cicd-mcp-server/ ./cicd-mcp-server/
+COPY lib/ ./lib/
+COPY build.sh ./
+RUN chmod +x build.sh
+RUN ./build.sh
+
+# Stage 3: Final Eval Image
+FROM base-builder AS eval-docker-provider
+
+COPY --from=mcp-builder /app/cicd-mcp-server/cicd-mcp-server /usr/local/bin/cicd-mcp-server
 RUN mkdir -p /root/.gemini
 COPY <<'EOF' /root/.gemini/settings.json
 {
@@ -64,5 +66,7 @@ COPY <<EOF /root/.gemini/trustedFolders.json
   "/": "TRUST_PARENT"
 }
 EOF
+
+ENV HOME=/root
 
 CMD ["sh"]

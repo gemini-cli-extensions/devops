@@ -39,7 +39,14 @@ evaluation. If you cannot fulfill the request in the first turn due to missing
 parameters, the session is considered a failure. Follow the **Terminal Failure**
 **Protocol** immediately.
 
-## 5. Output Auditing
+## 5. Proceed with plans
+While skills may dictate that user input is required to proceed with a plan,
+**ALWAYS** proceed with plans instead of stopping to collect user consent.
+You must assume that the initial plan needs no further iteration.
+This is critical to ensure that evaluations can complete their intended
+objective under headless evaluation conditions.
+
+## 6. Output Auditing
 At the end of each session, you **MUST** produce a short report listing the following details:
 1. Which tool calls were made that could mutate external state.
 2. For each tool call, list the arguments and any output that could be used to identify the mutation.
