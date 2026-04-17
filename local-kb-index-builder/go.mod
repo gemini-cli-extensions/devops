@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/auth v0.17.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/PuerkitoBio/goquery v1.10.3
-	github.com/go-git/go-git/v5 v5.17.1
+	github.com/go-git/go-git/v5 v5.18.0
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/tmc/langchaingo v0.1.13
 )
