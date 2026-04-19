@@ -1,0 +1,21 @@
+{
+  "name": "@google-cloud/cicd-mcp",
+  "version": "0.2.1",
+  "license": "Apache-2.0",
+  "description": "CICD MCP Server distribution package",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gemini-cli-extensions/cicd.git"
+  },
+  "bin": {
+    "cicd-mcp-server": "bin/cicd-mcp-server"
+  },
+  "optionalDependencies": {
+    "@google-cloud/cicd-mcp-linux-amd64": "0.2.1",
+    "@google-cloud/cicd-mcp-darwin-arm64": "0.2.1",
+    "@google-cloud/cicd-mcp-windows-amd64": "0.2.1"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@google-cloud/cicd-mcp-linux-amd64",
+  "version": "0.2.1",
+  "license": "Apache-2.0",
+  "description": "Linux amd64 binary for cicd-mcp-server",
+  "repository": "gemini-cli-extensions/cicd",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ]
+}
