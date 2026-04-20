@@ -46,13 +46,13 @@ Ensure all binaries are built and placed in the correct directories. You can use
 
 ```bash
 # Linux amd64
-GOOS=linux GOARCH=amd64 go build -o npm/cicd-mcp-linux-amd64/bin/cicd-mcp-server .
+GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o npm/cicd-mcp-linux-amd64/bin/cicd-mcp-server .
 
 # Darwin arm64
-GOOS=darwin GOARCH=arm64 go build -o npm/cicd-mcp-darwin-arm64/bin/cicd-mcp-server .
+GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o npm/cicd-mcp-darwin-arm64/bin/cicd-mcp-server .
 
 # Windows amd64
-GOOS=windows GOARCH=amd64 go build -o npm/cicd-mcp-windows-amd64/bin/cicd-mcp-server.exe .
+GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o npm/cicd-mcp-windows-amd64/bin/cicd-mcp-server.exe .
 ```
 
 ### Step 2: Publish sub-packages
