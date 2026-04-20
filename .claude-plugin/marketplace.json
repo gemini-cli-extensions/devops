@@ -1,0 +1,20 @@
+{
+  "name": "google-ai-assisted-cicd",
+  "description": "Official marketplace for Google AI Assisted CI/CD plugins.",
+  "plugins": [
+    {
+      "name": "cicd",
+      "source": "https://github.com/gemini-cli-extensions/cicd",
+      "description": "Advanced CI/CD pipeline management for Claude Code.",
+      "version": "1.0.0",
+      "category": "Automation",
+      "tags": [
+        "cicd",
+        "deployment",
+        "pipeline design",
+        "terraform",
+        "canary release"
+      ]
+    }
+  ]
+}
