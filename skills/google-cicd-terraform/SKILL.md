@@ -1,7 +1,6 @@
 ---
 name: google-cicd-terraform
-description: "Architect, provision, and troubleshoot production-grade Google Cloud infrastructure using Terraform and OpenTofu. Use to design landing zones (Shared VPCs, Folders), deploy core services (GKE, Cloud Run, Cloud SQL), implement IAM least-privilege, and manage GCS-backed state. Enforces Google’s Cloud Foundation Fabric patterns and rigorous validation protocols to ensure secure, idempotent, and scalable deployments across environments."
-version: "0.1.0"
+description: Architect, provision, and troubleshoot infrastructure on Google Cloud using Terraform. This skill ensures best practices like GCS backend usage and least-privilege IAM are followed. Enforces Google’s Cloud Foundation Fabric patterns and rigorous validation protocols to ensure secure, idempotent, and scalable deployments across environments. Activate when the user requests infrastructure changes, pipeline design involving Terraform, or debugging Terraform issues.
 ---
 
 # Terraform GCP Skill

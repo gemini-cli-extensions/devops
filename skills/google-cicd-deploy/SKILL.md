@@ -1,6 +1,11 @@
 ---
 name: google-cicd-deploy
-description: Deploy an application to Google Cloud. Use when the user wants to deploy a new application on GCP.
+description: >
+  Deploy an application to Google Cloud (GCS, Cloud Run, GKE).
+  **Why**: Encodes best practices for secure and efficient deployments, such as mandatory secret scanning and correct workflow selection based on application type, preventing deployment of exposed secrets and ensuring proper resource usage.
+  **When**:
+  - The user requests to deploy an application to Google Cloud.
+  - Determining the best deployment target (GCS, Cloud Run, GKE) for an application.
 ---
 
 # Google Cloud CI/CD Assistant
@@ -95,7 +100,7 @@ This workflow is for deploying container-based applications to a GKE cluster. Co
 
 These rules apply to all workflows.
 
-Always scan for secrets before uploading anything to docker or GCS using the `scan_code_for_secrets` tool. Always ignore directories where scanning is not useful e.g. dependencies which the user has no control over e.g. .venv or go_modules etc. Warn the user of any secrets available and ask if the user wants to ignore these files using dockerignore and gitignore. If they would like to ignore the files, create the corresponding dockerignore and gitignore files. Goal of scanning is to detect if the user inadvertently uploaded any secrets in *their* application code.
+Always scan for secrets before any build or deployment operation (including building Docker images or uploading files to GCS) using the `scan_code_for_secrets` tool. Always ignore directories where scanning is not useful e.g. dependencies which the user has no control over e.g. .venv or go_modules etc. Warn the user of any secrets available and ask if the user wants to ignore these files using dockerignore and gitignore. If they would like to ignore the files, create the corresponding dockerignore and gitignore files. Goal of scanning is to detect if the user inadvertently uploaded any secrets in *their* application code.
 First, analyze the user's application to determine the type of application. Proceed to the workflow only after analyzing the application.
 
 ### **Error Handling Protocol**
