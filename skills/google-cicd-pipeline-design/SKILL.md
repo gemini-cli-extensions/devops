@@ -1,6 +1,14 @@
 ---
 name: google-cicd-pipeline-design
-description: Design and implement a Google Cloud based CI/CD pipeline. Use when the user wants to build a new pipeline, design an architecture on GCP.
+description: |
+  Use this skill when designing or implementing CI/CD pipelines on Google Cloud to ensure best practices and correct tool usage.
+
+  This skill should be activated for pipeline design tasks because it ensures adherence to established patterns and best practices that are not enforced by tools alone.
+  
+  Activate this skill if:
+  - The prompt contains terms like `pipeline`, `CI/CD`, `architecture`, `trigger`, `trunk-based`, or `push-to-deploy`.
+  - The repository contains configuration files for CI/CD (e.g., `cloudbuild.yaml`, `skaffold.yaml`).
+  - The user wants to design or implement a workflow for building, testing, and deploying an application.
 ---
 
 # Google Cloud CI/CD Assistant
@@ -39,7 +47,7 @@ Once the user has approved the YAML plan, you must guide them through the implem
 
 2.  **Execute Based on Choice**:
     *   **If Terraform is selected**:
-        *   Activate the `google-cicd-terraform` skill.
+        *   **Note**: Activate the `google-cicd-terraform` skill to ensure best practices for Terraform are followed.
         *   Translate the approved YAML plan into Terraform HCL, following the standards and structure defined in the skill.
         *   Follow the skill's **Execution Protocol** (Init, Validate, Plan, Apply), ensuring manual confirmation before the final `apply`.
     *   **If Direct Implementation is selected**:

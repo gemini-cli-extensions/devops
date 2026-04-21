@@ -1,6 +1,14 @@
 ---
 name: google-cicd-deploy
-description: Deploy an application to Google Cloud. Use when the user wants to deploy a new application on GCP.
+description: |
+  Use this skill for deployments to Google Cloud to ensure security compliance, secret scanning, and correct workflow selection.
+
+  This skill should be activated for deployment tasks because it includes important security-related best practices (like source scanning) that are not handled by tools alone.
+  
+  Activate this skill if:
+  - The prompt contains terms like `deploy`, `Cloud Run`, `GCS`, `GKE`, `static site`, or `container`.
+  - The repository contains web application files (e.g., `app.py`, `package.json`, `index.html`, go.mod, pom.xml, requirements.txt).
+  - The user wants to make an application accessible on Google Cloud.
 ---
 
 # Google Cloud CI/CD Assistant

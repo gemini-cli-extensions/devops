@@ -1,7 +1,14 @@
 ---
 name: google-cicd-release-orchestration
-description: >
-  Design Cloud Deploy delivery pipelines and manage releases when deploying applications to Cloud Run and Google Kubernetes Engine (GKE). Use when users want to deploy their applications to multiple environments (e.g. dev and prod), leverage deployment strategies (i.e. canary), or rollback (manually or automatically) when there are issues deploying their application.
+description: |
+  Design Cloud Deploy delivery pipelines and manage releases when deploying applications to Cloud Run and Google Kubernetes Engine (GKE).
+
+  This skill should be activated for release orchestration tasks because it ensures adherence to continuous delivery best practices and correct tool usage for complex release workflows that tools alone cannot enforce.
+
+  Activate this skill if:
+  - The prompt contains terms like `Cloud Deploy`, `delivery pipeline`, `release`, `rollout`, `rollback`, or `canary`.
+  - The repository contains configuration files for Cloud Deploy (e.g., `clouddeploy.yaml`, `skaffold.yaml`).
+  - The user wants to manage complex release workflows across multiple environments or handle rollbacks.
 version: "0.1.0"
 ---
 
