@@ -8,7 +8,7 @@
     "url": "git+https://github.com/gemini-cli-extensions/cicd.git"
   },
   "bin": {
-    "cicd-mcp-server": "bin/cicd-mcp-server"
+    "cicd-mcp": "bin/cicd-mcp-server"
   },
   "optionalDependencies": {
     "@google-cloud/cicd-mcp-linux-amd64": "0.2.1",
