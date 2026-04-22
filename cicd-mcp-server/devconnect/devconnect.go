@@ -46,6 +46,15 @@ var addDevConnectGitRepoLinkToolFunc func(ctx context.Context, req *mcp.CallTool
 
 func addAddDevConnectGitRepoLinkTool(server *mcp.Server, dcClient devconnectclient.DeveloperConnectClient) {
 	addDevConnectGitRepoLinkToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args AddDevConnectGitRepoLinkArgs) (*mcp.CallToolResult, any, error) {
+		// First, check if a git repository link already exists for this URI.
+		existingLinks, err := dcClient.FindGitRepositoryLinksForGitRepo(ctx, args.ProjectID, args.Location, args.GitRepoURI)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to check for existing git repository links: %w", err)
+		}
+		if len(existingLinks) > 0 {
+			return &mcp.CallToolResult{}, existingLinks[0], nil
+		}
+
 		// We need a repoLinkID. We can derive it from the URI.
 		repoLinkID := strings.TrimSuffix(strings.ReplaceAll(strings.TrimPrefix(args.GitRepoURI, "https://github.com/"), "/", "-"), ".git")
 		newLink, err := dcClient.CreateGitRepositoryLink(ctx, args.ProjectID, args.Location, args.ConnectionID, repoLinkID, args.GitRepoURI)
@@ -78,7 +87,7 @@ func addSetupDevConnectConnectionTool(server *mcp.Server, dcClient devconnectcli
 			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to check for existing git repository links: %w", err)
 		}
 		if len(existingLinks) > 0 {
-			return &mcp.CallToolResult{}, ResultWrapper{Message: "pre-exsisting connection found", Result: existingLinks[0]}, nil
+			return &mcp.CallToolResult{}, ResultWrapper{Message: "pre-existing connection found", Result: existingLinks[0]}, nil
 		}
 
 		newConnection, err := dcClient.CreateConnection(ctx, args.ProjectID, args.Location, dcClient.GenerateUUID())
