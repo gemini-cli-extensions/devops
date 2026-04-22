@@ -26,8 +26,6 @@ USER appuser
 
 ```
 
-
-
 ---
 
 ## 3. Multi-Stage Builds (The Gold Standard)
@@ -89,13 +87,58 @@ ENTRYPOINT ["/app"]
 
 ```
 
+### 💡 Example 3: Python simple application
+
+# --- Stage 1: Builder Stage ---
+# Use a full Python image with build tools
+FROM python:3.12-slim AS builder
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# --- Stage 2: Final (Runtime) Stage ---
+# Use a minimal, slim Python image for the final runtime
+FROM python:3.12-slim AS final
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the installed packages from the builder stage into the final image
+# This is a key step to include only the necessary libraries
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+
+# Copy the application code from the builder stage
+COPY --from=builder /app .
+
+# Expose the port the app runs on (adjust if your app uses a different port)
+EXPOSE 8000
+
+# Command to run the application
+CMD ["python", "app.py"]
+
 ---
 
-## 4. Google Cloud Run Specifics
+## 4. Recommended Base Images
+
+### Generic Base Image suggestions
+* For programming languages use their official base image.
+* Use latest version of the language specific image as base image.
+* Review project config files to identify required runtime version:
+  * When a runtime version is specified, use that version for the base image.
+  * If no minimum version is specified, use a recent stable version of the runtime.
+
+### Google Cloud Run Specific Base Images
 
 If you are deploying to **Google Cloud Run**, you can leverage advanced features for security and maintenance.
 
-### Base Image for Cloud Run Automatic Updates
+#### Base Image for Cloud Run Automatic Updates
 
 Google Cloud can automatically patch security vulnerabilities in your base image if you follow the **"Scratch Pattern"**.
 
@@ -121,11 +164,11 @@ CMD [ "node", "index.js" ]
 
 ```
 
-### Recommended Base Images (Stacks)
+#### Recommended Base Images (Stacks)
 
 A base image serves as the starting foundation for container-based development. You build your application by layering necessary libraries, binaries, and configuration files on top of this image. Google Cloud's buildpacks publish these images with various configurations for system packages and languages.
 
-#### Key Guidelines
+##### Key Guidelines
 
 * **Hosting**: Base images are hosted in every region where the Artifact Registry is available.
 * **Updates**: Security and maintenance updates are released routinely. Depending on your environment (e.g., Cloud Run functions) and configuration, these updates can be applied automatically or manually.
@@ -139,70 +182,70 @@ A base image serves as the starting foundation for container-based development. 
 
 
 Runtime IDs and environment details (mostly Ubuntu 22.04 or 18.04, with some newer Ubuntu 24.04 options) for the following languages:
-| Language    | Runtime       | Generation      | Environment | Runtime ID  |
-| :---------- | :------------ | :-------------- | :---------- | :---------- |
-| Node.js     | Node.js 24    | 2nd gen         | Ubuntu 24.04| nodejs24    |
-| Node.js     | Node.js 22    | 1st gen, 2nd gen| Ubuntu 22.04| nodejs22    |
-| Node.js     | Node.js 20    | 1st gen, 2nd gen| Ubuntu 22.04| nodejs20    |
-| Node.js     | Node.js 18    | 1st gen, 2nd gen| Ubuntu 22.04| nodejs18    |
-| Node.js     | Node.js 16    | 1st gen, 2nd gen| Ubuntu 18.04| nodejs16    |
-| Node.js     | Node.js 14    | 1st gen, 2nd gen| Ubuntu 18.04| nodejs14    |
-| Node.js     | Node.js 12    | 1st gen, 2nd gen| Ubuntu 18.04| nodejs12    |
-| Node.js     | Node.js 10    | 1st gen, 2nd gen| Ubuntu 18.04| nodejs10    |
-| Node.js     | Node.js 8     | 1st gen, 2nd gen| Ubuntu 18.04| nodejs8     |
-| Node.js     | Node.js 6     | 1st gen, 2nd gen| Ubuntu 18.04| nodejs6     |
-| Python      | Python 3.14   | 2nd gen         | Ubuntu 24.04| python314   |
-| Python      | Python 3.13   | 2nd gen         | Ubuntu 22.04| python313   |
-| Python      | Python 3.12   | 1st gen, 2nd gen| Ubuntu 22.04| python312   |
-| Python      | Python 3.11   | 1st gen, 2nd gen| Ubuntu 22.04| python311   |
-| Python      | Python 3.10   | 1st gen, 2nd gen| Ubuntu 22.04| python310   |
-| Python      | Python 3.9    | 1st gen, 2nd gen| Ubuntu 18.04| python39    |
-| Python      | Python 3.8    | 1st gen, 2nd gen| Ubuntu 18.04| python38    |
-| Python      | Python 3.7    | 1st gen         | Ubuntu 18.04| python37    |
-| Go          | Go 1.25       | 2nd gen         | Ubuntu 22.04| go125       |
-| Go          | Go 1.24       | 2nd gen         | Ubuntu 22.04| go124       |
-| Go          | Go 1.23       | 2nd gen         | Ubuntu 22.04| go123       |
-| Go          | Go 1.22       | 2nd gen         | Ubuntu 22.04| go122       |
-| Go          | Go 1.21       | 1st gen, 2nd gen| Ubuntu 22.04| go121       |
-| Go          | Go 1.20       | 1st gen, 2nd gen| Ubuntu 22.04| go120       |
-| Go          | Go 1.19       | 1st gen, 2nd gen| Ubuntu 22.04| go119       |
-| Go          | Go 1.18       | 1st gen, 2nd gen| Ubuntu 22.04| go118       |
-| Go          | Go 1.16       | 1st gen, 2nd gen| Ubuntu 18.04| go116       |
-| Go          | Go 1.13       | 1st gen, 2nd gen| Ubuntu 18.04| go113       |
-| Go          | Go 1.11       | 1st gen, 2nd gen| Ubuntu 18.04| go111       |
-| Java        | Java 25       | 2nd gen         | Ubuntu 24.04| java25      |
-| Java        | Java 21       | 2nd gen         | Ubuntu 22.04| java21      |
-| Java        | Java 17       | 1st gen, 2nd gen| Ubuntu 22.04| java17      |
-| Java        | Java 11       | 1st gen, 2nd gen| Ubuntu 18.04| java11      |
-| Ruby        | Ruby 3.4      | 2nd gen         | Ubuntu 22.04| ruby34      |
-| Ruby        | Ruby 3.3      | 1st gen, 2nd gen| Ubuntu 22.04| ruby33      |
-| Ruby        | Ruby 3.2      | 1st gen, 2nd gen| Ubuntu 22.04| ruby32      |
-| Ruby        | Ruby 3.0      | 1st gen, 2nd gen| Ubuntu 18.04| ruby30      |
-| Ruby        | Ruby 2.7      | 1st gen, 2nd gen| Ubuntu 18.04| ruby27      |
-| Ruby        | Ruby 2.6      | 1st gen, 2nd gen| Ubuntu 18.04| ruby26      |
-| PHP         | PHP 8.4       | 2nd gen         | Ubuntu 22.04| php84       |
-| PHP         | PHP 8.3       | 2nd gen         | Ubuntu 22.04| php83       |
-| PHP         | PHP 8.2       | 1st gen, 2nd gen| Ubuntu 22.04| php82       |
-| PHP         | PHP 8.1       | 1st gen, 2nd gen| Ubuntu 18.04| php81       |
-| PHP         | PHP 7.4       | 1st gen, 2nd gen| Ubuntu 18.04| php74       |
-| .NET Core   | .NET Core 8   | 2nd gen         | Ubuntu 22.04| dotnet8     |
-| .NET Core   | .NET Core 6   | 1st gen, 2nd gen| Ubuntu 22.04| dotnet6     |
-| .NET Core   | .NET Core 3   | 1st gen, 2nd gen| Ubuntu 18.04| dotnet3     |
+| Language  | Runtime     | Generation       | Environment  | Runtime ID |
+| :-------- | :---------- | :--------------- | :----------- | :--------- |
+| Node.js   | Node.js 24  | 2nd gen          | Ubuntu 24.04 | nodejs24   |
+| Node.js   | Node.js 22  | 1st gen, 2nd gen | Ubuntu 22.04 | nodejs22   |
+| Node.js   | Node.js 20  | 1st gen, 2nd gen | Ubuntu 22.04 | nodejs20   |
+| Node.js   | Node.js 18  | 1st gen, 2nd gen | Ubuntu 22.04 | nodejs18   |
+| Node.js   | Node.js 16  | 1st gen, 2nd gen | Ubuntu 18.04 | nodejs16   |
+| Node.js   | Node.js 14  | 1st gen, 2nd gen | Ubuntu 18.04 | nodejs14   |
+| Node.js   | Node.js 12  | 1st gen, 2nd gen | Ubuntu 18.04 | nodejs12   |
+| Node.js   | Node.js 10  | 1st gen, 2nd gen | Ubuntu 18.04 | nodejs10   |
+| Node.js   | Node.js 8   | 1st gen, 2nd gen | Ubuntu 18.04 | nodejs8    |
+| Node.js   | Node.js 6   | 1st gen, 2nd gen | Ubuntu 18.04 | nodejs6    |
+| Python    | Python 3.14 | 2nd gen          | Ubuntu 24.04 | python314  |
+| Python    | Python 3.13 | 2nd gen          | Ubuntu 22.04 | python313  |
+| Python    | Python 3.12 | 1st gen, 2nd gen | Ubuntu 22.04 | python312  |
+| Python    | Python 3.11 | 1st gen, 2nd gen | Ubuntu 22.04 | python311  |
+| Python    | Python 3.10 | 1st gen, 2nd gen | Ubuntu 22.04 | python310  |
+| Python    | Python 3.9  | 1st gen, 2nd gen | Ubuntu 18.04 | python39   |
+| Python    | Python 3.8  | 1st gen, 2nd gen | Ubuntu 18.04 | python38   |
+| Python    | Python 3.7  | 1st gen          | Ubuntu 18.04 | python37   |
+| Go        | Go 1.25     | 2nd gen          | Ubuntu 22.04 | go125      |
+| Go        | Go 1.24     | 2nd gen          | Ubuntu 22.04 | go124      |
+| Go        | Go 1.23     | 2nd gen          | Ubuntu 22.04 | go123      |
+| Go        | Go 1.22     | 2nd gen          | Ubuntu 22.04 | go122      |
+| Go        | Go 1.21     | 1st gen, 2nd gen | Ubuntu 22.04 | go121      |
+| Go        | Go 1.20     | 1st gen, 2nd gen | Ubuntu 22.04 | go120      |
+| Go        | Go 1.19     | 1st gen, 2nd gen | Ubuntu 22.04 | go119      |
+| Go        | Go 1.18     | 1st gen, 2nd gen | Ubuntu 22.04 | go118      |
+| Go        | Go 1.16     | 1st gen, 2nd gen | Ubuntu 18.04 | go116      |
+| Go        | Go 1.13     | 1st gen, 2nd gen | Ubuntu 18.04 | go113      |
+| Go        | Go 1.11     | 1st gen, 2nd gen | Ubuntu 18.04 | go111      |
+| Java      | Java 25     | 2nd gen          | Ubuntu 24.04 | java25     |
+| Java      | Java 21     | 2nd gen          | Ubuntu 22.04 | java21     |
+| Java      | Java 17     | 1st gen, 2nd gen | Ubuntu 22.04 | java17     |
+| Java      | Java 11     | 1st gen, 2nd gen | Ubuntu 18.04 | java11     |
+| Ruby      | Ruby 3.4    | 2nd gen          | Ubuntu 22.04 | ruby34     |
+| Ruby      | Ruby 3.3    | 1st gen, 2nd gen | Ubuntu 22.04 | ruby33     |
+| Ruby      | Ruby 3.2    | 1st gen, 2nd gen | Ubuntu 22.04 | ruby32     |
+| Ruby      | Ruby 3.0    | 1st gen, 2nd gen | Ubuntu 18.04 | ruby30     |
+| Ruby      | Ruby 2.7    | 1st gen, 2nd gen | Ubuntu 18.04 | ruby27     |
+| Ruby      | Ruby 2.6    | 1st gen, 2nd gen | Ubuntu 18.04 | ruby26     |
+| PHP       | PHP 8.4     | 2nd gen          | Ubuntu 22.04 | php84      |
+| PHP       | PHP 8.3     | 2nd gen          | Ubuntu 22.04 | php83      |
+| PHP       | PHP 8.2     | 1st gen, 2nd gen | Ubuntu 22.04 | php82      |
+| PHP       | PHP 8.1     | 1st gen, 2nd gen | Ubuntu 18.04 | php81      |
+| PHP       | PHP 7.4     | 1st gen, 2nd gen | Ubuntu 18.04 | php74      |
+| .NET Core | .NET Core 8 | 2nd gen          | Ubuntu 22.04 | dotnet8    |
+| .NET Core | .NET Core 6 | 1st gen, 2nd gen | Ubuntu 22.04 | dotnet6    |
+| .NET Core | .NET Core 3 | 1st gen, 2nd gen | Ubuntu 18.04 | dotnet3    |
 
 ---
 
 ## 5. Summary Checklist
 
-| Feature | Best Practice |
-| --- | --- |
-| **Base Image** | Use official, versioned, slim, or distroless images. |
-| **Layers** | Combine `RUN` commands; copy dependencies before source code. |
-| **Security** | Prefer not to run as `root`; never include secrets/ENV keys in Dockerfile. |
-| **Size** | Use **Multi-Stage builds** to strip out build-time bloat. |
-| **Cloud Run** | Use `runtime provided` + base images |
-| **Metadata** | Use `LABEL` to provide contact and versioning info. |
+| Feature        | Best Practice                                                              |
+| -------------- | -------------------------------------------------------------------------- |
+| **Base Image** | Use official, versioned, slim, or distroless images.                       |
+| **Layers**     | Combine `RUN` commands; copy dependencies before source code.              |
+| **Security**   | Prefer not to run as `root`; never include secrets/ENV keys in Dockerfile. |
+| **Size**       | Use **Multi-Stage builds** to strip out build-time bloat.                  |
+| **Cloud Run**  | Use `runtime provided` + base images                                       |
+| **Metadata**   | Use `LABEL` to provide contact and versioning info.                        |
 
-### Sources:
+#### Sources:
 
 https://cloud.google.com/run/docs/configuring/services/automatic-base-image-updates
 https://cloud.google.com/docs/buildpacks/base-images
