@@ -1,12 +1,16 @@
 {
   "name": "google-ai-assisted-cicd",
-  "description": "Official marketplace for Google AI Assisted CI/CD plugins.",
+  "metadata": {
+    "description": "Agent skills for Dataproc to manage clusters and jobs."
+  },
+  "owner": {
+    "name": "Google LLC"
+  },
   "plugins": [
     {
       "name": "cicd",
-      "source": "https://github.com/gemini-cli-extensions/cicd",
+      "source": "./",
       "description": "Advanced CI/CD pipeline management for Claude Code.",
-      "version": "1.0.0",
       "category": "Automation",
       "tags": [
         "cicd",

@@ -3,8 +3,7 @@
   "version": "0.2.1",
   "description": "The CI/CD extension provides Gemini powered AI assisted CI/CD. It supports deployment to Cloud Run and Cloud Storage as well as creation of a robust CI/CD pipeline.",
   "author": {
-    "name": "Google LLC",
-    "email": "noreploy-ai-assisted-cicd@google.com"
+    "name": "Google LLC"
   },
   "homepage": "https://github.com/gemini-cli-extensions/cicd",
   "license": "Apache-2.0",
