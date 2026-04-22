@@ -1,0 +1,20 @@
+tests/skills/google-cicd-terraform/SKILL.md
+  h_3b53ed7c1c852c 1-7
+tests/skills/google-cicd-deploy/SKILL.md
+  h_3b53ed7c1c852c 1-6
+tests/skills/google-cicd-pipeline-design/SKILL.md
+  h_3b53ed7c1c852c 1-6
+tests/skills/google-cicd-release-orchestration/SKILL.md
+  h_3b53ed7c1c852c 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "1bd102eae285f1e9856b38804fe9926794cb8d7c",
+  "prompts": {},
+  "humans": {
+    "h_3b53ed7c1c852c": {
+      "author": "Jianxi Wang"
+    }
+  }
+}
