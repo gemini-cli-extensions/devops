@@ -1,0 +1,13 @@
+{
+  "name": "@google-cloud/cicd-mcp-darwin-arm64",
+  "version": "0.2.1",
+  "license": "Apache-2.0",
+  "description": "Darwin arm64 binary for cicd-mcp-server",
+  "repository": "gemini-cli-extensions/cicd",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ]
+}
