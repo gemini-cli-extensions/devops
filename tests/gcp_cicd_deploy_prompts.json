@@ -1,0 +1,302 @@
+[
+  {
+    "length": 1,
+    "specificity": 1,
+    "prompt": "Host it online."
+  },
+  {
+    "length": 1,
+    "specificity": 2,
+    "prompt": "Deploy it online."
+  },
+  {
+    "length": 1,
+    "specificity": 3,
+    "prompt": "Deploy to Google."
+  },
+  {
+    "length": 1,
+    "specificity": 4,
+    "prompt": "Deploy Google Cloud."
+  },
+  {
+    "length": 1,
+    "specificity": 5,
+    "prompt": "Google Cloud Run deploy."
+  },
+  {
+    "length": 1,
+    "specificity": 6,
+    "prompt": "Google Cloud deploy GKE us-east."
+  },
+  {
+    "length": 2,
+    "specificity": 1,
+    "prompt": "Put my app online now."
+  },
+  {
+    "length": 2,
+    "specificity": 2,
+    "prompt": "Deploy my app online now."
+  },
+  {
+    "length": 2,
+    "specificity": 3,
+    "prompt": "Deploy my app to Google."
+  },
+  {
+    "length": 2,
+    "specificity": 4,
+    "prompt": "Deploy application to Google Cloud."
+  },
+  {
+    "length": 2,
+    "specificity": 5,
+    "prompt": "Deploy it to GCS bucket."
+  },
+  {
+    "length": 2,
+    "specificity": 6,
+    "prompt": "Deploy Google Cloud Run us-central1."
+  },
+  {
+    "length": 3,
+    "specificity": 1,
+    "prompt": "Can you get this code hosted online somewhere really fast?"
+  },
+  {
+    "length": 3,
+    "specificity": 2,
+    "prompt": "I want to run this application online using the cloud."
+  },
+  {
+    "length": 3,
+    "specificity": 3,
+    "prompt": "Please analyze my project and deploy it to the cloud."
+  },
+  {
+    "length": 3,
+    "specificity": 4,
+    "prompt": "Please help me deploy this application to Google Cloud Platform."
+  },
+  {
+    "length": 3,
+    "specificity": 5,
+    "prompt": "Use Google Cloud to deploy this application to Cloud Run."
+  },
+  {
+    "length": 3,
+    "specificity": 6,
+    "prompt": "Deploy to Google Cloud Run, project ID my-project, region us-east1."
+  },
+  {
+    "length": 4,
+    "specificity": 1,
+    "prompt": "I just finished writing this code, how do I make it accessible on the internet?"
+  },
+  {
+    "length": 4,
+    "specificity": 2,
+    "prompt": "I need you to figure out this app and deploy it onto a live server."
+  },
+  {
+    "length": 4,
+    "specificity": 3,
+    "prompt": "Look at my repository and help deploy the entire thing to the Google servers online."
+  },
+  {
+    "length": 4,
+    "specificity": 4,
+    "prompt": "Please set up my containerized application to deploy onto the Google Cloud Platform services."
+  },
+  {
+    "length": 4,
+    "specificity": 5,
+    "prompt": "This is a static site, please deploy it to Google Cloud using a GCS bucket."
+  },
+  {
+    "length": 4,
+    "specificity": 6,
+    "prompt": "Deploy to Google Cloud GKE us-central1. Create Artifact Registry, build Dockerfile, name it web-prod."
+  },
+  {
+    "length": 5,
+    "specificity": 1,
+    "prompt": "My code is finally ready. What is the exact next step to get it running live on the web today?"
+  },
+  {
+    "length": 5,
+    "specificity": 2,
+    "prompt": "Please look at my workspace. I want to take all of this code and deploy it so people can visit."
+  },
+  {
+    "length": 5,
+    "specificity": 3,
+    "prompt": "Analyze my package.json, determine what type of project this is, and deploy it appropriately to the Google hosting ecosystem."
+  },
+  {
+    "length": 5,
+    "specificity": 4,
+    "prompt": "I have a dynamic service here. Please containerize it and deploy the container to Google Cloud as soon as possible."
+  },
+  {
+    "length": 5,
+    "specificity": 5,
+    "prompt": "I built a Hugo website. Check build scripts and deploy the static files to Google Cloud via Cloud Storage bucket."
+  },
+  {
+    "length": 5,
+    "specificity": 6,
+    "prompt": "Project prod-123, region us-east4. Scan for secrets, create repo, build Dockerfile, and deploy to a public Google Cloud Run service."
+  },
+  {
+    "length": 6,
+    "specificity": 1,
+    "prompt": "I am completely new to hosting. I have all my code in this folder, and I just need someone to help me figure out how to put it online for everyone."
+  },
+  {
+    "length": 6,
+    "specificity": 2,
+    "prompt": "I want to use modern infrastructure. Please look at the files I have here, figure out what they do, and deploy the application so it is running on the internet."
+  },
+  {
+    "length": 6,
+    "specificity": 3,
+    "prompt": "This repository needs to be deployed to Google. Start by analyzing the intent and application type, then choose the best workflow to get this online without heavy lifting."
+  },
+  {
+    "length": 6,
+    "specificity": 4,
+    "prompt": "I need this dynamic application to be deployed. Check if it needs a Dockerfile, build it locally, and then set it up to run on Google Cloud Platform."
+  },
+  {
+    "length": 6,
+    "specificity": 5,
+    "prompt": "Here is my Node.js application. Please write a production-grade multistage Dockerfile, verify it builds locally, and then deploy it to Google Cloud using the Cloud Run workflow."
+  },
+  {
+    "length": 6,
+    "specificity": 6,
+    "prompt": "Project web-prod-88, Region us-central1. Run secret scanner, create .gitignore. Build custom multistage Docker image, push to AR repo backend-repo, and deploy a public Google Cloud Run service."
+  },
+  {
+    "length": 7,
+    "specificity": 1,
+    "prompt": "I've spent weeks writing this code locally and it works. I don't know much about hosting, but I want people to visit my site. Can you guide me through getting this live without me doing the manual work?"
+  },
+  {
+    "length": 7,
+    "specificity": 2,
+    "prompt": "I've decided to go with a major platform for my startup's code. I'm not sure which service is best, so please analyze my directory, pick the right product, and deploy it so it is running online."
+  },
+  {
+    "length": 7,
+    "specificity": 3,
+    "prompt": "We need to deploy this repository to Google servers. You are the CI/CD assistant, so start by running intent analysis. Figure out if this is static or dynamic, and proceed with the correct workflow to host it."
+  },
+  {
+    "length": 7,
+    "specificity": 4,
+    "prompt": "I want this application running smoothly. It's a dynamic service, so figure out how to package it. Handle the containerization locally, then deploy it to Google Cloud so it's accessible via a public URL on the internet."
+  },
+  {
+    "length": 7,
+    "specificity": 5,
+    "prompt": "I need to deploy this Express Node.js API to Google Cloud. First, scan code to ensure I didn't leave passwords inside. Then create a multistage Dockerfile, build using Docker CLI, and execute the Cloud Run workflow."
+  },
+  {
+    "length": 7,
+    "specificity": 6,
+    "prompt": "Let's do a custom Google Cloud deployment. Generate a multistage Dockerfile. Create an Artifact Registry repository named frontend-images. Build and push the Docker image, then deploy it as a public Cloud Run service in the us-west2 region."
+  },
+  {
+    "length": 8,
+    "specificity": 1,
+    "prompt": "I am totally stuck on how to share my project with the world. I have all the files ready on my computer, but the hosting stuff is super confusing to me. Can you take over, look at what I have built, and just make it available online for free?"
+  },
+  {
+    "length": 8,
+    "specificity": 2,
+    "prompt": "Everything is working locally on my machine. I want to use a reputable provider to host it, but I don't know if I need a server, a bucket, or what. Please investigate my files, tell me what you think it is, and deploy it on their infrastructure for me."
+  },
+  {
+    "length": 8,
+    "specificity": 3,
+    "prompt": "This is my latest software project and I need it deployed quickly. Start with the Application Type Analysis by inspecting my package.json. Determine if it has a build script for a static site or a start script for a dynamic service, then execute the Google hosting workflow."
+  },
+  {
+    "length": 8,
+    "specificity": 4,
+    "prompt": "Please set up a pipeline for this dynamic application to deploy to Google Cloud. You will need to determine how to run it, build the necessary container image locally on my machine, upload that image to the registry, and then configure the environment to serve it to users."
+  },
+  {
+    "length": 8,
+    "specificity": 5,
+    "prompt": "I'm working with a standard Go web application. Since Go is natively supported by buildpacks, I do not want you to generate a Dockerfile. Just perform a secret scan, ignore go_modules, and deploy to Google Cloud using the Cloud Run buildpacks workflow as a public web service."
+  },
+  {
+    "length": 8,
+    "specificity": 6,
+    "prompt": "Follow Workflow C to deploy this app to Google Cloud. Create a multistage Dockerfile exposing port 8080. Create an Artifact Registry repo called web-repo in project my-corp-project. Build image locally, push to web-repo, and deploy it as a public Cloud Run service in the us-east1 region."
+  },
+  {
+    "length": 9,
+    "specificity": 1,
+    "prompt": "I have been learning to code and finally built something I am proud of. It is just sitting here in this directory right now. I have heard I need to get it hosted to make it a real website, but I have absolutely no clue where to start or what tools to use. Can you handle the whole process and just give me a link?"
+  },
+  {
+    "length": 9,
+    "specificity": 2,
+    "prompt": "I built this application and I want to release it using cloud infrastructure because I want it to scale well. I don't really understand the difference between all the products out there. Could you scan my code, figure out what kind of web app I've made, and get it running on whichever service makes the most sense for this kind of code?"
+  },
+  {
+    "length": 9,
+    "specificity": 3,
+    "prompt": "We are ready to move this project online, specifically targeting Google infrastructure. As the CI/CD assistant, your first mandatory step is intent analysis. Please look closely at my project files, analyze the build and start scripts, and definitively classify this as either a Static Site or a Dynamic Service. Once you have established the archetype, automatically proceed with the deploy workflow."
+  },
+  {
+    "length": 9,
+    "specificity": 4,
+    "prompt": "It is time to deploy this dynamic web service to Google Cloud. I need you to take charge of the entire containerization process. Figure out the correct base image, expose the right ports, and ensure the environment variables are handled. Build the container on my local Docker instance, push it securely, and launch the service so it is live."
+  },
+  {
+    "length": 9,
+    "specificity": 5,
+    "prompt": "This project is a statically generated blog built with Hugo. You can verify this by checking the hugo.toml file and the build script that outputs to the /public folder. Please follow Workflow A exactly. Deploy to Google Cloud using a new Cloud Storage bucket, make sure to add the IAM policy binding to allow allUsers access, and copy the directory."
+  },
+  {
+    "length": 9,
+    "specificity": 6,
+    "prompt": "Strictly execute Workflow D for Google Cloud deploy targeting GKE. Project: fintech-core, Cluster: prod-cluster-1, Zone: us-east4-b. First, scan repository for secrets using your tool, automatically generating dockerignore/gitignore files. Create Artifact Registry core-services. Generate a multistage Dockerfile, build via local Docker CLI, push image. Generate a Kubernetes Deployment (3 replicas) and internal ClusterIP Service manifest. Apply using kubectl and verify."
+  },
+  {
+    "length": 10,
+    "specificity": 1,
+    "prompt": "I am at my wits' end trying to understand internet hosting. I have a folder here full of code that runs perfectly on my laptop, but the tutorials online are overwhelming and full of jargon I don't understand. I just want someone to take this folder, do whatever technical magic is required behind the scenes, and give me back a public web address so my friends and family can see what I built. Please guide me step-by-step without making me do the hard work."
+  },
+  {
+    "length": 10,
+    "specificity": 2,
+    "prompt": "My team just finished developing this application and we've agreed that using a major provider is our preferred route. However, we haven't set up any infrastructure yet. I need you to act as our DevOps engineer. Look through all the files in this directory, parse our package manager files to figure out our stack, decide whether this needs a server or just static hosting, and then deploy it. Explain what you are doing before you do it."
+  },
+  {
+    "length": 10,
+    "specificity": 3,
+    "prompt": "As my dedicated CI/CD Assistant, your task today is to get the current repository live on Google infrastructure. Before taking any action, you must perform your Core Operational Logic intent analysis. Thoroughly inspect my package.json, evaluate the build and start scripts, and look for configuration files that indicate the framework. Once you have classified the application as a Static Site or a Dynamic Service, explain your findings to me clearly. Only after I acknowledge your plan should you proceed with the deploy."
+  },
+  {
+    "length": 10,
+    "specificity": 4,
+    "prompt": "We have a dynamic application here that needs to be configured and deploy onto Google Cloud. I need you to manage the entire lifecycle. Start by analyzing the project to determine the necessary environment variables and exposed ports. If it requires a Dockerfile, craft a production-ready, multistage one. Use my local Docker CLI to build the image, ensuring there are no local build errors. Once built, handle the creation of an Artifact Registry repository, push the image, and launch the application."
+  },
+  {
+    "length": 10,
+    "specificity": 5,
+    "prompt": "I am updating a dynamic Node.js backend. Your first mandatory step is to run the secret scanning tool across the entire directory, explicitly ignoring the node_modules folder. If you find any secrets, alert me so we can add them to a .dockerignore. Next, consult your internal references to author a secure, multistage Dockerfile specific to Node.js. Build this image locally using the Docker CLI to verify it works, then deploy it to Google Cloud using the public Cloud Run workflow."
+  },
+  {
+    "length": 10,
+    "specificity": 6,
+    "prompt": "I require a highly specific deploy using Workflow C for Google Cloud. First, create a multistage Dockerfile tailored to this application. Next, you must gather all parameters to target exactly the us-east4 region under the project ID global-ecommerce-prod. Create an Artifact Registry repository named checkout-service-repo. Build the image locally and push it to that exact repository. Finally, configure the image on Cloud Run, ensuring you explicitly set it as a public service, and provide me with the live URL once successful."
+  }
+]
