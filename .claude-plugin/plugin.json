@@ -10,7 +10,7 @@
   "repository": "https://github.com/gemini-cli-extensions/cicd",
   "skills": "./skills/",
   "mcpServers": {
-    "plugin-database": {
+    "cicd-mcp": {
       "command": "npx",
       "args": [
         "-y",
