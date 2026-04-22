@@ -14,3 +14,6 @@ server
 # GitHub App credentials
 gha-creds-*.json
 .env
+
+# eval environment issues reported
+ENV_ISSUES.md

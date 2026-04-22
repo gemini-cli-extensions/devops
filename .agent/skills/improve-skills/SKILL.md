@@ -26,14 +26,15 @@ This skill outlines the process for analyzing evaluation results to improve the 
 1.  Read the `eval.yaml` file in the repository root to understand the specific requirements and expected behaviors for each task.
 2.  Pay attention to the `graders` section, especially `tool_usage` requirements (e.g., expected tools).
 3.  Compare the actual tool calls and outputs in the result logs with the expectations in `eval.yaml`.
-4.  **Identify Eval Flaws**: Check if `eval.yaml` contains cases that are overly constrained or that should be changed to better test the skill. Call this out to the user if the evaluation setup itself needs improvement, as maintaining quality evaluations is also important.
+4.  **Identify Eval Flaws**: Check if `eval.yaml` contains cases that are overly constrained or that should be changed to better test the skill. If a task requires a capability that the mandatory tools do not support (e.g., custom registry support), suggest updating the eval to remove that constraint or relax the tool usage requirement.
 
 ### Step 3: Identify Skill Gaps
 
-1.  Locate the current skills in the `skills/` directory.
+1.  Locate the current skills in the `./skills` directory at the workspace root (not in `.agent/skills`).
 2.  Analyze the relevant skill file (e.g., `SKILL.md`) to see if it covers the failed scenario or if the instructions are unclear.
 3.  Identify gaps where the skill file lacks clarity on mandatory steps, tool usage, or best practices that led to the failure.
-4.  **Differentiate Environment Issues**: Check if the failure was caused by the test environment (e.g., missing IAM permissions, disabled APIs, missing tools). If so, call this out to the user as an environment failure and do not update the skill to fix it.
+4.  **Differentiate Environment Issues**: Check if the failure was caused by the test environment (e.g., missing IAM permissions, disabled APIs, missing tools). If so, call this out to the user as an environment failure, write a local file (e.g., `ENV_ISSUES.md`) to the workspace root detailing the issue and required action, and do not update the skill to fix it.
+5.  **Check Tool Source Code**: If a failure is suspected to be caused by a tool limitation, check the source code of the MCP tools in `./cicd-mcp-server` to understand the tool's behavior and parameters. This can help determine if the tool needs to be updated or if the skill needs to be adapted to use it correctly.
 
 ### Step 4: Formulate General Improvements
 
@@ -42,6 +43,12 @@ This skill outlines the process for analyzing evaluation results to improve the 
     - High-level description.
     - Why it's important to activate (e.g., why the skill is more useful than individual tools, encoding best practices that tools alone cannot achieve).
     - When to activate (triggers).
+    - **Optimizing Descriptions**:
+    -   Use imperative phrasing (e.g., "Use this skill when...") rather than describing what it does.
+    -   Focus on user intent, not internal mechanics.
+    -   Err on the side of being pushy: Explicitly list contexts where the skill applies, including cases where the user doesn't name the domain directly (e.g., "even if they don't explicitly mention CSV or analysis").
+    -   Avoid overfitting keywords from failed queries; address the general concept.
+    -   Respect the hard limit of 1024 characters for descriptions.
 3.  **Move Triggers to Description**: Include skill activation triggers within the description field of the YAML front matter to make them immediately visible to the model and encourage activation.
 4.  **Soft but Clear Wording**: Avoid overly harsh terms like "CRITICAL" or "MANDATORY" in skills, but clearly state that the skill *should* be activated to ensure best practices are followed.
 5.  Focus on **Best Practices**: Add instructions that ensure correct and secure operation (e.g., mandatory security scans, resource checks).
@@ -49,3 +56,10 @@ This skill outlines the process for analyzing evaluation results to improve the 
 7.  **Incremental Focus**: Prioritize small, targeted updates over broad rewrites. Focus on addressing the specific issue identified without risking regression of other functionality.
 8.  **Highlight Skill Value Over Tools**: Ensure skills clearly articulate their value proposition over raw tool usage. This helps prevent the model from bypassing skills in favor of a set of tools that might seem to achieve the goal but lack the embedded best practices and structured workflow of the skill.
 9.  **Avoid Environment-Specific Tool Prefixes**: Do not hardcode tool names with environment-specific prefixes (e.g., `mcp_cicd_`) in skill files if they represent implementation details. Prefer using generic or core tool names to ensure skills remain portable across different environments or tool delivery mechanisms.
+
+## External References
+
+For more best practices on skill creation and optimization, refer to the official documentation:
+- [Skill Creation Guide](https://agentskills.io/skill-creation)
+- [Best Practices](https://agentskills.io/skill-creation/best-practices)
+- [Optimizing Descriptions](https://agentskills.io/skill-creation/optimizing-descriptions)
