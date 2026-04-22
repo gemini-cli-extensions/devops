@@ -142,6 +142,40 @@ trialConfig:
   cleanup: scripts/teardown-gcs.sh gs://${_EVAL_UUID}-${_EVAL_TRIAL}
 ```
 
+## Running Evaluations
+
+To run an evaluation, you can use the `skillgrade` tool.
+
+1.  **Export API Key**: Ensure the `GEMINI_API_KEY` environment variable is exported and available.
+2.  **Run Command**: Use the following command to run a specific evaluation:
+    ```bash
+    skillgrade --no-redact --eval=<name of eval>
+    ```
+
+The results will be available under `/tmp/skillgrade/cicd/results` to use for further improvement.
+
+### Debugging Running Evaluations
+
+While an evaluation is running, you can use standard Docker commands to inspect the environment and agent behavior:
+
+1.  **Find Container ID**: Use `docker ps` to find the container ID of the running trial.
+2.  **Interactive Shell**: Get an interactive shell in the container:
+    ```bash
+    docker exec -it <container_id> sh
+    ```
+3.  **Inspect Processes**: Inside the container, run `ps -ax` to see the Gemini CLI invocation and running tools/MCP servers.
+4.  **Tail Logs**: To follow the agent's JSON stream logs in real-time inside the container:
+    ```bash
+    ls -t ~/.gemini/tmp/*/chats/session-*.json | head -n 1 | xargs tail -f
+    ```
+5.  **Keep Container Alive**: To keep the container running longer for inspection, add a `sleep` command to the `trialConfig.cleanup` section in `eval.yaml`:
+    ```yaml
+    trialConfig:
+      cleanup: |
+        scripts/cleanup.sh
+        sleep 100
+    ```
+
 ## Best Practices
 
 - **Grade outcomes, not steps.** Check that the file was fixed, not that the agent ran a specific command.

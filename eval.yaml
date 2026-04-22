@@ -155,6 +155,7 @@ tasks:
       - type: llm_rubric
         rubric: The agent must have used a custom docker image to build the application
 
+
   # Evals for pipeline design with Terraform
   - name: pipeline-design-terraform-trunk-based-simple
     
@@ -202,3 +203,134 @@ tasks:
           1. The agent must have used Terraform to implement the pipeline.
           2. The agent must have used the trunk-based push-to-deploy pattern.
           3. The agent must have used Cloud Run as the deployment target.
+
+  # Evals for deploying simple python application with canary strategy targeting GKE
+  - name: release-orchestration-canary-gke
+    instruction: |
+      Design and create a Cloud Deploy delivery pipeline for the python application targeting GKE with a canary deployment strategy for the production environment.
+      The pipeline should target both staging and prod environments, but only the prod target should use a canary strategy.
+
+    workspace:
+      - content: |
+          1. The project id will be available as an environment variable $PROJECT_ID.
+          2. The region to use will be available as an environment variable $REGION.
+          3. The application name is chefs-companion.
+          4. Define a delivery pipeline and targets for staging and prod in clouddeploy.yaml.
+          5. The staging target should point to a GKE cluster named cluster-staging.
+          6. The prod target should point to a GKE cluster named cluster-prod and use a canary strategy with percentages 25 and 75.
+          7. The prod target requires service networking configuration with service name chefs-companion and deployment name chefs-companion.
+          8. Validating the generated configuration files is sufficient. You do not need to apply the pipeline to GCP.
+          9. Generate basic Kubernetes Deployment and Service manifests for the application.
+        dest: /workspace/GEMINI.md
+
+    timeout: 600
+
+    trialConfig:
+      setup: |
+        git clone -b no-cloudbuild https://github.com/sdlc-graph/chefs-companion.git
+    agentWorkingDir: /workspace/chefs-companion
+
+    graders:
+      - type: deterministic
+        run: python3 scripts/validate-clouddeploy.py --runtime=gke --check-canary chefs-companion
+      - type: deterministic
+        run: python3 scripts/validate-skaffold.py --profiles=chefs-companion-staging,chefs-companion-prod chefs-companion
+      - type: deterministic
+        run: python3 scripts/validate-manifests-gke.py chefs-companion
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-release-orchestration
+      - type: llm_rubric
+        rubric: |
+          1. The agent must have defined a delivery pipeline in clouddeploy.yaml.
+          2. The agent must have defined staging and prod targets for GKE in clouddeploy.yaml.
+          3. The agent must have configured a canary strategy for the prod target with percentages 25 and 75.
+          4. The agent must have generated Kubernetes manifests.
+
+  # Evals for deploying simple python application with multi-environment: https://github.com/sdlc-graph/chefs-companion
+  - name: release-orchestration-multi-env-cloudrun
+    instruction: |
+      Design and create a Cloud Deploy delivery pipeline for the python application.
+      The pipeline should target both staging and prod environments.
+
+    workspace:
+      - content: |
+          1. The project id will be available as an environment variable $PROJECT_ID.
+          2. The region to use will be available as an environment variable $REGION.
+          3. The application name is chefs-companion.
+          4. Define a delivery pipeline and targets for staging and prod in clouddeploy.yaml.
+          5. The staging target should point to a Cloud Run service named service-staging.
+          6. The prod target should point to a Cloud Run service named service-prod.
+          7. Validating the generated configuration files is sufficient. You do not need to apply the pipeline to GCP.
+          8. Configure the pipeline to automatically rollback on failure.
+          9. Configure automatic promotion from staging to prod after successful deployment to staging.
+        dest: /workspace/GEMINI.md
+
+    timeout: 600
+
+    trialConfig:
+      setup: |
+        git clone -b no-cloudbuild https://github.com/sdlc-graph/chefs-companion.git
+    agentWorkingDir: /workspace/chefs-companion
+
+    graders:
+      - type: deterministic
+        run: python3 scripts/validate-clouddeploy.py --runtime=run --check-automations chefs-companion
+      - type: deterministic
+        run: python3 scripts/validate-skaffold.py --profiles=chefs-companion-staging,chefs-companion-prod chefs-companion
+      - type: deterministic
+        run: python3 scripts/validate-manifests-cloudrun.py --services=service-staging,service-prod chefs-companion
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-release-orchestration
+      - type: llm_rubric
+        rubric: |
+          1. The agent must have defined a delivery pipeline in clouddeploy.yaml.
+          2. The agent must have defined staging and prod targets in clouddeploy.yaml.
+
+  # Evals for deploying simple python application with multi-environment targeting GKE
+  - name: release-orchestration-multi-env-gke
+    instruction: |
+      Design and create a Cloud Deploy delivery pipeline for the python application targeting GKE.
+      The pipeline should target both staging and prod environments.
+
+    workspace:
+      - content: |
+          1. The project id will be available as an environment variable $PROJECT_ID.
+          2. The region to use will be available as an environment variable $REGION.
+          3. The application name is chefs-companion.
+          4. Define a delivery pipeline and targets for staging and prod in clouddeploy.yaml.
+          5. The staging target should point to a GKE cluster named cluster-staging.
+          6. The prod target should point to a GKE cluster named cluster-prod.
+          7. Validating the generated configuration files is sufficient. You do not need to apply the pipeline to GCP.
+          8. Generate basic Kubernetes Deployment and Service manifests for the application.
+        dest: /workspace/GEMINI.md
+
+    timeout: 600
+
+    trialConfig:
+      setup: |
+        git clone -b no-cloudbuild https://github.com/sdlc-graph/chefs-companion.git
+    agentWorkingDir: /workspace/chefs-companion
+
+    graders:
+      - type: deterministic
+        run: python3 scripts/validate-clouddeploy.py --runtime=gke chefs-companion
+      - type: deterministic
+        run: python3 scripts/validate-skaffold.py --profiles=chefs-companion-staging,chefs-companion-prod chefs-companion
+      - type: deterministic
+        run: python3 scripts/validate-manifests-gke.py chefs-companion
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-release-orchestration
+      - type: llm_rubric
+        rubric: |
+          1. The agent must have defined a delivery pipeline in clouddeploy.yaml.
+          2. The agent must have defined staging and prod targets for GKE in clouddeploy.yaml.
+          3. The agent must have generated Kubernetes manifests.

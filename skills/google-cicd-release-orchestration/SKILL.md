@@ -1,7 +1,7 @@
 ---
 name: google-cicd-release-orchestration
 description: >
-  Design Cloud Deploy delivery pipelines and manage releases when deploying applications to Cloud Run and Google Kubernetes Engine (GKE). Use when users want to deploy their applications to multiple environments (e.g. dev and prod), leverage deployment strategies (i.e. canary), or rollback (manually or automatically) when there are issues deploying their application.
+  Use this skill when you need to design Cloud Deploy delivery pipelines or manage releases for applications deploying to Cloud Run or GKE. This skill encodes best practices for multi-environment deployment, deployment strategies (like canary), and release management (including rollbacks and automations). Always activate this skill for these tasks to ensure robust and consistent configuration.
 version: "0.1.0"
 ---
 
@@ -39,7 +39,7 @@ This workflow provides steps for designing a Cloud Deploy `DeliveryPipeline`.
 2. Identify if promotions should require user approval.
 3. Define each of the deployment environments as Cloud Deploy `Target` resources in a `clouddeploy.yaml` file. 
     - Use `references/configure-targets.md` as a reference when generating the resource YAML.
-    - Use the application name provided by the user when naming the Cloud Deploy `Target` resources. For example, if the user wants to deploy an application named "hello-world" to a test and production environment then use "hello-world-test" and "hello-world-prod" as the `Target` IDs.
+    - Always prefix target IDs with the application name provided by the user (e.g., `[app-name]-[env]`) to prevent resource name collisions when multiple applications are deployed in the same project/region.
 
 ### Step 2: Define the delivery pipeline
 
@@ -79,6 +79,7 @@ gcloud deploy apply --file=clouddeploy.yaml --region=<REGION> --project=<PROJECT
     - **If GKE**: Generate a Kubernetes `Deployment` and `Service`manifest. Use `references/basic-k8s-manifests.md` as a reference.
 2. Create a `skaffold.yaml` file required to create a Cloud Deploy `Release` for the `DeliveryPipeline`.
     - Use `references/configure-skaffold.md` as a reference when generating the `skaffold.yaml` file.
+    - **For multi-environment pipelines, you must define a Skaffold profile for each Cloud Deploy target environment, named to match the target ID exactly. Do NOT use generic names like 'staging' or 'prod' for profile names unless they match the target ID.**
 
 
 ### Step 7: Setup IAM permissions
