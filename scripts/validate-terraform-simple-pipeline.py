@@ -24,6 +24,7 @@ def run_grader():
         print(json.dumps({"score": 0.0, "details": f"Directory {args.dir} not found"}))
         return
 
+    error_details = []
     # Run init and validate
     check_validate = False
     try:
@@ -43,8 +44,12 @@ def run_grader():
             )
             if val_res.returncode == 0:
                 check_validate = True
-    except Exception:
-        pass
+            else:
+                error_details.append(f"terraform validate failed: {val_res.stderr.strip()}")
+        else:
+            error_details.append(f"terraform init failed: {init_res.stderr.strip()}")
+    except Exception as e:
+        error_details.append(f"Failed to execute terraform: {e}")
 
     # Resource checks based on file content
     expected_resources = [
@@ -60,6 +65,7 @@ def run_grader():
 
     # Scan .tf files
     for root, dirs, files in os.walk(args.dir):
+        dirs[:] = [d for d in dirs if d not in [".terraform", ".git"]]
         for file in files:
             if file.endswith(".tf"):
                 full_path = os.path.join(root, file)
@@ -71,8 +77,8 @@ def run_grader():
                                 for r_type in resource_block.keys():
                                     if r_type in expected_resources:
                                         found_resources[r_type] = True
-                except Exception:
-                    pass
+                except Exception as e:
+                    error_details.append(f"Failed to parse {full_path}: {e}")
 
     # Calculate score
     total_checks = len(expected_resources) + 1  # +1 for validate
@@ -96,11 +102,15 @@ def run_grader():
             }
         )
 
+    details = f"{passed_checks}/{total_checks} checks passed"
+    if error_details:
+        details += f". Errors: {'; '.join(error_details)}"
+
     print(
         json.dumps(
             {
                 "score": score,
-                "details": f"{passed_checks}/{total_checks} checks passed",
+                "details": details,
                 "checks": checks,
             }
         )

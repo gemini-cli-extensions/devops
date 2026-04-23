@@ -43,9 +43,9 @@ def run_grader():
 
     steps = config.get("steps", [])
     for step in steps:
-        step_id = step.get("id", "")
-        step_name = step.get("name", "")
-        step_args = " ".join(step.get("args", [])) if "args" in step else ""
+        step_id = step.get("id") or ""
+        step_name = step.get("name") or ""
+        step_args = " ".join(step.get("args") or [])
 
         # Test check
         if (
