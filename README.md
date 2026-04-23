@@ -77,7 +77,7 @@ Follow the instructions at [Connecting Custom MCP Servers](https://antigravity.g
 2. Add Skills
 You can use [Skills](https://github.com/vercel-labs/skills) to add skills to Antigravity. 
 ```bash
- npx skills add --global --all --agent antigravity https://github.com/gemini-cli-extensions/cicd
+ npx skills add https://github.com/gemini-cli-extensions/cicd --global --all --agent antigravity
 ```
 
 
