@@ -17,3 +17,10 @@ gha-creds-*.json
 
 # eval environment issues reported
 ENV_ISSUES.md
+
+#Local agent setup
+.agent
+
+#npm publishing artifacts
+cicd-mcp-server/npm/artifacts/
+cicd-mcp-server/npm/**/bin/
