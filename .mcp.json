@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "cicd": {
+    "cicd-mcp": {
       "command": "npx",
       "args": [
         "-y",
