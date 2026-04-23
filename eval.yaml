@@ -187,9 +187,9 @@ tasks:
 
     graders:
       - type: deterministic
-        run: scripts/validate-cloudbuild-simple-pipeline.sh chefs-companion/cloudbuild.yaml
+        run: python3 scripts/validate-cloudbuild-simple-pipeline.py chefs-companion/cloudbuild.yaml
       - type: deterministic
-        run: scripts/validate-terraform-simple-pipeline.sh chefs-companion/terraform
+        run: python3 scripts/validate-terraform-simple-pipeline.py chefs-companion/terraform
       - type: tool_usage
         expectedTools:
           - name: activate_skill
