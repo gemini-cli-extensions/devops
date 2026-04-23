@@ -13,3 +13,10 @@ server
 
 # GitHub App credentials
 gha-creds-*.json
+
+#Local agent setup
+.agent
+
+#npm publishing artifacts
+cicd-mcp-server/npm/artifacts/
+cicd-mcp-server/npm/**/bin/
