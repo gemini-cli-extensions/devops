@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "cicd": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@google-cloud/cicd-mcp"
+      ]
+    }
+  }
+}
