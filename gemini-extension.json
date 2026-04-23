@@ -1,6 +1,6 @@
 {
   "name": "cicd",
-  "version": "0.1.1",
+  "version": "0.2.2",
   "description": "The CI/CD extension provides Gemini powered AI assisted CI/CD. It supports deployment to Cloud Run and Cloud Storage as well as creation of a robust CI/CD pipeline.",
   "mcpServers": {
     "cicd-mcp": {

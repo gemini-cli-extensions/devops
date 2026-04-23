@@ -23,18 +23,8 @@ The CI/CD extension for Gemini CLI automates Continuous Integration and Continuo
 
 ## ⚙️ Installation
 
-To install the CI/CD extension, run the following command in your terminal:
+### ✅ Prerequisites
 
-```bash
-gemini extensions install https://github.com/gemini-cli-extensions/cicd
-```
-
-*To install development build add `--ref=nightly --pre-release` flags.*
-
-## ✅ Prerequisites
-
-*   [Gemini CLI](https://github.com/google-gemini/gemini-cli): Version **v0.15.0 or newer** must be installed.
-*   Gemini CLI Authentication: Ensure you have configured [Authentication Options](https://github.com/google-gemini/gemini-cli/tree/main?tab=readme-ov-file#-authentication-options).
 *   `gcloud` CLI: The Google Cloud CLI must be [installed](https://cloud.google.com/sdk/docs/install) and available in your system's PATH.
 *   Google Cloud Project: You need a Google Cloud project with the necessary APIs enabled. Depending on your usage, the extension may require:
     *   Cloud Build API
@@ -50,6 +40,46 @@ gemini extensions install https://github.com/gemini-cli-extensions/cicd
     gcloud auth login
     gcloud auth application-default login
     ```
+
+### Using Gemini CLI
+To install the CI/CD extension, run the following command in your terminal:
+
+```bash
+gemini extensions install https://github.com/gemini-cli-extensions/cicd
+```
+
+*To install development build add `--ref=nightly --pre-release` flags.*
+
+*   [Gemini CLI](https://github.com/google-gemini/gemini-cli): Version **v0.15.0 or newer** must be installed.
+*   Gemini CLI Authentication: Ensure you have configured [Authentication Options](https://github.com/google-gemini/gemini-cli/tree/main?tab=readme-ov-file#-authentication-options).
+
+
+### Using Claude Code
+To install the CI/CD extension, run the following command in your terminal:
+
+1. Add the Marketplace.
+
+```bash
+claude plugin marketplace add https://github.com/gemini-cli-extensions/cicd.git#v0.2.2
+```
+
+2. Install the Plugin.
+```bash
+claude plugin install cicd
+```
+
+### Using Antigravity
+To install our CI/CD extension in Antigravity, you can setup our MCP Server as custom MCP and add skills.
+
+1. Setup custom MCP server
+Follow the instructions at [Connecting Custom MCP Servers](https://antigravity.google/docs/mcp#connecting-custom-mcp-servers). Use the provided [.mcp.json](.mcp.json) file which contains our MCP server config.
+
+2. Add Skills
+You can use [Skills](https://github.com/vercel-labs/skills) to add skills to Antigravity. 
+```bash
+ npx skills add https://github.com/gemini-cli-extensions/cicd --global --all --agent antigravity
+```
+
 
 ## 🔒 Security Considerations
 

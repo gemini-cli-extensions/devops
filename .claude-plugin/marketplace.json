@@ -1,0 +1,24 @@
+{
+  "name": "google-ai-assisted-cicd",
+  "metadata": {
+    "description": "Advanced CI/CD pipeline management for Claude Code."
+  },
+  "owner": {
+    "name": "Google LLC"
+  },
+  "plugins": [
+    {
+      "name": "cicd",
+      "source": "./",
+      "description": "Advanced CI/CD pipeline management for Claude Code.",
+      "category": "Automation",
+      "tags": [
+        "cicd",
+        "deployment",
+        "pipeline design",
+        "terraform",
+        "canary release"
+      ]
+    }
+  ]
+}
