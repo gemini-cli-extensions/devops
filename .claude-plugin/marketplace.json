@@ -1,7 +1,7 @@
 {
   "name": "google-ai-assisted-cicd",
   "metadata": {
-    "description": "Agent skills for Dataproc to manage clusters and jobs."
+    "description": "Advanced CI/CD pipeline management for Claude Code."
   },
   "owner": {
     "name": "Google LLC"

@@ -60,7 +60,7 @@ To install the CI/CD extension, run the following command in your terminal:
 1. Add the Marketplace.
 
 ```bash
-claude plugin marketplace add https://github.com/gemini-cli-extensions/cicd.git#0.2.1
+claude plugin marketplace add https://github.com/gemini-cli-extensions/cicd.git#v0.2.2
 ```
 
 2. Install the Plugin.
