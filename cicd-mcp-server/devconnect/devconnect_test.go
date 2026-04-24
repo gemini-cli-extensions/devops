@@ -103,6 +103,9 @@ func TestSetupDevConnectConnection_NoExistingLink_NoExistingConnection(t *testin
 
 func TestAddDevConnectGitRepoLink(t *testing.T) {
 	mockClient := &mocks.MockDevConnectClient{
+		FindGitRepositoryLinksForGitRepoFunc: func(ctx context.Context, projectID, location, repoURI string) ([]*developerconnect.GitRepositoryLink, error) {
+			return []*developerconnect.GitRepositoryLink{}, nil
+		},
 		CreateGitRepositoryLinkFunc: func(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*developerconnect.GitRepositoryLink, error) {
 			return &developerconnect.GitRepositoryLink{Name: "new-link"}, nil
 		},
@@ -130,5 +133,43 @@ func TestAddDevConnectGitRepoLink(t *testing.T) {
 
 	if link.Name != "new-link" {
 		t.Errorf("expected link name 'new-link', got '%s'", link.Name)
+	}
+}
+
+func TestAddDevConnectGitRepoLink_ExistingLink(t *testing.T) {
+	mockClient := &mocks.MockDevConnectClient{
+		FindGitRepositoryLinksForGitRepoFunc: func(ctx context.Context, projectID, location, repoURI string) ([]*developerconnect.GitRepositoryLink, error) {
+			return []*developerconnect.GitRepositoryLink{
+				{Name: "existing-link"},
+			}, nil
+		},
+		CreateGitRepositoryLinkFunc: func(ctx context.Context, projectID, location, connectionID, repoLinkID, repoURI string) (*developerconnect.GitRepositoryLink, error) {
+			t.Errorf("CreateGitRepositoryLink should not be called when link already exists")
+			return nil, nil
+		},
+	}
+
+	server := mcp.NewServer(&mcp.Implementation{Name: "test"}, &mcp.ServerOptions{})
+	addAddDevConnectGitRepoLinkTool(server, mockClient)
+
+	args := AddDevConnectGitRepoLinkArgs{
+		ProjectID:    "test-project",
+		Location:     "us-central1",
+		ConnectionID: "test-connection",
+		GitRepoURI:   "https://github.com/test/repo.git",
+	}
+
+	_, res, err := addDevConnectGitRepoLinkToolFunc(context.Background(), nil, args)
+	if err != nil {
+		t.Fatalf("tool function returned an error: %v", err)
+	}
+
+	link, ok := res.(*developerconnect.GitRepositoryLink)
+	if !ok {
+		t.Fatalf("result is not of the expected type for links, got %T", res)
+	}
+
+	if link.Name != "existing-link" {
+		t.Errorf("expected link name 'existing-link', got '%s'", link.Name)
 	}
 }
