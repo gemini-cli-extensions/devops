@@ -125,7 +125,7 @@ def generate_yaml():
             "name": f"SAT_{skill}_length-{length}_specificity-{specificity}-{prompt_hash}",
             "instruction": prompt,
             "trialConfig": {
-                "setup": f"git clone https://github.com/CoasterJX/tinyjam.git /tmp/skill-activation/{prompt_hash}",
+                "setup": f"git clone https://github.com/sdlc-graph/tinyjam.git /tmp/skill-activation/{prompt_hash}",
                 "cleanup": f"rm -rf /tmp/skill-activation/{prompt_hash}",
             },
             "agentWorkingDir": f"/tmp/skill-activation/{prompt_hash}",
