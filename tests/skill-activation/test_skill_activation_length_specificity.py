@@ -151,7 +151,7 @@ def generate_heatmap(bucket_name, local_dir="local_results", output_img="heatmap
 
     print("Downloading files from GCS...")
     # Using gsutil -m cp with glob to download all json files
-    cmd = f"gsutil -m cp gs://{bucket_name}/**.json {local_dir}/"
+    cmd = f"gcloud storage cp gs://{bucket_name}/**.json {local_dir}/"
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     if result.returncode != 0:
         print(f"Warning or Error downloading files: {result.stderr}")
