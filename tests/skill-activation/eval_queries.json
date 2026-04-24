@@ -1,0 +1,166 @@
+{
+  "google-cicd-deploy": [
+    {
+      "query": "I have a nodejs app and I want to put it on cloud run.",
+      "should_trigger": true
+    },
+    {
+      "query": "how do i deploy my static site to a gcs bucket",
+      "should_trigger": true
+    },
+    {
+      "query": "Can you help me get this docker image running on GKE?",
+      "should_trigger": true
+    },
+    {
+      "query": "I need to deploy my application to Google Cloud, what are the steps?",
+      "should_trigger": true
+    },
+    {
+      "query": "pls deploy this to gcp",
+      "should_trigger": true
+    },
+    {
+      "query": "We need to deploy our python backend to cloud run using buildpacks, can you do that?",
+      "should_trigger": true
+    },
+    {
+      "query": "i got a site ready in dist/ folder, how to host it on google storage?",
+      "should_trigger": true
+    },
+    {
+      "query": "Deploy my app to GKE and make sure its public.",
+      "should_trigger": true
+    },
+    {
+      "query": "i want to deploy to cloud run from source code",
+      "should_trigger": true
+    },
+    {
+      "query": "Can you guide me through deploying a containerized app to GCP?",
+      "should_trigger": true
+    },
+    {
+      "query": "I need to design a CI/CD pipeline for my project.",
+      "should_trigger": false
+    },
+    {
+      "query": "how do i create a cloud build trigger for my repo",
+      "should_trigger": false
+    },
+    {
+      "query": "Can you write a terraform script to create a GKE cluster?",
+      "should_trigger": false
+    },
+    {
+      "query": "I want to migrate my Jenkins pipeline to Google Cloud.",
+      "should_trigger": false
+    },
+    {
+      "query": "whats the best way to manage secrets in Cloud Build",
+      "should_trigger": false
+    },
+    {
+      "query": "I need to deploy my application to AWS ECS, can you help?",
+      "should_trigger": false
+    },
+    {
+      "query": "can you help me write a Dockerfile for my app",
+      "should_trigger": false
+    },
+    {
+      "query": "How do I scale my Cloud Run service?",
+      "should_trigger": false
+    },
+    {
+      "query": "I need to view the logs of my deployed application.",
+      "should_trigger": false
+    },
+    {
+      "query": "Can you help me set up automated rollbacks for my deployment?",
+      "should_trigger": false
+    }
+  ],
+  "google-cicd-pipeline-design": [
+    {
+      "query": "i want to build a new cicd pipeline on gcp",
+      "should_trigger": true
+    },
+    {
+      "query": "Can you help me design an architecture for my deployment pipeline?",
+      "should_trigger": true
+    },
+    {
+      "query": "I need to migrate my Jenkins pipeline to Google Cloud.",
+      "should_trigger": true
+    },
+    {
+      "query": "how do i set up a full cicd flow for my app using cloud build and cloud deploy",
+      "should_trigger": true
+    },
+    {
+      "query": "pls help me design a pipeline for my project",
+      "should_trigger": true
+    },
+    {
+      "query": "We need a pipeline that does trunk-based development and pushes to deploy.",
+      "should_trigger": true
+    },
+    {
+      "query": "I need to design a secure cluster architecture on GCP.",
+      "should_trigger": true
+    },
+    {
+      "query": "can you guide me through creating a pipeline with multiple environments",
+      "should_trigger": true
+    },
+    {
+      "query": "I want to use Terraform to build my CI/CD infrastructure, can you help design it?",
+      "should_trigger": true
+    },
+    {
+      "query": "whats the best pattern for a cicd pipeline on google cloud",
+      "should_trigger": true
+    },
+    {
+      "query": "I want to deploy my app to Cloud Run right now.",
+      "should_trigger": false
+    },
+    {
+      "query": "how do i upload these files to a gcs bucket",
+      "should_trigger": false
+    },
+    {
+      "query": "Can you create a release in Cloud Deploy for me?",
+      "should_trigger": false
+    },
+    {
+      "query": "How do I fix this error in my Cloud Build logs?",
+      "should_trigger": false
+    },
+    {
+      "query": "can you write a Dockerfile for my Node.js app",
+      "should_trigger": false
+    },
+    {
+      "query": "How do I add a IAM policy binding for a service account?",
+      "should_trigger": false
+    },
+    {
+      "query": "I need to monitor my deployment for incidents.",
+      "should_trigger": false
+    },
+    {
+      "query": "how do i create an artifact registry repo",
+      "should_trigger": false
+    },
+    {
+      "query": "I want to build a new CI/CD pipeline on AWS using CodePipeline.",
+      "should_trigger": false
+    },
+    {
+      "query": "How do I scale my GKE cluster?",
+      "should_trigger": false
+    }
+  ]
+}
