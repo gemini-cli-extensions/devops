@@ -17,6 +17,7 @@ gha-creds-*.json
 
 # eval environment issues reported
 ENV_ISSUES.md
+eval_results/
 
 #Local agent setup
 .agent

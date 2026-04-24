@@ -75,8 +75,10 @@ def run_grader():
                         if "resource" in dict_content:
                             for resource_block in dict_content["resource"]:
                                 for r_type in resource_block.keys():
-                                    if r_type in expected_resources:
-                                        found_resources[r_type] = True
+                                    # hcl2 parser returns keys with literal quotes, e.g., '"google_artifact_registry_repository"'
+                                    clean_r_type = r_type.strip('"')
+                                    if clean_r_type in expected_resources:
+                                        found_resources[clean_r_type] = True
                 except Exception as e:
                     error_details.append(f"Failed to parse {full_path}: {e}")
 
