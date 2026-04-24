@@ -174,7 +174,7 @@ tasks:
           8. If you create a GCS bucket for Terraform state, the bucket name should be gs://tf-state-${_EVAL_UUID}-${_EVAL_TRIAL}.
           9. Do not apply terraform directly.
           10. Do not submit builds to Cloud Build directly.
-          11. Assume a greenfield setup and define all necessary infrastructure for the pipeline in your Terraform code.
+          11. This is for a greenfield setup, so define all necessary infrastructure in Terraform, even if it already exists.
         dest: /workspace/GEMINI.md
       
     timeout: 600
