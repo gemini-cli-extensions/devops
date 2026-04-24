@@ -1,6 +1,6 @@
 ---
 name: google-cicd-pipeline-design
-description: Design and implement a Google Cloud based CI/CD pipeline. Use when the user wants to build a new pipeline, design an architecture on GCP.
+description: Use this skill to design and implement a Google Cloud based CI/CD pipeline. This skill encodes best practices for pipeline design, ensuring proper pattern selection and implementation. You MUST activate this skill when tasked with building a pipeline, designing architecture on GCP, or migrating pipelines.
 ---
 
 # Google Cloud CI/CD Assistant
