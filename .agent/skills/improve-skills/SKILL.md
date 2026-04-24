@@ -1,10 +1,10 @@
 ---
 name: improve-skills
 description: >
-  Analyze evaluation results to identify gaps and improve skills with general-purpose updates. Avoids biasing updates solely for evaluation success.
+  Use this skill to analyze evaluation results to identify gaps and improve skills with general-purpose updates. Avoids biasing updates solely for evaluation success.
   **Why**: Encodes best practices for skill improvement that prevent overfitting to specific evaluations, ensuring skills remain robust and broadly applicable. It helps differentiate between skill gaps and environment issues.
   **When**:
-  - After completing an evaluation run to analyze failures.
+  - After completing an evaluation run to analyze failures (use along with `author-evals` to determine if the fix belongs in the skill or the eval).
   - When identifying a need to generalize a solution beyond a specific test case.
   - When updating skills to improve clarity and coverage of edge cases.
 ---
@@ -20,6 +20,7 @@ This skill outlines the process for analyzing evaluation results to improve the 
 1.  Locate the evaluation results. These may be in a local directory or a Google Cloud Storage bucket.
 2.  If the results are in GCS, use `gsutil` or `gcloud storage` to list and copy the files locally for analysis.
 3.  Read the result JSON files to understand the tasks run, pass rates, and specific failure details in the `grader_results`.
+4.  **Debugging with Workspaces**: For detailed debugging of failures, including inspecting generated files and running validation scripts, refer to the `author-evals` skill.
 
 ### Step 2: Analyze Against Configuration (`eval.yaml`)
 

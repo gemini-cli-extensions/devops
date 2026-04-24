@@ -123,7 +123,7 @@ tasks:
           2. The cloud run service name should be constructed from service-${_EVAL_UUID}-${_EVAL_TRIAL}.
           3. The artifact registry to use will be available as an environment variable $ARTIFACT_REGISTRY.
           4. The region to use will be available as an environment variable $REGION.
-          5. Build a customer docker image for the application.
+          5. Do not use buildpacks for building and deploying the application.
         dest: /workspace/GEMINI.md
 
     timeout: 600
@@ -174,7 +174,7 @@ tasks:
           8. If you create a GCS bucket for Terraform state, the bucket name should be gs://tf-state-${_EVAL_UUID}-${_EVAL_TRIAL}.
           9. Do not apply terraform directly.
           10. Do not submit builds to Cloud Build directly.
-          11. Assume a greenfield setup and define all necessary infrastructure for the pipeline in your Terraform code (e.g., Artifact Registry repository).
+          11. This is for a greenfield setup, so define all necessary infrastructure in Terraform, even if it already exists.
         dest: /workspace/GEMINI.md
       
     timeout: 600
@@ -187,9 +187,9 @@ tasks:
 
     graders:
       - type: deterministic
-        run: scripts/validate-cloudbuild-simple-pipeline.sh chefs-companion/cloudbuild.yaml
+        run: python3 scripts/validate-cloudbuild-simple-pipeline.py chefs-companion/cloudbuild.yaml
       - type: deterministic
-        run: scripts/validate-terraform-simple-pipeline.sh chefs-companion/terraform
+        run: python3 scripts/validate-terraform-simple-pipeline.py chefs-companion/terraform
       - type: tool_usage
         expectedTools:
           - name: activate_skill
