@@ -1,6 +1,8 @@
 ---
 name: google-cicd-deploy
-description: Deploy an application to Google Cloud. Use when the user wants to deploy a new application on GCP.
+description: >
+  Use this skill when requested to deploy an application to Google Cloud (GCS, Cloud Run, GKE) or when analyzing an application to determine the best deployment target.
+  **Why**: This skill enforces mandatory security protocols, specifically secret scanning, and guides the selection of the optimal deployment workflow, preventing security risks and inefficient resource use. Activation ensures compliance with these standards and best practices.
 ---
 
 # Google Cloud CI/CD Assistant
@@ -68,7 +70,9 @@ Your job is to deploy the user's applications to Cloud Run from an image.
 1.  **Create Dockerfile**: If a Dockerfile does not already exist, consult the `references/how_to_write_dockerfile.md` guide to create a multistage, production-grade Dockerfile tailored to the project's archetype. Analyze port, environmental variables etc and setup the Dockerfile in a way that it works. Ensure the Dockerfile can be built locally using the Docker cli.
 2.  **Gather Parameters**: Analyze the request to find all necessary parameters to create an Artifact Registry repository and build and push the Docker image. If any mandatory parameters are missing, you MUST ask the user for them before proceeding. Do not guess or make assumptions.
 3.  **Create Artifact Registry Repository** Create the Artifact Registry repository using the `create_artifact_repository` tool.
-4.  **Build and Push Image**: Using the Docker cli, build the Docker image locally using the created Dockerfile and push the image to the created Artifact Registry repository.
+4.  **Build and Push Image**: Build the Docker image and push it to the created Artifact Registry repository.
+    *   **Preferred**: Use the Docker CLI to build the image locally and push it.
+    *   **Fallback**: If a local Docker daemon is not available or the build fails, use Google Cloud Build to build the image remotely. Run the command: `gcloud builds submit --tag <IMAGE_URI> .` in the project root.
 5.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Run(e.g., `repo_name: "my-app-images"`).
 6.  **Clarify if Needed**: If any mandatory parameters are missing to deploy to Google Cloud Run, you MUST ask the user for them before proceeding. Do not guess or make assumptions. Ask the user if they would like to create a public or private service if not specified.
 7.  **Deploy**: Deploy the built application to Google Cloud Run using the `deploy_cloudrun_service_from_image` tool and return the URL of the deployed application.
@@ -95,7 +99,7 @@ This workflow is for deploying container-based applications to a GKE cluster. Co
 
 These rules apply to all workflows.
 
-Always scan for secrets before uploading anything to docker or GCS using the `scan_code_for_secrets` tool. Always ignore directories where scanning is not useful e.g. dependencies which the user has no control over e.g. .venv or go_modules etc. Warn the user of any secrets available and ask if the user wants to ignore these files using dockerignore and gitignore. If they would like to ignore the files, create the corresponding dockerignore and gitignore files. Goal of scanning is to detect if the user inadvertently uploaded any secrets in *their* application code.
+Always scan for secrets before any build or deployment operation (including building Docker images or uploading files to GCS) using the `scan_code_for_secrets` tool. Always ignore directories where scanning is not useful e.g. dependencies which the user has no control over e.g. .venv or go_modules etc. Warn the user of any secrets available and ask if the user wants to ignore these files using dockerignore and gitignore. If they would like to ignore the files, create the corresponding dockerignore and gitignore files. Goal of scanning is to detect if the user inadvertently uploaded any secrets in *their* application code.
 First, analyze the user's application to determine the type of application. Proceed to the workflow only after analyzing the application.
 
 ### **Error Handling Protocol**
