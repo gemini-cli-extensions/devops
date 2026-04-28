@@ -1,7 +1,6 @@
 ---
 name: google-cicd-terraform
-description: "Architect, provision, and troubleshoot production-grade Google Cloud infrastructure using Terraform and OpenTofu. Use to design landing zones (Shared VPCs, Folders), deploy core services (GKE, Cloud Run, Cloud SQL), implement IAM least-privilege, and manage GCS-backed state. Enforces Google’s Cloud Foundation Fabric patterns and rigorous validation protocols to ensure secure, idempotent, and scalable deployments across environments."
-version: "0.1.0"
+description: Architect, provision, and troubleshoot infrastructure on Google Cloud using Terraform. This skill ensures best practices like GCS backend usage and least-privilege IAM are followed. Enforces Google’s Cloud Foundation Fabric patterns and rigorous validation protocols to ensure secure, idempotent, and scalable deployments across environments. Activate when the user requests infrastructure changes, pipeline design involving Terraform, or debugging Terraform issues.
 ---
 
 # Terraform GCP Skill
@@ -147,6 +146,18 @@ To maintain a clean module interface, use the main identifier for singleton reso
     }
     ```
 
+5. Developer Connect Git Repository Link
+   When configuring `google_developer_connect_git_repository_link`, use `parent_connection` and `git_repository_link_id` as required arguments.
+
+    ```hcl
+    resource "google_developer_connect_git_repository_link" "main" {
+      location                = var.region
+      parent_connection       = google_developer_connect_connection.main.connection_id
+      git_repository_link_id  = "my-repo-link"
+      clone_uri               = var.github_repo_uri
+    }
+    ```
+
 ## 📂 Directory Structure
 Follow this standard to ensure compatibility with Antigravity (AGY) discovery and Google best practices:
 
@@ -165,6 +176,8 @@ Follow this standard to ensure compatibility with Antigravity (AGY) discovery an
     └── helpers/             # Scripts NOT called by Terraform
 ```
 ## ⚠️ Anti-Patterns (Do NOT do these)
+   - ❌ Legacy GitHub Triggers: Do not use the legacy `github` block in `google_cloudbuild_trigger`. Always use `developer_connect_event_config`.
+
    - ❌ Hardcoded IDs: Never hardcode Project IDs. Use variables or data "google_project" sources.
 
    - ❌ Service Account Keys: Never generate or store .json keys. Use Workload Identity Federation or the default metadata server.
