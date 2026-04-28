@@ -41,7 +41,7 @@ The CI/CD extension for Gemini CLI automates Continuous Integration and Continuo
     gcloud auth application-default login
     ```
 
-### Using Gemini CLI
+### For Gemini CLI
 To install the CI/CD extension, run the following command in your terminal:
 
 ```bash
@@ -54,7 +54,7 @@ gemini extensions install https://github.com/gemini-cli-extensions/cicd
 *   Gemini CLI Authentication: Ensure you have configured [Authentication Options](https://github.com/google-gemini/gemini-cli/tree/main?tab=readme-ov-file#-authentication-options).
 
 
-### Using Claude Code
+### For Claude Code
 To install the CI/CD extension, run the following command in your terminal:
 
 1. Add the Marketplace.
@@ -68,7 +68,7 @@ claude plugin marketplace add https://github.com/gemini-cli-extensions/cicd.git#
 claude plugin install cicd
 ```
 
-### Using Antigravity
+### For Antigravity
 To install our CI/CD extension in Antigravity, you can setup our MCP Server as custom MCP and add skills.
 
 1. Setup custom MCP server
@@ -80,7 +80,17 @@ You can use [Skills](https://github.com/vercel-labs/skills) to add skills to Ant
  npx skills add https://github.com/gemini-cli-extensions/cicd --global --all --agent antigravity
 ```
 
+### For Other Agents
+To install our CI/CD extension in other agents, you can manually setup our MCP Server and skills.
 
+1. Setup MCP server
+Each agent will have their own process to setup an MCP server, but you can use the provided [.mcp.json](.mcp.json) file which contains our MCP server config.
+
+2. Add Skills
+You can use [Skills](https://github.com/vercel-labs/skills) to add skills to your agent. Replace `<agent_name>` with your specific agent name.
+```bash
+ npx skills add https://github.com/gemini-cli-extensions/cicd --global --all --agent <agent_name>
+```
 ## 🔒 Security Considerations
 
 > [!WARNING]
