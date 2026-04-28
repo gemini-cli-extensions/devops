@@ -81,10 +81,10 @@ You can use [Skills](https://github.com/vercel-labs/skills) to add skills to Ant
 ```
 
 ### For Other Agents
-To install our CI/CD extension in other agents, you can manually setup our MCP Server and skills.
+To install our CI/CD extension in other agents, you can manually set up our MCP server and skills.
 
-1. Setup MCP server
-Each agent will have their own process to setup an MCP server, but you can use the provided [.mcp.json](.mcp.json) file which contains our MCP server config.
+1. Set up MCP server
+Each agent will have their own process to set up an MCP server, but you can use the provided [.mcp.json](.mcp.json) file which contains our MCP server config.
 
 2. Add Skills
 You can use [Skills](https://github.com/vercel-labs/skills) to add skills to your agent. Replace `<agent_name>` with your specific agent name.
