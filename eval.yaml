@@ -110,7 +110,8 @@ tasks:
           - name: mcp_cicd_deploy_cloudrun_service_from_source
           - name: mcp_cicd_scan_code_for_secrets
       - type: llm_rubric
-        rubric: The agent must have used buildpacks to build the application
+        outcome_assertions:
+          - Did the agent use buildpacks to build the application?
 
   # Evals for deploying simple python application: https://github.com/sdlc-graph/chefs-companion
   - name: deploy-cloud-run-no-dockerfile-python
@@ -153,7 +154,8 @@ tasks:
           - name: mcp_cicd_deploy_cloudrun_service_from_image
           - name: mcp_cicd_scan_code_for_secrets
       - type: llm_rubric
-        rubric: The agent must have used a custom docker image to build the application
+        outcome_assertions:
+          - Did the agent use a custom Docker image to build the application?
 
 
   # Evals for pipeline design with Terraform
@@ -199,10 +201,10 @@ tasks:
             args:
               name: google-cicd-terraform
       - type: llm_rubric
-        rubric: |
-          1. The agent must have used Terraform to implement the pipeline.
-          2. The agent must have used the trunk-based push-to-deploy pattern.
-          3. The agent must have used Cloud Run as the deployment target.
+        outcome_assertions:
+          - Is Terraform used to implement the pipeline?
+          - Is the trunk-based push-to-deploy pattern used?
+          - Is Cloud Run used as the deployment target?
 
   # Evals for deploying simple python application with canary strategy targeting GKE
   - name: release-orchestration-canary-gke
@@ -243,11 +245,14 @@ tasks:
             args:
               name: google-cicd-release-orchestration
       - type: llm_rubric
-        rubric: |
-          1. The agent must have defined a delivery pipeline in clouddeploy.yaml.
-          2. The agent must have defined staging and prod targets for GKE in clouddeploy.yaml.
-          3. The agent must have configured a canary strategy for the prod target with percentages 25 and 75.
-          4. The agent must have generated Kubernetes manifests.
+        outcome_assertions:
+          - Is there a clouddeploy.yaml file created?
+          - Is a delivery pipeline defined in clouddeploy.yaml?
+          - Are staging and prod targets defined in clouddeploy.yaml?
+          - Do the targets point to GKE clusters?
+          - Is a canary strategy configured for the prod target?
+          - Are the canary percentages set to 25 and 75?
+          - Were Kubernetes manifests generated?
 
   # Evals for deploying simple python application with multi-environment: https://github.com/sdlc-graph/chefs-companion
   - name: release-orchestration-multi-env-cloudrun
@@ -288,9 +293,10 @@ tasks:
             args:
               name: google-cicd-release-orchestration
       - type: llm_rubric
-        rubric: |
-          1. The agent must have defined a delivery pipeline in clouddeploy.yaml.
-          2. The agent must have defined staging and prod targets in clouddeploy.yaml.
+        outcome_assertions:
+          - Is there a clouddeploy.yaml file created?
+          - Is a delivery pipeline defined in clouddeploy.yaml?
+          - Are staging and prod targets defined in clouddeploy.yaml?
 
   # Evals for deploying simple python application with multi-environment targeting GKE
   - name: release-orchestration-multi-env-gke
@@ -330,7 +336,9 @@ tasks:
             args:
               name: google-cicd-release-orchestration
       - type: llm_rubric
-        rubric: |
-          1. The agent must have defined a delivery pipeline in clouddeploy.yaml.
-          2. The agent must have defined staging and prod targets for GKE in clouddeploy.yaml.
-          3. The agent must have generated Kubernetes manifests.
+        outcome_assertions:
+          - Is there a clouddeploy.yaml file created?
+          - Is a delivery pipeline defined in clouddeploy.yaml?
+          - Are staging and prod targets defined in clouddeploy.yaml?
+          - Do the targets point to GKE clusters?
+          - Were Kubernetes manifests generated?
