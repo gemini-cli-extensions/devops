@@ -22,7 +22,7 @@ defaults:
   agentWorkingDir: /tmp/skill-activation/tinyjam-pipeline-design
   expectedSkill: google-cicd-pipeline-design
   prohibitedEventsBeforeActivation:
-    - "activate_skill.*(?!google-cicd-pipeline-design)"
+    - "activate_skill.*"
     - "^mcp_.*"
     - "run_shell_command.*gcloud"
 

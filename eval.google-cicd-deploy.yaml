@@ -22,7 +22,7 @@ defaults:
   agentWorkingDir: /tmp/skill-activation/tinyjam-deploy
   expectedSkill: google-cicd-deploy
   prohibitedEventsBeforeActivation:
-    - "activate_skill.*(?!google-cicd-deploy)"
+    - "activate_skill.*"
     - "^mcp_.*"
     - "run_shell_command.*gcloud"
 
