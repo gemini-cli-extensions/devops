@@ -1,0 +1,39 @@
+# skillgrade --config=eval.google-cicd-deploy.yaml --no-redact --output=gs://$BUCKET_NAME
+
+version: '1'
+defaults:
+  agent: gemini
+  provider: local
+  trials: 5
+  timeout: 60
+  threshold: 0.5
+  grader_model: gemini-3-flash-preview
+  docker:
+    base: cicd-evals:latest
+  env:
+    GOOGLE_APPLICATION_CREDENTIALS: ~/.config/gcloud/application_default_credentials.json
+  trialConfig:
+    setup: |
+      mkdir -p /tmp/skill-activation
+      git clone https://github.com/sdlc-graph/tinyjam.git /tmp/skill-activation/tinyjam-deploy
+    cleanup: |
+      sleep 3
+      rm -rf /tmp/skill-activation/tinyjam-deploy
+  agentWorkingDir: /tmp/skill-activation/tinyjam-deploy
+  expectedSkill: google-cicd-deploy
+  prohibitedEventsBeforeActivation:
+    - "activate_skill.*(?!google-cicd-deploy)"
+    - "^mcp_.*"
+    - "run_shell_command.*gcloud"
+
+skillActivationTasks:
+  - instruction: I have a nodejs app and I want to put it on cloud run.
+  - instruction: how do i deploy my static site to a gcs bucket
+  - instruction: Can you help me get this docker image running on GKE?
+  - instruction: I need to deploy my application to Google Cloud, what are the steps?
+  - instruction: pls deploy this to gcp
+  - instruction: We need to deploy our python backend to cloud run using buildpacks, can you do that?
+  - instruction: i got a site ready in dist/ folder, how to host it on google storage?
+  - instruction: Deploy my app to GKE and make sure its public.
+  - instruction: i want to deploy to cloud run from source code
+  - instruction: Can you guide me through deploying a containerized app to GCP?
