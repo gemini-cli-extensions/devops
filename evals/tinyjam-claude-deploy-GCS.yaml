@@ -1,0 +1,8 @@
+Test Repository: https://github.com/sdlc-graph/tinyjam.git
+Skill: google-cicd-deploy
+Model: claude
+
+Deployment Workflow: Cloud Storage
+
+Required Resources:
+- GCS bucket

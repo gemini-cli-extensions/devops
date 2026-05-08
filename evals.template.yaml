@@ -1,0 +1,17 @@
+Test Repository: https://github.com/sdlc-graph/tinyjam.git
+Skill: google-cicd-deploy
+Model: claude
+
+Deployment Workflow: Cloud Storage / Cloud Run
+CICD pattern:
+CICD Pipeline Type:
+CICD Implementation:
+
+Required Resources:
+- Developer Connect connection
+- Developer Connect git repository link
+- GCS bucket
+- Cloud Run service
+- Artifact Registry repository
+- GKE cluster
+- Cloud Build trigger
