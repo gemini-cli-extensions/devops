@@ -1,0 +1,14 @@
+Test Repository: https://github.com/sdlc-graph/tinyjam.git
+Skill: google-cicd-pipeline-design
+Model: gemini
+
+Deployment Workflow: Cloud Storage
+CICD pattern: Trunk-Based Push-to-Deploy
+CICD Pipeline Type: Single
+CICD Implementation: Terraform
+
+Required Resources:
+- Developer Connect connection
+- Developer Connect git repository link
+- GCS bucket
+- Cloud Build trigger
