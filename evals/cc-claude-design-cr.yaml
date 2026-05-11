@@ -1,0 +1,15 @@
+Test Repository: chefs-companion
+Skill: google-cicd-pipeline-design
+Model: claude
+
+Deployment Workflow: Cloud Run
+CICD pattern: Trunk-Based Push-to-Deploy
+CICD Pipeline Type: Single
+CICD Implementation: Terraform
+
+Required Resources:
+- Developer Connect connection
+- Developer Connect git repository link
+- Cloud Build trigger
+- Artifact Registry repository
+- Cloud Run service
