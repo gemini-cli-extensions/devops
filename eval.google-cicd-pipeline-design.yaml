@@ -1,0 +1,39 @@
+# skillgrade --config=eval.google-cicd-pipeline-design.yaml --no-redact --output=gs://$BUCKET_NAME
+
+version: '1'
+defaults:
+  agent: gemini
+  provider: local
+  trials: 5
+  timeout: 60
+  threshold: 0.5
+  grader_model: gemini-3-flash-preview
+  docker:
+    base: cicd-evals:latest
+  env:
+    GOOGLE_APPLICATION_CREDENTIALS: ~/.config/gcloud/application_default_credentials.json
+  trialConfig:
+    setup: |
+      mkdir -p /tmp/skill-activation
+      git clone https://github.com/sdlc-graph/tinyjam.git /tmp/skill-activation/tinyjam-pipeline-design
+    cleanup: |
+      sleep 3
+      rm -rf /tmp/skill-activation/tinyjam-pipeline-design
+  agentWorkingDir: /tmp/skill-activation/tinyjam-pipeline-design
+  expectedSkill: google-cicd-pipeline-design
+  prohibitedEventsBeforeActivation:
+    - "activate_skill.*"
+    - "^mcp_.*"
+    - "run_shell_command.*gcloud"
+
+skillActivationTasks:
+  - instruction: i want to build a new cicd pipeline on gcp
+  - instruction: Can you help me design an architecture for my deployment pipeline?
+  - instruction: I need to migrate my Jenkins pipeline to Google Cloud.
+  - instruction: how do i set up a full cicd flow for my app using cloud build and cloud deploy
+  - instruction: pls help me design a pipeline for my project
+  - instruction: We need a pipeline that does trunk-based development and pushes to deploy.
+  - instruction: I need to design a secure cluster architecture on GCP.
+  - instruction: can you guide me through creating a pipeline with multiple environments
+  - instruction: I want to use Terraform to build my CI/CD infrastructure, can you help design it?
+  - instruction: whats the best pattern for a cicd pipeline on google cloud
