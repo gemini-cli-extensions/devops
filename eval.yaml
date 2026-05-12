@@ -342,3 +342,38 @@ tasks:
           - Staging and prod targets must be defined in clouddeploy.yaml.
           - The targets must point to GKE clusters.
           - Kubernetes manifests must be generated.
+
+  # Evals for deploying simple Java application to GKE
+  - name: deploy-gke-java
+    instruction: |
+      Deploy the Java application to GKE.
+
+    workspace:
+      - content: |
+          1. The project id will be available as an environment variable $PROJECT_ID.
+          2. The GKE cluster name is cluster-prod.
+          3. The GKE cluster location is available as an environment variable $REGION.
+          4. The artifact registry repository name should be repo-${_EVAL_UUID}-${_EVAL_TRIAL}.
+          5. Keep the service private.
+        dest: /workspace/GEMINI.md
+
+    timeout: 1000
+
+    trialConfig:
+      setup: |
+        git clone https://github.com/sdlc-graph/spring-petclinic-docker.git
+    agentWorkingDir: /workspace/spring-petclinic-docker
+
+    graders:
+      - type: tool_usage
+        expectedTools:
+          - name: activate_skill
+            args:
+              name: google-cicd-deploy
+          - name: mcp_cicd_create_artifact_repository
+          - name: mcp_cicd_scan_code_for_secrets
+      - type: llm_rubric
+        outcome_assertions:
+          - A Dockerfile must be created.
+          - A Kubernetes Deployment manifest must be generated.
+          - A Kubernetes Service manifest must be generated.
