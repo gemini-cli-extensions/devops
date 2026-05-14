@@ -1,0 +1,7 @@
+go 1.25.5
+
+use (
+	./cicd-mcp-server
+	./lib/bm25
+	./local-kb-index-builder
+)
