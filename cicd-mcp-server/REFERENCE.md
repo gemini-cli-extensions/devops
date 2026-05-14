@@ -78,6 +78,21 @@ Creates a new Cloud Run service or updates an existing one from source.
 - `port` (integer, optional): The port the container listens on.
 - `allow_public_access` (boolean, optional): If the service should be public. Default is `false`.
 
+### `deploy_cloudrun_service_no_build`
+Creates a new Cloud Run service or updates an existing one from source without a build step, utilizing a Google-managed base image.
+
+**Arguments:**
+- `project_id` (string, required): The Google Cloud project ID.
+- `location` (string, required): The Google Cloud location.
+- `service_name` (string, required): The name of the Cloud Run service.
+- `source` (string, required): The path to the source code to deploy.
+- `base_image` (string, required): The runtime base image (e.g., `nodejs24`, `python314`, `osonly24`).
+- `command` (string, optional): The command that the container starts up with.
+- `args` (array of strings, optional): Arguments to pass to the container command.
+- `env_vars` (object with string keys and values, optional): Environment variables to set.
+- `port` (integer, optional): The port the container listens on.
+- `allow_public_access` (boolean, optional): If the service should be public. Default is `false`.
+
 ## Developer Connect
 
 ### `create_git_connection`

@@ -52,6 +52,7 @@ type CloudRunClient interface {
 	UpdateService(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error)
 	GetRevision(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error)
 	DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error
+	DeployNoBuild(ctx context.Context, projectID, location, serviceName, source, baseImage, command string, cmdArgs []string, envVars map[string]string, port int32, allowPublicAccess bool) error
 	DeleteService(ctx context.Context, projectID, location, serviceName string) error
 	SetServiceAccess(ctx context.Context, serviceName string, allowPublicAccess bool) error
 }
@@ -201,6 +202,56 @@ func (c *CloudRunClientImpl) DeployFromSource(ctx context.Context, projectID, lo
 	}
 	return nil
 }
+
+// DeployNoBuild deploys a Cloud Run service from source without a build step, using a base image.
+func (c *CloudRunClientImpl) DeployNoBuild(ctx context.Context, projectID, location, serviceName, source, baseImage, command string, cmdArgs []string, envVars map[string]string, port int32, allowPublicAccess bool) error {
+	args := []string{"beta", "run", "deploy", serviceName, "--project", projectID, "--region", location, "--source", source, "--no-build", "--base-image", baseImage, "--format", "json", "--quiet"}
+	if command != "" {
+		args = append(args, "--command", command)
+	}
+	if len(cmdArgs) > 0 {
+		var argStr string
+		for i, a := range cmdArgs {
+			if i > 0 {
+				argStr += ","
+			}
+			argStr += a
+		}
+		if argStr != "" {
+			args = append(args, "--args", argStr)
+		}
+	}
+	if len(envVars) > 0 {
+		var envStr string
+		i := 0
+		for k, v := range envVars {
+			if i > 0 {
+				envStr += ","
+			}
+			envStr += fmt.Sprintf("%s=%s", k, v)
+			i++
+		}
+		if envStr != "" {
+			args = append(args, "--set-env-vars", envStr)
+		}
+	}
+	if port != 0 {
+		args = append(args, "--port", fmt.Sprintf("%d", port))
+	}
+	if allowPublicAccess {
+		args = append(args, "--allow-unauthenticated")
+	} else {
+		args = append(args, "--no-allow-unauthenticated")
+	}
+
+	cmd := c.execer.Command("gcloud", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to deploy no-build: %w, output: %s", err, out)
+	}
+	return nil
+}
+
 
 // DeleteService deletes a Cloud Run service.
 func (c *CloudRunClientImpl) DeleteService(ctx context.Context, projectID, location, serviceName string) error {
