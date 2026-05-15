@@ -28,6 +28,7 @@ type MockCloudRunClient struct {
 	UpdateServiceFunc    func(ctx context.Context, projectID, location, serviceName, imageURL, revisionName string, port int32, service *cloudrunpb.Service) (*cloudrunpb.Service, error)
 	GetRevisionFunc      func(ctx context.Context, service *cloudrunpb.Service) (*cloudrunpb.Revision, error)
 	DeployFromSourceFunc func(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error
+	DeployNoBuildFunc    func(ctx context.Context, projectID, location, serviceName, source, baseImage, command string, cmdArgs []string, envVars map[string]string, port int32, allowPublicAccess bool) error
 	DeleteServiceFunc    func(ctx context.Context, projectID, location, serviceName string) error
 	SetServiceAccessFunc func(ctx context.Context, serviceName string, allowPublicAccess bool) error
 }
@@ -65,6 +66,11 @@ func (m *MockCloudRunClient) GetRevision(ctx context.Context, service *cloudrunp
 // DeployFromSource mocks the DeployFromSource method.
 func (m *MockCloudRunClient) DeployFromSource(ctx context.Context, projectID, location, serviceName, source string, port int32, allowPublicAccess bool) error {
 	return m.DeployFromSourceFunc(ctx, projectID, location, serviceName, source, port, allowPublicAccess)
+}
+
+// DeployNoBuild mocks the DeployNoBuild method.
+func (m *MockCloudRunClient) DeployNoBuild(ctx context.Context, projectID, location, serviceName, source, baseImage, command string, cmdArgs []string, envVars map[string]string, port int32, allowPublicAccess bool) error {
+	return m.DeployNoBuildFunc(ctx, projectID, location, serviceName, source, baseImage, command, cmdArgs, envVars, port, allowPublicAccess)
 }
 
 func (m *MockCloudRunClient) SetServiceAccess(ctx context.Context, serviceName string, allowPublicAccess bool) error {

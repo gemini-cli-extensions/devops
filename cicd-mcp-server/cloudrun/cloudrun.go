@@ -36,6 +36,7 @@ func (h *Handler) Register(server *mcp.Server) {
 	addListServicesTool(server, h.CrClient)
 	addDeployToCloudRunFromImageTool(server, h.CrClient)
 	addDeployToCloudRunFromSourceTool(server, h.CrClient)
+	addDeployToCloudRunNoBuildTool(server, h.CrClient)
 }
 
 type ListServicesArgs struct {
@@ -134,3 +135,34 @@ func addDeployToCloudRunFromSourceTool(server *mcp.Server, crClient cloudrunclie
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "deploy_cloudrun_service_from_source", Description: "Creates a new Cloud Run service or updates an existing one from source. This tool may take a couple minutes to finish running."}, deployToCloudRunFromSourceToolFunc)
 }
+
+type DeployToCloudRunNoBuildArgs struct {
+	ProjectID         string            `json:"project_id" jsonschema:"The Google Cloud project ID."`
+	Location          string            `json:"location" jsonschema:"The Google Cloud location."`
+	ServiceName       string            `json:"service_name" jsonschema:"The name of the Cloud Run service."`
+	Source            string            `json:"source" jsonschema:"The path to the source code to deploy."`
+	BaseImage         string            `json:"base_image" jsonschema:"The runtime base image (e.g., nodejs24, python314, osonly24)."`
+	Command           string            `json:"command,omitempty" jsonschema:"The command that the container starts up with."`
+	Args              []string          `json:"args,omitempty" jsonschema:"Arguments to pass to the container command."`
+	EnvVars           map[string]string `json:"env_vars,omitempty" jsonschema:"Environment variables to set."`
+	Port              int32             `json:"port,omitempty" jsonschema:"The port the container listens on."`
+	AllowPublicAccess bool              `json:"allow_public_access,omitempty" jsonschema:"If the service should be public. Default is false."`
+}
+
+var deployToCloudRunNoBuildToolFunc func(ctx context.Context, req *mcp.CallToolRequest, args DeployToCloudRunNoBuildArgs) (*mcp.CallToolResult, any, error)
+
+func addDeployToCloudRunNoBuildTool(server *mcp.Server, crClient cloudrunclient.CloudRunClient) {
+	deployToCloudRunNoBuildToolFunc = func(ctx context.Context, req *mcp.CallToolRequest, args DeployToCloudRunNoBuildArgs) (*mcp.CallToolResult, any, error) {
+		err := crClient.DeployNoBuild(ctx, args.ProjectID, args.Location, args.ServiceName, args.Source, args.BaseImage, args.Command, args.Args, args.EnvVars, args.Port, args.AllowPublicAccess)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to deploy service: %w", err)
+		}
+		service, err := crClient.GetService(ctx, args.ProjectID, args.Location, args.ServiceName)
+		if err != nil {
+			return &mcp.CallToolResult{}, nil, fmt.Errorf("failed to get service: %w", err)
+		}
+		return &mcp.CallToolResult{}, service, nil
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "deploy_cloudrun_service_no_build", Description: "Creates a new Cloud Run service or updates an existing one from source without a build step, using a pre-configured base image. This tool may take a couple minutes to finish running."}, deployToCloudRunNoBuildToolFunc)
+}
+
