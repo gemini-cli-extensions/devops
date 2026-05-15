@@ -61,10 +61,13 @@ To perform a no-build deployment, call the MCP tool `deploy_cloudrun_service_no_
 *   **Python Base Image**: The default base image is `python314` (or matching your Python major/minor version).
 
 #### 2. Step-by-Step Workflow
-1.  **Install Dependencies Locally into Vendor Folder**:
-    Since there is no build step on Cloud Run, all external dependencies must be packaged alongside your application source code. Install dependencies into a local `./vendor` directory by running:
+1.  **Install Dependencies Locally**:
+    Since there is no build step on Cloud Run, all external dependencies must be packaged alongside your application source code. To avoid system-level `pip` permission restrictions, always create an isolated virtual environment (e.g. `.venv`), activate it to use its private `pip` to stage dependencies into a dedicated vendor folder (e.g. `./vendor`), and then deactivate:
     ```bash
-    pip3 install -r requirements.txt --target=./vendor
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt --target=./vendor
+    deactivate
     ```
 2.  **Deploy via MCP Tool**:
     Call the `deploy_cloudrun_service_no_build` MCP tool with the following parameters:
