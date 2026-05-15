@@ -212,7 +212,7 @@ func (c *CloudRunClientImpl) DeployNoBuild(ctx context.Context, projectID, locat
 	}
 	if len(cmdArgs) > 0 {
 		argStr := strings.Join(cmdArgs, ",")
-		args = append(args, "--args", argStr)
+		args = append(args, fmt.Sprintf("--args=%s", argStr))
 	}
 	if len(envVars) > 0 {
 		envPairs := make([]string, 0, len(envVars))
