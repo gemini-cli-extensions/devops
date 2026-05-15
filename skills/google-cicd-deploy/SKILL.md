@@ -83,18 +83,23 @@ Your job is to deploy the user's applications to Cloud Run from an image.
 
 This workflow is for deploying applications directly to Google Cloud Run without a build step, utilizing pre-configured Google-managed runtime base images.
 
-1.  **Verify Prerequisites**:
-    *   **Node.js**: Project must contain `package.json` and `index.js`.
-    *   **Python**: Project must contain an entry point (e.g., `main.py`) and `requirements.txt` (create it if missing and verify local behavior).
-    *   **Go**: Project must compile a Linux-targeted binary (e.g., `GOOS="linux" GOARCH=amd64 go build main.go`).
-2.  **Read Detailed Guides (MANDATORY FIRST STEP)**: Before executing any deployment commands, installing packages, compiling binaries, or calling the `deploy_cloudrun_service_no_build` tool, you **MUST** call the `view_file` tool to read the following guides in full to understand the language-specific preparation, dependencies, local environment targets, and parameters. Failure to read these files first is a critical protocol violation.
-    *   [General No-Build Instructions](cloud-run/no-build/instruction.md)
-    *   [Node.js No-Build Guide](cloud-run/no-build/nodejs.md)
-    *   [Python No-Build Guide](cloud-run/no-build/python.md)
-    *   [Go No-Build Guide](cloud-run/no-build/go.md)
-3.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Run (e.g., `project_id`, `service_name`, `region`).
-4.  **Clarify if Needed**: If any mandatory parameters are missing, you MUST ask the user for them before proceeding. Ask the user if they would like to create a public or private service if not specified.
-5.  **Deploy**: Deploy the application to Google Cloud Run using the `deploy_cloudrun_service_no_build` MCP tool. Ensure you specify the correct parameters (e.g., `project_id`, `location`, `service_name`, `source`, `base_image`, `command`, `args`, `env_vars`, `port`, and `allow_public_access`) as detailed in the specific guides, then return the URL of the deployed application.
+### Why Choose No-Build Deployment?
+*   **Sub-second Build Times**: Bypasses building container layers entirely, substantially speeding up deployment cycles.
+*   **Simpler Developer Experience**: Eliminates the need for a local Docker daemon, dockerfiles, or Cloud Build triggers.
+*   **Predictable Environments**: Runs on Google-managed, secured, and optimized runtime base images (such as `nodejs24`, `python314`, and `osonly24`).
+*   **Vendor-Locking/Pre-Compilation Support**: Great for compiled binaries (Go) and standard scripting runtimes with bundled dependencies.
+
+### Prerequisites & Intent Analysis:
+*   **Node.js**: Project must contain `package.json` and `index.js`.
+*   **Python**: Project must contain an entry point (e.g., `main.py`) and `requirements.txt` (create it if missing and verify local behavior).
+*   **Go**: Project must compile a Linux-targeted binary (e.g., `GOOS="linux" GOARCH=amd64 go build main.go`).
+*   **Other Languages**: Bypassing build for other unsupported languages is outside the scope of automated detection. However, if the user explicitly requests it, proceed by guiding the user to manually compile or package dependencies locally first, then use the generic OS-only base image (`osonly24`).
+
+### Mandatory Operational Protocol:
+1.  **Read Detailed Guide (MANDATORY FIRST STEP)**: Before executing any deployment commands, installing packages, compiling binaries, or calling the `deploy_cloudrun_service_no_build` tool, you **MUST** call the `view_file` tool to read the detailed [Google Cloud Run No-Build Deployment Guide](references/cloudrun/nobuild.md) in full. Failure to read this file first is a critical protocol violation.
+2.  **Gather Parameters**: Analyze the request to find all necessary parameters to deploy to Google Cloud Run (e.g., `project_id`, `service_name`, `region`).
+3.  **Clarify if Needed**: If any mandatory parameters are missing, you MUST ask the user for them before proceeding. Ask the user if they would like to create a public or private service if not specified.
+4.  **Deploy**: Deploy the application to Google Cloud Run using the `deploy_cloudrun_service_no_build` MCP tool. Ensure you specify the correct parameters (e.g., `project_id`, `location`, `service_name`, `source`, `base_image`, `command`, `args`, `env_vars`, `port`, and `allow_public_access`) as detailed in the reference guide, then return the URL of the deployed application.
 
 
 ## Workflow E: Google Kubernetes Engine (GKE)
@@ -132,7 +137,7 @@ First, analyze the user's application to determine the type of application. Proc
 
 * **Follow Instructions**: Your primary directive is to follow the plan or the user's direct command without deviation.
 * **Use Only Your Tools**: You can only call the specialized tools provided to you.
-* **Mandatory No-Build Reference Reading**: If Workflow D (No-Build) is selected, you **MUST** call the `view_file` tool to read `instruction.md` and the relevant language guide (`nodejs.md`, `python.md`, or `go.md`) **BEFORE** installing dependencies, building binaries, or executing the `deploy_cloudrun_service_no_build` tool. Skipping this file read step constitutes an operational failure.
+* **Mandatory No-Build Reference Reading**: If Workflow D (No-Build) is selected, you **MUST** call the `view_file` tool to read `references/cloudrun/nobuild.md` **BEFORE** installing dependencies, building binaries, or executing the `deploy_cloudrun_service_no_build` tool. Skipping this file read step constitutes an operational failure.
 
 ### **Defaults**
 *  **Google Cloud**: If gcloud is installed use `gcloud config list` to get the default *project* and *region*.
