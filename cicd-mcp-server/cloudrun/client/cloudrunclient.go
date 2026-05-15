@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"google.golang.org/api/iterator"
 
@@ -210,30 +211,16 @@ func (c *CloudRunClientImpl) DeployNoBuild(ctx context.Context, projectID, locat
 		args = append(args, "--command", command)
 	}
 	if len(cmdArgs) > 0 {
-		var argStr string
-		for i, a := range cmdArgs {
-			if i > 0 {
-				argStr += ","
-			}
-			argStr += a
-		}
-		if argStr != "" {
-			args = append(args, "--args", argStr)
-		}
+		argStr := strings.Join(cmdArgs, ",")
+		args = append(args, "--args", argStr)
 	}
 	if len(envVars) > 0 {
-		var envStr string
-		i := 0
+		envPairs := make([]string, 0, len(envVars))
 		for k, v := range envVars {
-			if i > 0 {
-				envStr += ","
-			}
-			envStr += fmt.Sprintf("%s=%s", k, v)
-			i++
+			envPairs = append(envPairs, fmt.Sprintf("%s=%s", k, v))
 		}
-		if envStr != "" {
-			args = append(args, "--set-env-vars", envStr)
-		}
+		envStr := strings.Join(envPairs, ",")
+		args = append(args, "--set-env-vars", envStr)
 	}
 	if port != 0 {
 		args = append(args, "--port", fmt.Sprintf("%d", port))
