@@ -40,9 +40,7 @@ To perform a no-build deployment, call the MCP tool `deploy_cloudrun_service_no_
     ```bash
     npm install
     ```
-2.  **Run Secret Scanning**:
-    Always verify no secrets are present in your files by running the `scan_code_for_secrets` tool. If secrets are found, ensure they are added to `.gitignore` or `.gcloudignore`.
-3.  **Deploy via MCP Tool**:
+2.  **Deploy via MCP Tool**:
     Call the `deploy_cloudrun_service_no_build` MCP tool with the following parameters:
     *   **`project_id`**: The Google Cloud project ID.
     *   **`location`**: The region where your service is deployed.
@@ -68,9 +66,7 @@ To perform a no-build deployment, call the MCP tool `deploy_cloudrun_service_no_
     ```bash
     pip3 install -r requirements.txt --target=./vendor
     ```
-2.  **Run Secret Scanning**:
-    Ensure there are no secrets present in the vendor or code directories using the `scan_code_for_secrets` tool. Configure `.gcloudignore` or `.gitignore` to prevent uploading sensitive local files.
-3.  **Deploy via MCP Tool**:
+2.  **Deploy via MCP Tool**:
     Call the `deploy_cloudrun_service_no_build` MCP tool with the following parameters:
     *   **`project_id`**: The Google Cloud project ID.
     *   **`location`**: The region where your service is deployed.
@@ -97,9 +93,7 @@ To perform a no-build deployment, call the MCP tool `deploy_cloudrun_service_no_
     ```bash
     GOOS="linux" GOARCH=amd64 go build -o main main.go
     ```
-2.  **Run Secret Scanning**:
-    Check your workspace for secrets before deployment with the `scan_code_for_secrets` tool to ensure sensitive config files are not inadvertently included.
-3.  **Deploy via MCP Tool**:
+2.  **Deploy via MCP Tool**:
     Call the `deploy_cloudrun_service_no_build` MCP tool with the following parameters:
     *   **`project_id`**: The Google Cloud project ID.
     *   **`location`**: The region where your service is deployed.
