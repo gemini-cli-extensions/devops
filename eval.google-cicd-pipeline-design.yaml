@@ -12,6 +12,7 @@ defaults:
     base: cicd-evals:latest
   env:
     GOOGLE_APPLICATION_CREDENTIALS: ~/.config/gcloud/application_default_credentials.json
+    GEMINI_CLI_TRUST_WORKSPACE: true
   trialConfig:
     setup: |
       mkdir -p /tmp/skill-activation
