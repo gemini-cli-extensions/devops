@@ -1,9 +1,18 @@
 ---
 name: google-cicd-deploy
 description: >
-  Use this skill when requested to deploy an application to Google Cloud (GCS, Cloud Run, GKE) or when analyzing an application to determine the best deployment target.
-  **Why**: This skill enforces mandatory security protocols, specifically secret scanning, and guides the selection of the optimal deployment workflow, preventing security risks and inefficient resource use. Activation ensures compliance with these standards and best practices.
+  Use this skill when requested to deploy, host, or release any application, static site, backend service, or container image to Google Cloud (including GCS, Cloud Run, GKE/Kubernetes), or whenever the user has the intent to get their application running/working on Google Cloud.
+  
+  **Triggers**:
+  - Any user request with the intent to get an application "up and running", "working", "hosted", or "online" on Google Cloud / GCP.
+  - Deploying static websites, uploading build artifacts/dist folders, or configuring hosting on Google Cloud Storage (GCS).
+  - Running containerized applications or Docker images on Google Kubernetes Engine (GKE), including creating/updating Kubernetes manifests (Deployment, Service).
+  - Deploying backend apps (Node.js, Python, Go) to Cloud Run, whether deploying from source code, container images, or using Cloud Native Buildpacks.
+  - Planning, troubleshooting, or analyzing the best Google Cloud deployment target for an application (even if the request has missing files or false assumptions).
+
+  **CRITICAL**: Activation is MANDATORY before writing any Dockerfiles, Kubernetes manifests, or running deployment shell commands (such as `gcloud storage`, `gsutil`, `gcloud run deploy`, or `gcloud deploy`). This guarantees compliance with required security protocols (like secret scanning) and prevents security leaks.
 ---
+
 
 # Google Cloud CI/CD Assistant
 
